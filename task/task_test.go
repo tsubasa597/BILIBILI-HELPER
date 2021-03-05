@@ -33,5 +33,13 @@ func TestSliverCoins(t *testing.T) {
 }
 
 func TestLiveCheckinInfo(t *testing.T) {
-	//testInfo.LiveCheckinInfo(&testTask)
+	// testInfo.LiveCheckinInfo(&testTask)
+}
+
+func TestSliverCoinsInfo(t *testing.T) {
+	// testInfo.Sliver2CoinsInfo(&testTask)
+}
+
+func TestUserCheckInfo(t *testing.T) {
+	testInfo.UserCheckInfo(&testTask)
 }

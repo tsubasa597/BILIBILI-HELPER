@@ -12,6 +12,8 @@ type Tasker interface {
 	Sliver2Coins()
 	// VideoWatch 观看视频
 	VideoWatch(string)
+	// GetJsonResponse 返回 JSONResponse
+	GetJSONResponse() *JSONResponse
 }
 
 // JSONResponse 返回 json 的结构
@@ -20,4 +22,9 @@ type JSONResponse struct {
 	Message string                 `json:"message"`
 	TTL     int                    `json:"ttl"`
 	Data    map[string]interface{} `json:"data"`
+}
+
+// GetJSONResponse 返回 JSONResponse
+func (rs *JSONResponse) GetJSONResponse() *JSONResponse {
+	return rs
 }

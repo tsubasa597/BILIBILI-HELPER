@@ -1,7 +1,22 @@
 package main
 
-import "bili/utils"
+import (
+	"bili/task"
+	"fmt"
+)
+
+var (
+	jrs    *task.JSONResponse = &task.JSONResponse{}
+	status task.Status        = task.Status{}
+)
+
+func init() {
+	status.UserCheckInfo(jrs)
+	status.LiveCheckinInfo(jrs)
+	status.Sliver2CoinsInfo(jrs)
+	status.VideoWatchInfo(jrs)
+}
 
 func main() {
-	utils.Get("https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign")
+	fmt.Println(status)
 }
