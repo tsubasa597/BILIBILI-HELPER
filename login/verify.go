@@ -9,5 +9,6 @@ type UserInfo struct {
 
 // GetVerify 将参数进行组合
 func (usif UserInfo) GetVerify() string {
+	// TODO 修改组合方式
 	return "bili_jct=" + usif.BiliJct + ";SESSDATA=" + usif.SessData + ";DedeUserID=" + usif.UserID + ";"
 }

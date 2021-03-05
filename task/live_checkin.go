@@ -3,14 +3,15 @@ package task
 import (
 	"bili/apiquery"
 	"bili/utils"
+	"encoding/json"
 	"fmt"
 )
 
 // LiveCheckin 直播签到
-func LiveCheckin() {
+func (rs *Response) LiveCheckin() {
 	res, err := utils.Get(apiquery.ApiList.LiveCheckin)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(res)
+	json.Unmarshal(res, &rs)
 }

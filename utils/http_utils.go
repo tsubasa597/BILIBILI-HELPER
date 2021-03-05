@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bili/login"
+	"bytes"
 	"io/ioutil"
 	"net/http"
 	urlpkg "net/url"
@@ -23,34 +24,35 @@ func init() {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 }
 
-// Get Get 请求封装 TODO : 修改返回类型
-func Get(url string) (resp string, err error) {
+// Get 请求封装
+func Get(url string) (resp []byte, err error) {
 	request.URL, err = urlpkg.Parse(url)
-	// request.Method = "GET"
+	request.Method = "GET"
 	if err != nil {
-		return "", err
+		return []byte(""), err
 	}
 	response, err := client.Do(request)
 	if err != nil {
-		return "", err
+		return []byte(""), err
 	}
 	res, _ := ioutil.ReadAll(response.Body)
 	defer response.Body.Close()
-	return string(res), nil
+	return res, nil
 }
 
-// Post Post 请求封装 TODO : 修改返回类型
-func Post(url string, postBody []byte) (resp string, err error) {
+// Post 请求封装
+func Post(url string, postBody []byte) (resp []byte, err error) {
 	request.URL, err = urlpkg.Parse(url)
 	request.Method = "POST"
+	request.Body = ioutil.NopCloser(bytes.NewReader(postBody))
 	if err != nil {
-		return "", err
+		return []byte(""), err
 	}
 	response, err = client.Do(request)
 	if err != nil {
-		return "", err
+		return []byte(""), err
 	}
 	res, _ := ioutil.ReadAll(response.Body)
 	defer response.Body.Close()
-	return string(res), nil
+	return res, nil
 }
