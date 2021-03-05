@@ -9,7 +9,7 @@ import (
 )
 
 // Sliver2CoinsStatus 银瓜子换硬币状态
-func (rs *Response) Sliver2CoinsStatus() {
+func (rs *JSONResponse) Sliver2CoinsStatus() {
 	res, err := utils.Get(apiquery.ApiList.Sliver2CoinsStatus)
 	if err != nil {
 		fmt.Println(err)
@@ -18,7 +18,7 @@ func (rs *Response) Sliver2CoinsStatus() {
 }
 
 // Sliver2Coins 银瓜子换硬币
-func (rs *Response) Sliver2Coins() {
+func (rs *JSONResponse) Sliver2Coins() {
 	res, err := utils.Get(apiquery.ApiList.Sliver2Coins)
 	if err != nil {
 		fmt.Println(err)

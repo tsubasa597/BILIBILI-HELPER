@@ -13,3 +13,11 @@ type Tasker interface {
 	// VideoWatch 观看视频
 	VideoWatch(string)
 }
+
+// JSONResponse 返回 json 的结构
+type JSONResponse struct {
+	Code    int                    `json:"code"`
+	Message string                 `json:"message"`
+	TTL     int                    `json:"ttl"`
+	Data    map[string]interface{} `json:"data"`
+}

@@ -8,7 +8,7 @@ import (
 )
 
 // UserCheck 用户检查
-func (rs *Response) UserCheck() {
+func (rs *JSONResponse) UserCheck() {
 	res, err := utils.Get(apiquery.ApiList.Login)
 	if err != nil {
 		fmt.Println(err)
