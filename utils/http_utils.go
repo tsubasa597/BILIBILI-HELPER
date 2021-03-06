@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bili/config"
 	"bili/login"
 	"bytes"
 	"io/ioutil"
@@ -10,24 +11,22 @@ import (
 
 // HTTP 请求的结构体
 type HTTP struct {
-	Verify  *login.UserInfo
+	Verify  *login.Cookie
 	client  *http.Client
 	request *http.Request
 }
 
 var (
+	// Http 结构体初始化
 	Http *HTTP = &HTTP{}
 )
 
 func init() {
-	var userAgent string = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-		"(KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"
 	Http.client = &http.Client{}
 	Http.request = &http.Request{Header: make(http.Header), Method: "GET"}
-	Http.Verify = &login.UserInfo{UserID: "35656398", SessData: "c0763d4c,1630379068,8c9fa*31", BiliJct: "e5ca623ee5d94759cf6d7a7b62cbf6c9"}
 	Http.request.Header.Add("Connection", "keep-alive")
-	Http.request.Header.Add("User-Agent", userAgent)
-	Http.request.Header.Add("Cookie", Http.Verify.GetVerify())
+	Http.request.Header.Add("User-Agent", config.Conf.UserAgent)
+	Http.request.Header.Add("Cookie", config.Conf.Cookie.GetVerify())
 	Http.request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 }
 

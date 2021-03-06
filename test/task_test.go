@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	testTask task.JSONResponse
+	testTask task.Response
 	testInfo task.Status
 )
 

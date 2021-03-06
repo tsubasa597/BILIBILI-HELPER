@@ -2,6 +2,7 @@ package task
 
 import (
 	"bili/apiquery"
+	"bili/config"
 	"bili/utils"
 	"encoding/json"
 	"fmt"
@@ -10,29 +11,29 @@ import (
 )
 
 // VideoWatch 观看视频
-func (rs *JSONResponse) VideoWatch(bvid string) {
+func (rs *Response) videoWatch(bvid string) {
 	postBody := []byte("bvid=" + bvid + "&played_time=" + strconv.Itoa(rand.Intn(90)))
 	res, err := utils.Post(apiquery.ApiList.VideoHeartbeat, postBody)
 	if err != nil {
 		fmt.Println(err)
 	}
-	json.Unmarshal(res, &rs)
+	json.Unmarshal(res, &rs.json)
 }
 
 // VideoShare 分享视频
-func (rs *JSONResponse) VideoShare(bvid string) {
-	postBody := []byte("bvid=" + bvid + "&csrf=" + utils.Http.Verify.BiliJct)
+func (rs *Response) videoShare(bvid string) {
+	postBody := []byte("bvid=" + bvid + "&csrf=" + config.Conf.Cookie.BiliJct)
 	res, err := utils.Post(apiquery.ApiList.AvShare, postBody)
 	if err != nil {
 		fmt.Println(err)
 	}
-	json.Unmarshal(res, &rs)
+	json.Unmarshal(res, &rs.json)
 }
 
 // DailyVideo 观看视频
 func (info *Status) DailyVideo(ts Tasker) {
-	ts.VideoWatch("BV1NT4y137Jc")
-	response := ts.GetJSONResponse()
+	ts.videoWatch("BV1NT4y137Jc")
+	response := ts.getJSONResponse()
 	if response.Code == 0 {
 		info.IsVideoWatch = true
 		fmt.Println("视频播放成功")
@@ -40,8 +41,8 @@ func (info *Status) DailyVideo(ts Tasker) {
 		fmt.Println("视频播放失败,原因: " + response.Message)
 	}
 	if !info.IsVideoShare {
-		ts.VideoShare("BV1NT4y137Jc")
-		response = ts.GetJSONResponse()
+		ts.videoShare("BV1NT4y137Jc")
+		response = ts.getJSONResponse()
 		if response.Code == 0 {
 			info.IsVideoShare = true
 			fmt.Println("视频分享成功")

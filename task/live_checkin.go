@@ -8,18 +8,18 @@ import (
 )
 
 // LiveCheckin 直播签到
-func (rs *JSONResponse) LiveCheckin() {
+func (rs *Response) liveCheckin() {
 	res, err := utils.Get(apiquery.ApiList.LiveCheckin)
 	if err != nil {
 		fmt.Println(err)
 	}
-	json.Unmarshal(res, &rs)
+	json.Unmarshal(res, &rs.json)
 }
 
 // DailyLiveCheckin 直播签到信息
 func (info *Status) DailyLiveCheckin(ts Tasker) {
-	ts.LiveCheckin()
-	response := ts.GetJSONResponse()
+	ts.liveCheckin()
+	response := ts.getJSONResponse()
 	if response.Code == 0 {
 		info.IsLiveCheckin = true
 		fmt.Println("直播签到成功，本次签到获得" + response.Data["text"].(string) + "," + response.Data["specialText"].(string))

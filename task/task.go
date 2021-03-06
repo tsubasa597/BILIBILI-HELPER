@@ -5,30 +5,27 @@ import "bili/utils"
 // Tasker 任务
 type Tasker interface {
 	// LiveCheckin 直播签到
-	LiveCheckin()
+	liveCheckin()
 	// UserCheck 用户检查
-	UserCheck()
+	userCheck()
 	// Sliver2CoinsStatus 银瓜子换硬币状态
-	Sliver2CoinsStatus()
+	sliver2CoinsStatus()
 	// Sliver2Coins 银瓜子换硬币
-	Sliver2Coins()
+	sliver2Coins()
 	// VideoWatch 观看视频
-	VideoWatch(string)
+	videoWatch(string)
 	// GetJsonResponse 返回 JSONResponse
-	GetJSONResponse() *JSONResponse
-	VideoShare(string)
+	getJSONResponse() utils.JSON
+	videoShare(string)
 }
 
-// JSONResponse 返回 json 的结构
-type JSONResponse struct {
-	HTTP    utils.HTTP
-	Code    int                    `json:"code"`
-	Message string                 `json:"message"`
-	TTL     int                    `json:"ttl"`
-	Data    map[string]interface{} `json:"data"`
+// Response 返回 json 的结构
+type Response struct {
+	http utils.HTTP
+	json utils.JSON
 }
 
 // GetJSONResponse 返回 JSONResponse
-func (rs *JSONResponse) GetJSONResponse() *JSONResponse {
-	return rs
+func (rs *Response) getJSONResponse() utils.JSON {
+	return rs.json
 }

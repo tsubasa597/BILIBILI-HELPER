@@ -6,11 +6,10 @@ type Daily interface {
 	DailyLiveCheckin()
 	// UserCheck 用户检查
 	UserCheck()
-	// Sliver2CoinsStatus 银瓜子换硬币状态
 	// Sliver2Coins 银瓜子换硬币
 	DailySliver2Coins()
-	// VideoWatch 观看视频
-	// VideoWatchInfo(string)
+	// DailyVideo 观看视频
+	DailyVideo(string)
 }
 
 // Status 任务信息

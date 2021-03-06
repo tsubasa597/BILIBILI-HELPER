@@ -2,21 +2,20 @@ package main
 
 import (
 	"bili/task"
-	"fmt"
 )
 
 var (
-	jrs    *task.JSONResponse = &task.JSONResponse{}
-	status task.Status        = task.Status{}
+	rs     *task.Response = &task.Response{}
+	status task.Status    = task.Status{}
 )
 
 func init() {
-	status.UserCheck(jrs)
-	status.DailyLiveCheckin(jrs)
-	status.DailySliver2Coin(jrs)
-	status.DailyVideo(jrs)
+	status.UserCheck(rs)
+	status.DailyLiveCheckin(rs)
+	status.DailySliver2Coin(rs)
+	status.DailyVideo(rs)
 }
 
 func main() {
-	fmt.Println(status)
+	// fmt.Println(status)
 }
