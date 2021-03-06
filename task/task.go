@@ -1,5 +1,7 @@
 package task
 
+import "bili/utils"
+
 // Tasker 任务
 type Tasker interface {
 	// LiveCheckin 直播签到
@@ -14,10 +16,12 @@ type Tasker interface {
 	VideoWatch(string)
 	// GetJsonResponse 返回 JSONResponse
 	GetJSONResponse() *JSONResponse
+	VideoShare(string)
 }
 
 // JSONResponse 返回 json 的结构
 type JSONResponse struct {
+	HTTP    utils.HTTP
 	Code    int                    `json:"code"`
 	Message string                 `json:"message"`
 	TTL     int                    `json:"ttl"`

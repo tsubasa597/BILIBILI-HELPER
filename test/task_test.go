@@ -1,4 +1,4 @@
-package task_test
+package bilitest
 
 import (
 	"bili/task"
@@ -41,5 +41,5 @@ func TestSliverCoinsInfo(t *testing.T) {
 }
 
 func TestUserCheckInfo(t *testing.T) {
-	testInfo.UserCheckInfo(&testTask)
+	testInfo.UserCheck(&testTask)
 }

@@ -1,14 +1,14 @@
 package task
 
-// Info 任务信息
-type Info interface {
+// Daily 任务信息
+type Daily interface {
 	// LiveCheckin 直播签到
-	LiveCheckinInfo()
+	DailyLiveCheckin()
 	// UserCheck 用户检查
-	UserCheckInfo()
+	UserCheck()
 	// Sliver2CoinsStatus 银瓜子换硬币状态
 	// Sliver2Coins 银瓜子换硬币
-	Sliver2CoinsInfo()
+	DailySliver2Coins()
 	// VideoWatch 观看视频
 	// VideoWatchInfo(string)
 }
@@ -19,6 +19,7 @@ type Status struct {
 	NextLevelExp         float64
 	IsLogin              bool
 	IsVideoWatch         bool
+	IsVideoShare         bool
 	IsLiveCheckin        bool
 	IsSliver2CoinsStatus bool
 	Slivers              float64

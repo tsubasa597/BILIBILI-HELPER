@@ -16,8 +16,8 @@ func (rs *JSONResponse) UserCheck() {
 	json.Unmarshal(res, &rs)
 }
 
-// UserCheckInfo 用户检查
-func (info *Status) UserCheckInfo(ts Tasker) {
+// UserCheck 用户检查
+func (info *Status) UserCheck(ts Tasker) {
 	ts.UserCheck()
 	var response *JSONResponse = ts.GetJSONResponse()
 	if response == nil {

@@ -12,6 +12,8 @@ type APIList struct {
 	Sliver2CoinsStatus string
 	// 硬币换银瓜子
 	Sliver2Coins string
+	// 视频分享
+	AvShare string
 }
 
 var (
@@ -24,4 +26,5 @@ func init() {
 	ApiList.Login = "https://api.bilibili.com/x/web-interface/nav"
 	ApiList.Sliver2CoinsStatus = "https://api.live.bilibili.com/pay/v1/Exchange/getStatus"
 	ApiList.Sliver2Coins = "https://api.live.bilibili.com/pay/v1/Exchange/silver2coin"
+	ApiList.AvShare = "https://api.bilibili.com/x/web-interface/share/add"
 }

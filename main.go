@@ -11,10 +11,10 @@ var (
 )
 
 func init() {
-	status.UserCheckInfo(jrs)
-	status.LiveCheckinInfo(jrs)
-	status.Sliver2CoinsInfo(jrs)
-	status.VideoWatchInfo(jrs)
+	status.UserCheck(jrs)
+	status.DailyLiveCheckin(jrs)
+	status.DailySliver2Coin(jrs)
+	status.DailyVideo(jrs)
 }
 
 func main() {
