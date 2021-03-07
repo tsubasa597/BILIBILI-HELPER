@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bili/apiquery"
+	"bili/config"
 	"encoding/json"
 	"fmt"
 )
@@ -69,8 +70,8 @@ func (js JSON) sendGift(roomID string, uid string) {
 			"&bag_id=" + fmt.Sprintf("%f", gift["bag_id"].(float64)) +
 			"&gift_id=" + fmt.Sprintf("%f", gift["gift_id"].(float64)) +
 			"&gift_num=" + fmt.Sprintf("%f", gift["gift_num"].(float64)) +
-			"&uid=" + Http.Verify.UserID +
-			"&csrf=" + Http.Verify.BiliJct +
+			"&uid=" + config.Conf.Cookie.UserID +
+			"&csrf=" + config.Conf.Cookie.BiliJct +
 			"&send_ruid=" + "0" +
 			"&storm_beat_id=" + "0" +
 			"&price=" + "0" +

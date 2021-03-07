@@ -1,6 +1,9 @@
 package task
 
-import "bili/utils"
+import (
+	"bili/config"
+	"bili/utils"
+)
 
 // Tasker 任务
 type Tasker interface {
@@ -14,18 +17,28 @@ type Tasker interface {
 	sliver2Coins()
 	// VideoWatch 观看视频
 	videoWatch(string)
-	// GetJsonResponse 返回 JSONResponse
-	getJSONResponse() utils.JSON
+	// videoShare 分享视频
 	videoShare(string)
 }
 
 // Response 返回 json 的结构
-type Response struct {
-	http utils.HTTP
-	json utils.JSON
-}
+type Response utils.JSON
 
-// GetJSONResponse 返回 JSONResponse
-func (rs *Response) getJSONResponse() utils.JSON {
-	return rs.json
+func init() {
+	status := &Status{}
+	status.UserCheck()
+	if status.IsLogin {
+		if config.Conf.Status.IsLiveCheckin {
+			status.DailyLiveCheckin()
+		}
+		if config.Conf.Status.IsSliver2Coins {
+			status.DailySliver2Coin()
+		}
+		if config.Conf.Status.IsVideoWatch {
+			status.DailyVideo()
+		}
+		if config.Conf.Status.IsVideoShare {
+			status.DailyVideoShare()
+		}
+	}
 }

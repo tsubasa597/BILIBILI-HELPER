@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bili/config"
-	"bili/login"
 	"bytes"
 	"io/ioutil"
 	"net/http"
@@ -11,14 +10,13 @@ import (
 
 // HTTP 请求的结构体
 type HTTP struct {
-	Verify  *login.Cookie
 	client  *http.Client
 	request *http.Request
 }
 
 var (
 	// Http 结构体初始化
-	Http *HTTP = &HTTP{}
+	Http HTTP = HTTP{}
 )
 
 func init() {

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"bili/login"
+	"bili/verify"
 	"fmt"
 	"io/ioutil"
 
@@ -10,11 +10,21 @@ import (
 
 // Config 配置
 type Config struct {
-	Cookie    login.Cookie
+	Cookie    verify.Cookie
 	UserAgent string `yaml:"userAgent"`
+	Status    TaskStatus
+}
+
+// TaskStatus 任务信息
+type TaskStatus struct {
+	IsVideoWatch   bool `yaml:"isVideoWatch"`
+	IsVideoShare   bool `yaml:"isVideoShare"`
+	IsLiveCheckin  bool `yaml:"isLiveCheckin"`
+	IsSliver2Coins bool `yaml:"isSliver2Coins"`
 }
 
 var (
+	// Conf 公共配置
 	Conf *Config = &Config{}
 )
 

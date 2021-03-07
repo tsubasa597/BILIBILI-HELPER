@@ -17,7 +17,7 @@ func (rs *Response) videoWatch(bvid string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	json.Unmarshal(res, &rs.json)
+	json.Unmarshal(res, &rs)
 }
 
 // VideoShare 分享视频
@@ -27,27 +27,27 @@ func (rs *Response) videoShare(bvid string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	json.Unmarshal(res, &rs.json)
+	json.Unmarshal(res, &rs)
 }
 
 // DailyVideo 观看视频
-func (info *Status) DailyVideo(ts Tasker) {
-	ts.videoWatch("BV1NT4y137Jc")
-	response := ts.getJSONResponse()
+func (info *Status) DailyVideo() {
+	info.rs.videoWatch("BV1NT4y137Jc")
+	response := info.rs
 	if response.Code == 0 {
-		info.IsVideoWatch = true
 		fmt.Println("视频播放成功")
 	} else {
 		fmt.Println("视频播放失败,原因: " + response.Message)
 	}
-	if !info.IsVideoShare {
-		ts.videoShare("BV1NT4y137Jc")
-		response = ts.getJSONResponse()
-		if response.Code == 0 {
-			info.IsVideoShare = true
-			fmt.Println("视频分享成功")
-		} else {
-			fmt.Println("视频分享失败，原因: " + response.Message)
-		}
+}
+
+// DailyVideoShare 分享视频
+func (info *Status) DailyVideoShare() {
+	info.rs.videoShare("BV1NT4y137Jc")
+	response := info.rs
+	if response.Code == 0 {
+		fmt.Println("视频分享成功")
+	} else {
+		fmt.Println("视频分享失败,原因: " + response.Message)
 	}
 }

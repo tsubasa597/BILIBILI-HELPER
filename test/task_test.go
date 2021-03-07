@@ -41,5 +41,5 @@ func TestSliverCoinsInfo(t *testing.T) {
 }
 
 func TestUserCheckInfo(t *testing.T) {
-	testInfo.UserCheck(&testTask)
+	// testInfo.UserCheck(&testTask)
 }

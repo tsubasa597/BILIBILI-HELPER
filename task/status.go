@@ -10,17 +10,15 @@ type Daily interface {
 	DailySliver2Coins()
 	// DailyVideo 观看视频
 	DailyVideo(string)
+	DailyVideoShare()
 }
 
 // Status 任务信息
 type Status struct {
-	Level                float64
-	NextLevelExp         float64
-	IsLogin              bool
-	IsVideoWatch         bool
-	IsVideoShare         bool
-	IsLiveCheckin        bool
-	IsSliver2CoinsStatus bool
-	Slivers              float64
-	Coins                float64
+	Level        float64
+	NextLevelExp float64
+	IsLogin      bool
+	Slivers      float64
+	Coins        float64
+	rs           Response
 }
