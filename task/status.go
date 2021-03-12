@@ -1,7 +1,7 @@
 package task
 
-// Daily 任务信息
-type Daily interface {
+// Dailyer 任务信息
+type Dailyer interface {
 	// LiveCheckin 直播签到
 	DailyLiveCheckin()
 	// UserCheck 用户检查
@@ -10,15 +10,16 @@ type Daily interface {
 	DailySliver2Coins()
 	// DailyVideo 观看视频
 	DailyVideo(string)
+	// DailyVideo 分享视频
 	DailyVideoShare()
 }
 
-// Status 任务信息
-type Status struct {
+// DailyInfo 任务信息
+type DailyInfo struct {
 	Level        float64
 	NextLevelExp float64
 	IsLogin      bool
 	Slivers      float64
 	Coins        float64
-	rs           Response
+	// Err          []error
 }

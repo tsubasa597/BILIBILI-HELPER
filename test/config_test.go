@@ -7,5 +7,6 @@ import (
 )
 
 func TestConfig(t *testing.T) {
+
 	fmt.Println(config.Conf)
 }

@@ -2,8 +2,9 @@ package config
 
 import (
 	"bili/verify"
-	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -29,9 +30,13 @@ var (
 )
 
 func init() {
-	yamlFile, err := ioutil.ReadFile("./conf.yaml")
+	pwd, _ := os.Getwd()
+	yamlFile, err := ioutil.ReadFile(pwd + "/conf.yaml")
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Fatalln(err.Error())
 	}
 	yaml.Unmarshal(yamlFile, Conf)
+	if Conf == (&Config{}) {
+		log.Fatalln("无法读取数据")
+	}
 }

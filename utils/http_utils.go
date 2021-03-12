@@ -3,6 +3,7 @@ package utils
 import (
 	"bili/config"
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	urlpkg "net/url"
@@ -14,49 +15,54 @@ type HTTP struct {
 	request *http.Request
 }
 
-var (
-	// Http 结构体初始化
-	Http HTTP = HTTP{}
-)
-
-func init() {
-	Http.client = &http.Client{}
-	Http.request = &http.Request{Header: make(http.Header), Method: "GET"}
-	Http.request.Header.Add("Connection", "keep-alive")
-	Http.request.Header.Add("User-Agent", config.Conf.UserAgent)
-	Http.request.Header.Add("Cookie", config.Conf.Cookie.GetVerify())
-	Http.request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+// Response 返回值解析
+type Response struct {
+	Code    int                    `json:"code"`
+	Message string                 `json:"message"`
+	TTL     int                    `json:"ttl"`
+	Data    map[string]interface{} `json:"data"`
 }
 
-// Get 请求封装
-func Get(url string) (resp []byte, err error) {
-	Http.request.URL, err = urlpkg.Parse(url)
-	Http.request.Method = "GET"
-	if err != nil {
-		return []byte(""), err
+func (r *Response) HttpRequest(method string, url string, postBody []byte) (rep *Response, e error) {
+	h := &HTTP{}
+	var err error
+	h, err = initHttp(h, method, url)
+	if postBody != nil {
+		h.request.Body = ioutil.NopCloser(bytes.NewReader(postBody))
 	}
-	response, err := Http.client.Do(Http.request)
+	response, err := h.client.Do(h.request)
 	if err != nil {
-		return []byte(""), err
+		return r, err
 	}
-	res, _ := ioutil.ReadAll(response.Body)
+	res, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return r, err
+	}
 	defer response.Body.Close()
-	return res, nil
+	err = json.Unmarshal(res, &r)
+	return r, err
 }
 
-// Post 请求封装
-func Post(url string, postBody []byte) (resp []byte, err error) {
-	Http.request.URL, err = urlpkg.Parse(url)
-	Http.request.Method = "POST"
-	Http.request.Body = ioutil.NopCloser(bytes.NewReader(postBody))
+func initHttp(h *HTTP, method string, url string) (ht *HTTP, e error) {
+	h.client = &http.Client{}
+	var err error
+	h.request = &http.Request{Header: make(http.Header), Method: method}
+	h.request.Header.Add("Connection", "keep-alive")
+	h.request.Header.Add("User-Agent", config.Conf.UserAgent)
+	h.request.Header.Add("Cookie", config.Conf.Cookie.GetVerify())
+	h.request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	h.request.URL, err = urlpkg.Parse(url)
 	if err != nil {
-		return []byte(""), err
+		return h, err
 	}
-	response, err := Http.client.Do(Http.request)
-	if err != nil {
-		return []byte(""), err
-	}
-	res, _ := ioutil.ReadAll(response.Body)
-	defer response.Body.Close()
-	return res, nil
+	return h, err
+}
+
+func Get(url string) (resp *Response, err error) {
+	return resp.HttpRequest("GET", url, nil)
+
+}
+
+func Post(url string, postBody []byte) (resp *Response, err error) {
+	return resp.HttpRequest("POST", url, postBody)
 }

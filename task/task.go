@@ -1,31 +1,23 @@
 package task
 
-import (
-	"bili/config"
-	"bili/utils"
-)
+import "bili/config"
 
 // Tasker 任务
 type Tasker interface {
-	// LiveCheckin 直播签到
-	liveCheckin()
-	// UserCheck 用户检查
-	userCheck()
-	// Sliver2CoinsStatus 银瓜子换硬币状态
-	sliver2CoinsStatus()
-	// Sliver2Coins 银瓜子换硬币
-	sliver2Coins()
-	// VideoWatch 观看视频
-	videoWatch(string)
-	// videoShare 分享视频
-	videoShare(string)
+	Run()
 }
 
-// Response 返回 json 的结构
-type Response utils.JSON
+// Task task 类型的函数
+type Task func(string)
 
-func init() {
-	status := &Status{}
+// Run task 类型的函数调用
+func (t Task) Run(s string) {
+	t(s)
+}
+
+// New 启动日常任务
+func New() {
+	status := &DailyInfo{}
 	status.UserCheck()
 	if status.IsLogin {
 		if config.Conf.Status.IsLiveCheckin {
@@ -35,10 +27,10 @@ func init() {
 			status.DailySliver2Coin()
 		}
 		if config.Conf.Status.IsVideoWatch {
-			status.DailyVideo()
+			Task(status.DailyVideo).Run("BV1NT4y137Jc")
 		}
 		if config.Conf.Status.IsVideoShare {
-			status.DailyVideoShare()
+			Task(status.DailyVideoShare).Run("BV1NT4y137Jc")
 		}
 	}
 }
