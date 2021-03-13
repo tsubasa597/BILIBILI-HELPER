@@ -1,4 +1,4 @@
-package apiquery
+package config
 
 // APIList Api 列表
 type APIList struct {

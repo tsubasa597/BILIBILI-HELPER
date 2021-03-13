@@ -1,9 +1,10 @@
 package bilitest
 
 import (
+	"bili/task"
 	"testing"
 )
 
 func TestLiveGetRecommend(t *testing.T) {
-	// JSON.GiveGift()
+	task.Start()
 }

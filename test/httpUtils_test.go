@@ -2,15 +2,13 @@ package bilitest
 
 import (
 	"bili/utils"
+	"fmt"
 	"testing"
 )
 
-var (
-	HTTP utils.HTTP = utils.HTTP{}
-)
-
 func TestGet(t *testing.T) {
-	// t.Log(HTTP.Get("https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign"))
+	res, _ := utils.Get("http://passport.bilibili.com/login?act=exit")
+	fmt.Println(res)
 }
 
 func TestPost(t *testing.T) {
