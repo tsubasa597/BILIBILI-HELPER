@@ -25,7 +25,7 @@ func (info *DailyInfo) DailyVideo(bvid string) {
 func (info *DailyInfo) DailyVideoShare(bvid string) {
 	postBody := []byte("bvid=" + bvid + "&csrf=" + config.Conf.Cookie.BiliJct)
 	response, err := utils.Post(config.ApiList.AvShare, postBody)
-	if err != nil {
+	if err != nil && response.Code != 0 {
 		config.Log.Fatal(err)
 	}
 	if response.Code == 0 {

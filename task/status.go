@@ -41,7 +41,7 @@ func New() {
 			status.DailyVideo("BV1NT4y137Jc")
 		}
 		if config.Conf.Status.IsVideoShare {
-			status.DailyVideoShare("BV1NT4y137Jc")
+			status.DailyVideoShare("BV1UN411Q7k3")
 		}
 	}
 }
