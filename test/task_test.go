@@ -15,8 +15,8 @@ func TestLiveCheckin(t *testing.T) {
 }
 
 func TestVideoWatch(t *testing.T) {
-	testInfo.DailyVideo("BV1NT4y137Jc")
-	testInfo.DailyVideoShare("BV1NT4y137Jc")
+	// testInfo.DailyVideo("BV1NT4y137Jc")
+	// testInfo.DailyVideoShare("BV1NT4y137Jc")
 	//t.Log(testTask)
 }
 

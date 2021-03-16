@@ -3,10 +3,12 @@ package task
 import (
 	"bili/config"
 	"bili/utils"
+	"sync"
 )
 
 // DailyLiveCheckin 直播签到信息
-func (info *DailyInfo) DailyLiveCheckin() {
+func (info *DailyInfo) DailyLiveCheckin(wg *sync.WaitGroup, param ...string) {
+	defer wg.Done()
 	response, err := utils.Get(config.ApiList.LiveCheckin)
 	if err != nil {
 		config.Log.Fatal(err)
