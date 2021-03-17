@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	urlpkg "net/url"
 )
 
 // HTTP 请求的结构体
@@ -23,14 +22,27 @@ type Response struct {
 	Data    map[string]interface{} `json:"data"`
 }
 
-func (r *Response) HttpRequest(method string, url string, postBody []byte) (rep *Response, e error) {
-	h := &HTTP{}
-	var err error
-	h, err = initHttp(h, method, url)
-	if postBody != nil {
-		h.request.Body = ioutil.NopCloser(bytes.NewReader(postBody))
+var (
+	conf config.Config = *config.Init()
+	ht   *HTTP         = &HTTP{
+		request: &http.Request{
+			Header: http.Header{
+				"Connection":   []string{"keep-alive"},
+				"User-Agent":   []string{conf.UserAgent},
+				"Cookie":       []string{conf.Cookie.GetVerify()},
+				"Content-Type": []string{"application/x-www-form-urlencoded"},
+			},
+			Method: "",
+		},
 	}
-	response, err := h.client.Do(h.request)
+)
+
+func (r *Response) HttpRequest(method string, url string, postBody []byte) (*Response, error) {
+	ht.request.Method = method
+	if postBody != nil {
+		ht.request.Body = ioutil.NopCloser(bytes.NewReader(postBody))
+	}
+	response, err := ht.client.Do(ht.request)
 	if err != nil {
 		return r, err
 	}
@@ -41,21 +53,6 @@ func (r *Response) HttpRequest(method string, url string, postBody []byte) (rep 
 	defer response.Body.Close()
 	err = json.Unmarshal(res, &r)
 	return r, err
-}
-
-func initHttp(h *HTTP, method string, url string) (ht *HTTP, e error) {
-	h.client = &http.Client{}
-	var err error
-	h.request = &http.Request{Header: make(http.Header), Method: method}
-	h.request.Header.Add("Connection", "keep-alive")
-	h.request.Header.Add("User-Agent", config.Conf.UserAgent)
-	h.request.Header.Add("Cookie", config.Conf.Cookie.GetVerify())
-	h.request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	h.request.URL, err = urlpkg.Parse(url)
-	if err != nil {
-		return h, err
-	}
-	return h, err
 }
 
 func Get(url string) (resp *Response, err error) {

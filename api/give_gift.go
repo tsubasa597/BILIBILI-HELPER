@@ -60,8 +60,8 @@ func sendGift(roomID string, uid string) {
 			"&bag_id=" + fmt.Sprintf("%f", gift["bag_id"].(float64)) +
 			"&gift_id=" + fmt.Sprintf("%f", gift["gift_id"].(float64)) +
 			"&gift_num=" + fmt.Sprintf("%f", gift["gift_num"].(float64)) +
-			"&uid=" + config.Conf.Cookie.UserID +
-			"&csrf=" + config.Conf.Cookie.BiliJct +
+			"&uid=" + conf.Cookie.UserID +
+			"&csrf=" + conf.Cookie.BiliJct +
 			"&send_ruid=" + "0" +
 			"&storm_beat_id=" + "0" +
 			"&price=" + "0" +
@@ -74,3 +74,5 @@ func sendGift(roomID string, uid string) {
 		fmt.Println(res)
 	}
 }
+
+var conf = config.Init()

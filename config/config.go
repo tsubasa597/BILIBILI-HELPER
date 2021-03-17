@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bili/verify"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,7 +10,7 @@ import (
 
 // Config 配置
 type Config struct {
-	Cookie    verify.Cookie
+	Cookie    Cookie
 	UserAgent string `yaml:"userAgent"`
 	Status    TaskStatus
 }
@@ -24,19 +23,16 @@ type TaskStatus struct {
 	IsSliver2Coins bool `yaml:"isSliver2Coins"`
 }
 
-var (
-	// Conf 公共配置
-	Conf *Config = &Config{}
-)
-
-func init() {
+func Init() *Config {
+	var conf *Config = &Config{}
 	pwd, _ := os.Getwd()
 	yamlFile, err := ioutil.ReadFile(pwd + "/conf.yaml")
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	yaml.Unmarshal(yamlFile, Conf)
-	if Conf == (&Config{}) {
+	yaml.Unmarshal(yamlFile, conf)
+	if conf == (&Config{}) {
 		log.Fatalln("无法读取数据")
 	}
+	return conf
 }

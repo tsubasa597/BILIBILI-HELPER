@@ -3,12 +3,10 @@ package task
 import (
 	"bili/config"
 	"bili/utils"
-	"sync"
 )
 
 // DailySliver2Coin 银瓜子换硬币信息
-func (info *DailyInfo) DailySliver2Coin(wg *sync.WaitGroup, param ...string) {
-	defer wg.Done()
+func (info *DailyInfo) DailySliver2Coin(param ...string) {
 	// 银瓜子兑换硬币汇率
 	var exchangeRate float64 = 700
 	response, err := utils.Get(config.ApiList.Sliver2CoinsStatus)
