@@ -1,12 +1,11 @@
 package bilitest
 
 import (
-	"bili/task"
 	"testing"
 )
 
 var (
-	testInfo task.DailyInfo
+// testInfo task.DailyInfo
 )
 
 func TestLiveCheckin(t *testing.T) {

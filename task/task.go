@@ -1,5 +1,14 @@
 package task
 
+import (
+	"bili/config"
+	"bili/utils"
+	"math/rand"
+	"strconv"
+	"sync"
+	"time"
+)
+
 // Tasker 任务
 type Tasker interface {
 	Run()
@@ -9,15 +18,111 @@ type Tasker interface {
 type Task func(v ...string)
 
 // Run task 类型的函数调用
-func (t Task) Run(v ...string) {
+func (t Task) Run(wg *sync.WaitGroup, v ...string) {
+	defer wg.Done()
 	t(v...)
 }
 
 // Start 启动任务
 func Start() {
-	// todo := context.TODO()
-	// context.WithDeadline(todo)
-	for _, i := range New().task {
-		go i.Run()
+	var wg sync.WaitGroup
+	task := New()
+	for _, i := range task.tasks {
+		// 防止请求过快出错
+		time.Sleep(time.Second)
+		wg.Add(1)
+		go i.Run(&wg, task.params...)
 	}
+
+	wg.Wait()
+	task.done <- struct{}{}
+}
+
+// UserCheck 用户检查
+func (info *Daily) UserCheck() {
+	response, err := utils.Get(config.ApiList.Login)
+	if err != nil {
+		config.Log.Fatal(err)
+	}
+	if response.Code == 0 && response.Data["isLogin"].(bool) {
+		info.IsLogin = true
+		config.Log.Info("Cookies有效，登录成功")
+	} else {
+		info.IsLogin = false
+		config.Log.Fatal("Cookies可能失效了,请仔细检查Github Secrets中DEDEUSERID SESSDATA BILI_JCT三项的值是否正确、过期")
+	}
+	info.Coins = response.Data["money"].(float64)
+	info.Level = response.Data["level_info"].(map[string]interface{})["current_level"].(float64)
+	info.NextLevelExp = response.Data["level_info"].(map[string]interface{})["next_exp"].(float64) - response.Data["level_info"].(map[string]interface{})["current_exp"].(float64)
+}
+
+// DailyVideo 观看视频
+func (info *Daily) DailyVideo(param ...string) {
+	postBody := []byte("bvid=" + param[0] + "&played_time=" + strconv.Itoa(rand.Intn(90)))
+	response, err := utils.Post(config.ApiList.VideoHeartbeat, postBody)
+	if err != nil {
+		config.Log.Fatal(err)
+	}
+	if response.Code == 0 {
+		config.Log.Info("视频播放成功")
+	} else {
+		config.Log.Warning("视频播放失败,原因: " + response.Message)
+	}
+}
+
+// DailyVideoShare 分享视频
+func (info *Daily) DailyVideoShare(param ...string) {
+	postBody := []byte("bvid=" + param[0] + "&csrf=" + info.conf.Cookie.BiliJct)
+	response, err := utils.Post(config.ApiList.AvShare, postBody)
+	if err != nil && response.Code != 0 {
+		config.Log.Fatal(err)
+	}
+	if response.Code == 0 {
+		config.Log.Info("视频分享成功")
+	} else {
+		config.Log.Warnln("视频分享失败,原因: " + response.Message)
+	}
+}
+
+// DailySliver2Coin 银瓜子换硬币信息
+func (info *Daily) DailySliver2Coin(param ...string) {
+	// 银瓜子兑换硬币汇率
+	var exchangeRate float64 = 700
+	response, err := utils.Get(config.ApiList.Sliver2CoinsStatus)
+	if err != nil {
+		config.Log.Fatal(err)
+	}
+	info.Slivers = response.Data["silver"].(float64)
+	info.Coins = response.Data["coin"].(float64)
+	if info.Slivers < exchangeRate {
+		config.Log.Error("当前银瓜子余额为: ", info.Slivers, "，不足700,不进行兑换")
+	} else {
+		response, err = utils.Get(config.ApiList.Sliver2Coins)
+		if response.Code != 403 && err != nil {
+			config.Log.Fatal(err)
+		}
+		if response.Code == 0 {
+			config.Log.Info("银瓜子兑换成功")
+			info.Coins++
+			info.Slivers -= exchangeRate
+			config.Log.Info("当前银瓜子余额: ", info.Slivers)
+			config.Log.Info("兑换银瓜子后硬币余额: ", info.Coins)
+		} else {
+			config.Log.Warning("银瓜子兑换硬币失败 原因是: " + response.Message)
+		}
+	}
+}
+
+// DailyLiveCheckin 直播签到信息
+func (info *Daily) DailyLiveCheckin(param ...string) {
+	response, err := utils.Get(config.ApiList.LiveCheckin)
+	if err != nil {
+		info.logInfo <- []string{"Error", err.Error()}
+	}
+	if response.Code == 0 {
+		info.logInfo <- []string{"Info", "直播签到成功，本次签到获得" + response.Data["text"].(string) + "," + response.Data["specialText"].(string)}
+	} else {
+		info.logInfo <- []string{"Warn", "直播签到失败: " + response.Message}
+	}
+
 }

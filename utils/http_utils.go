@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	urlpkg "net/url"
 )
 
 // HTTP 请求的结构体
@@ -34,32 +35,34 @@ var (
 			},
 			Method: "",
 		},
+		client: &http.Client{},
 	}
 )
 
-func (r *Response) HttpRequest(method string, url string, postBody []byte) (*Response, error) {
+func httpRequest(method string, url string, postBody []byte) (r *Response, err error) {
 	ht.request.Method = method
+	ht.request.URL, err = urlpkg.Parse(url)
 	if postBody != nil {
 		ht.request.Body = ioutil.NopCloser(bytes.NewReader(postBody))
 	}
 	response, err := ht.client.Do(ht.request)
 	if err != nil {
-		return r, err
+		return
 	}
 	res, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return r, err
+		return
 	}
 	defer response.Body.Close()
 	err = json.Unmarshal(res, &r)
-	return r, err
+	return
 }
 
 func Get(url string) (resp *Response, err error) {
-	return resp.HttpRequest("GET", url, nil)
+	return httpRequest("GET", url, nil)
 
 }
 
 func Post(url string, postBody []byte) (resp *Response, err error) {
-	return resp.HttpRequest("POST", url, postBody)
+	return httpRequest("POST", url, postBody)
 }
