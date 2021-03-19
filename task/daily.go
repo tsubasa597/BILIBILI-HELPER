@@ -14,8 +14,8 @@ type Daily struct {
 	IsLogin      bool
 	Slivers      float64
 	Coins        float64
-	logInfo      chan []string
-	done         chan struct{}
+	logInfo      chan []interface{}
+	done         chan int
 }
 
 // New 启动日常任务
@@ -23,7 +23,8 @@ func New() (status *Daily) {
 	status = &Daily{
 		conf:    *config.Init(),
 		tasks:   []Task{},
-		logInfo: make(chan []string, 4),
+		logInfo: make(chan []interface{}, 4),
+		done:    make(chan int),
 	}
 	go status.readLog()
 	status.UserCheck()
@@ -51,13 +52,15 @@ Log:
 	for {
 		select {
 		case info := <-status.logInfo:
-			switch info[0] {
+			switch info[0].(string) {
 			case "Info":
 				config.Log.Info(info[1])
 			case "Warn":
 				config.Log.Warnln(info[1])
 			case "Error":
 				config.Log.Errorln(info[1])
+			case "Fatal":
+				config.Log.Fatal(info[1])
 			}
 		case <-status.done:
 			break Log
