@@ -1,9 +1,8 @@
 package config
 
 import (
-	"io/ioutil"
+	_ "embed"
 	"log"
-	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -23,13 +22,11 @@ type TaskStatus struct {
 	IsSliver2Coins bool `yaml:"isSliver2Coins"`
 }
 
+//go:embed conf.yaml
+var yamlFile []byte
+
 func Init() *Config {
 	var conf *Config = &Config{}
-	pwd, _ := os.Getwd()
-	yamlFile, err := ioutil.ReadFile(pwd + "/conf.yaml")
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
 	yaml.Unmarshal(yamlFile, conf)
 	if conf == (&Config{}) {
 		log.Fatalln("无法读取数据")
