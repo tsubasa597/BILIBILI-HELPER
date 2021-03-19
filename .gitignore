@@ -1,2 +1,2 @@
-./conf.yaml
-test/
+*.yaml
+/test/
