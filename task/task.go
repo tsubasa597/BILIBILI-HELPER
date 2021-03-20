@@ -2,7 +2,7 @@ package task
 
 import (
 	"bili/api"
-	"bili/config"
+	"bili/conf"
 	"bili/utils"
 	"math/rand"
 	"strconv"
@@ -100,7 +100,7 @@ func (info *Daily) DailySliver2Coin(param ...string) {
 	} else {
 		response, err = utils.Get(api.ApiList.Sliver2Coins)
 		if response.Code != 403 && err != nil {
-			config.Log.Fatal(err)
+			conf.Log.Fatal(err)
 		}
 		if response.Code == 0 {
 			info.logInfo <- []interface{}{"Info", "银瓜子兑换成功: "}

@@ -1,4 +1,4 @@
-package config
+package conf
 
 // Cookie 用于登录的必要参数
 type Cookie struct {

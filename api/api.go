@@ -1,13 +1,13 @@
 package api
 
 import (
-	"bili/config"
+	"bili/conf"
 	"bili/utils"
 	"fmt"
 	"log"
 )
 
-var conf = config.Init()
+var config conf.Config = *conf.Init()
 
 // GiveGift 直播赠送礼物
 func GiveGift(param []string) {
@@ -62,8 +62,8 @@ func sendGift(roomID string, uid string) {
 			"&bag_id=" + fmt.Sprintf("%f", gift["bag_id"].(float64)) +
 			"&gift_id=" + fmt.Sprintf("%f", gift["gift_id"].(float64)) +
 			"&gift_num=" + fmt.Sprintf("%f", gift["gift_num"].(float64)) +
-			"&uid=" + conf.Cookie.UserID +
-			"&csrf=" + conf.Cookie.BiliJct +
+			"&uid=" + config.Cookie.UserID +
+			"&csrf=" + config.Cookie.BiliJct +
 			"&send_ruid=" + "0" +
 			"&storm_beat_id=" + "0" +
 			"&price=" + "0" +

@@ -1,4 +1,4 @@
-package config
+package conf
 
 import (
 	nested "github.com/antonfisher/nested-logrus-formatter"

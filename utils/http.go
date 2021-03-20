@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"bili/config"
+	"bili/conf"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -24,13 +24,13 @@ type Response struct {
 }
 
 var (
-	conf config.Config = *config.Init()
-	ht   *HTTP         = &HTTP{
+	config conf.Config = *conf.Init()
+	ht     *HTTP       = &HTTP{
 		request: &http.Request{
 			Header: http.Header{
 				"Connection":   []string{"keep-alive"},
-				"User-Agent":   []string{conf.UserAgent},
-				"Cookie":       []string{conf.Cookie.GetVerify()},
+				"User-Agent":   []string{config.UserAgent},
+				"Cookie":       []string{config.Cookie.GetVerify()},
 				"Content-Type": []string{"application/x-www-form-urlencoded"},
 			},
 			Method: "",

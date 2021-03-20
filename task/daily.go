@@ -1,12 +1,12 @@
 package task
 
 import (
-	"bili/config"
+	"bili/conf"
 )
 
 // DailyInfo 任务信息
 type Daily struct {
-	conf         config.Config
+	conf         conf.Config
 	tasks        []Task
 	params       []string
 	Level        float64
@@ -21,7 +21,7 @@ type Daily struct {
 // New 启动日常任务
 func New() (status *Daily) {
 	status = &Daily{
-		conf:    *config.Init(),
+		conf:    *conf.Init(),
 		tasks:   []Task{},
 		logInfo: make(chan []interface{}, 4),
 		done:    make(chan int),
@@ -54,13 +54,13 @@ Log:
 		case info := <-status.logInfo:
 			switch info[0].(string) {
 			case "Info":
-				config.Log.Info(info[1:])
+				conf.Log.Info(info[1:])
 			case "Warn":
-				config.Log.Warnln(info[1:])
+				conf.Log.Warnln(info[1:])
 			case "Error":
-				config.Log.Errorln(info[1:])
+				conf.Log.Errorln(info[1:])
 			case "Fatal":
-				config.Log.Fatal(info[1:])
+				conf.Log.Fatal(info[1:])
 			}
 		case <-status.done:
 			break Log
