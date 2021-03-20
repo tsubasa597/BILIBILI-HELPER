@@ -1,6 +1,7 @@
 package task
 
 import (
+	"bili/api"
 	"bili/config"
 	"bili/utils"
 	"math/rand"
@@ -40,7 +41,7 @@ func Start() {
 
 // UserCheck 用户检查
 func (info *Daily) UserCheck() {
-	response, err := utils.Get(config.ApiList.Login)
+	response, err := utils.Get(api.ApiList.Login)
 	if err != nil {
 		info.logInfo <- []interface{}{"Fatal", err}
 	}
@@ -59,7 +60,7 @@ func (info *Daily) UserCheck() {
 // DailyVideo 观看视频
 func (info *Daily) DailyVideo(param ...string) {
 	postBody := []byte("bvid=" + param[0] + "&played_time=" + strconv.Itoa(rand.Intn(90)))
-	response, err := utils.Post(config.ApiList.VideoHeartbeat, postBody)
+	response, err := utils.Post(api.ApiList.VideoHeartbeat, postBody)
 	if err != nil {
 		info.logInfo <- []interface{}{"Fatal", err}
 	}
@@ -73,7 +74,7 @@ func (info *Daily) DailyVideo(param ...string) {
 // DailyVideoShare 分享视频
 func (info *Daily) DailyVideoShare(param ...string) {
 	postBody := []byte("bvid=" + param[0] + "&csrf=" + info.conf.Cookie.BiliJct)
-	response, err := utils.Post(config.ApiList.AvShare, postBody)
+	response, err := utils.Post(api.ApiList.AvShare, postBody)
 	if err != nil && response.Code != 0 {
 		info.logInfo <- []interface{}{"Fatal", err}
 	}
@@ -88,7 +89,7 @@ func (info *Daily) DailyVideoShare(param ...string) {
 func (info *Daily) DailySliver2Coin(param ...string) {
 	// 银瓜子兑换硬币汇率
 	var exchangeRate float64 = 700
-	response, err := utils.Get(config.ApiList.Sliver2CoinsStatus)
+	response, err := utils.Get(api.ApiList.Sliver2CoinsStatus)
 	if err != nil {
 		info.logInfo <- []interface{}{"Fatal", err}
 	}
@@ -97,7 +98,7 @@ func (info *Daily) DailySliver2Coin(param ...string) {
 	if info.Slivers < exchangeRate {
 		info.logInfo <- []interface{}{"Error", "当前银瓜子余额为: ", info.Slivers, "，不足700,不进行兑换"}
 	} else {
-		response, err = utils.Get(config.ApiList.Sliver2Coins)
+		response, err = utils.Get(api.ApiList.Sliver2Coins)
 		if response.Code != 403 && err != nil {
 			config.Log.Fatal(err)
 		}
@@ -115,7 +116,7 @@ func (info *Daily) DailySliver2Coin(param ...string) {
 
 // DailyLiveCheckin 直播签到信息
 func (info *Daily) DailyLiveCheckin(param ...string) {
-	response, err := utils.Get(config.ApiList.LiveCheckin)
+	response, err := utils.Get(api.ApiList.LiveCheckin)
 	if err != nil {
 		info.logInfo <- []interface{}{"Fatal", err}
 	}

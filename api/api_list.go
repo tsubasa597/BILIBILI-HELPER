@@ -1,4 +1,4 @@
-package config
+package api
 
 // APIList Api 列表
 type APIList struct {
@@ -26,11 +26,10 @@ type APIList struct {
 	GiftSend string
 }
 
-var (
-	ApiList APIList = APIList{}
-)
+var ApiList APIList = APIList{}
 
 func init() {
+
 	ApiList.LiveCheckin = "https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign"
 	ApiList.VideoHeartbeat = "https://api.bilibili.com/x/click-interface/web/heartbeat"
 	ApiList.Login = "https://api.bilibili.com/x/web-interface/nav"

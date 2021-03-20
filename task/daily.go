@@ -54,13 +54,13 @@ Log:
 		case info := <-status.logInfo:
 			switch info[0].(string) {
 			case "Info":
-				config.Log.Info(info[1])
+				config.Log.Info(info[1:])
 			case "Warn":
-				config.Log.Warnln(info[1])
+				config.Log.Warnln(info[1:])
 			case "Error":
-				config.Log.Errorln(info[1])
+				config.Log.Errorln(info[1:])
 			case "Fatal":
-				config.Log.Fatal(info[1])
+				config.Log.Fatal(info[1:])
 			}
 		case <-status.done:
 			break Log
