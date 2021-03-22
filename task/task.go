@@ -1,15 +1,76 @@
 package task
 
 import (
-	"math/rand"
-	"strconv"
 	"sync"
 	"time"
 
-	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/conf"
-	"github.com/tsubasa597/BILIBILI-HELPER/utils"
 )
+
+// DailyInfo 任务信息
+type Info struct {
+	Level        float64
+	NextLevelExp float64
+	Slivers      float64
+	Coins        float64
+
+	params  []string
+	conf    conf.Config
+	tasks   []Task
+	isLogin bool
+	logInfo chan []interface{}
+	done    chan int
+}
+
+// New 启动日常任务
+func New() (status *Info) {
+	status = &Info{
+		conf:    *conf.Init(),
+		tasks:   []Task{},
+		logInfo: make(chan []interface{}, 4),
+		done:    make(chan int),
+	}
+	go status.readLog()
+	status.UserCheck()
+	if status.isLogin {
+		if status.conf.Status.IsLiveCheckin {
+			status.tasks = append(status.tasks, Task(status.DailyLiveCheckin))
+		}
+		if status.conf.Status.IsSliver2Coins {
+			status.tasks = append(status.tasks, Task(status.DailySliver2Coin))
+		}
+		if status.conf.Status.IsVideoWatch {
+			status.params = []string{"BV1NT4y137Jc"}
+			status.tasks = append(status.tasks, Task(status.DailyVideo))
+		}
+		if status.conf.Status.IsVideoShare {
+			status.params = []string{"BV1NT4y137Jc"}
+			status.tasks = append(status.tasks, Task(status.DailyVideoShare))
+		}
+	}
+	return status
+}
+
+func (status *Info) readLog() {
+Log:
+	for {
+		select {
+		case info := <-status.logInfo:
+			switch info[0].(string) {
+			case "Info":
+				conf.Log.Info(info[1:])
+			case "Warn":
+				conf.Log.Warnln(info[1:])
+			case "Error":
+				conf.Log.Errorln(info[1:])
+			case "Fatal":
+				conf.Log.Fatal(info[1:])
+			}
+		case <-status.done:
+			break Log
+		}
+	}
+}
 
 // Tasker 任务
 type Tasker interface {
@@ -41,90 +102,26 @@ func Start() {
 }
 
 // UserCheck 用户检查
-func (info *Daily) UserCheck() {
-	response, err := utils.Get(api.ApiList.Login)
-	if err != nil {
-		info.logInfo <- []interface{}{"Fatal", err}
-	}
-	if response.Code == 0 && response.Data["isLogin"].(bool) {
-		info.IsLogin = true
-		info.logInfo <- []interface{}{"Info", "Cookies有效，登录成功"}
-	} else {
-		info.IsLogin = false
-		info.logInfo <- []interface{}{"Fatal", "Cookies可能失效了,请仔细检查Github Secrets中DEDEUSERID SESSDATA BILI_JCT三项的值是否正确、过期"}
-	}
-	info.Coins = response.Data["money"].(float64)
-	info.Level = response.Data["level_info"].(map[string]interface{})["current_level"].(float64)
-	info.NextLevelExp = response.Data["level_info"].(map[string]interface{})["next_exp"].(float64) - response.Data["level_info"].(map[string]interface{})["current_exp"].(float64)
+func (info *Info) UserCheck() {
+	info.isLogin = userCheck(info.logInfo)
 }
 
 // DailyVideo 观看视频
-func (info *Daily) DailyVideo(param ...string) {
-	postBody := []byte("bvid=" + param[0] + "&played_time=" + strconv.Itoa(rand.Intn(90)))
-	response, err := utils.Post(api.ApiList.VideoHeartbeat, postBody)
-	if err != nil {
-		info.logInfo <- []interface{}{"Fatal", err}
-	}
-	if response.Code == 0 {
-		info.logInfo <- []interface{}{"Info", "视频播放成功"}
-	} else {
-		info.logInfo <- []interface{}{"Warn", "视频播放失败,原因: " + response.Message}
-	}
+func (info *Info) DailyVideo(param ...string) {
+	watchVideo(info.logInfo, info.params...)
 }
 
 // DailyVideoShare 分享视频
-func (info *Daily) DailyVideoShare(param ...string) {
-	postBody := []byte("bvid=" + param[0] + "&csrf=" + info.conf.Cookie.BiliJct)
-	response, err := utils.Post(api.ApiList.AvShare, postBody)
-	if err != nil && response.Code != 0 {
-		info.logInfo <- []interface{}{"Fatal", err}
-	}
-	if response.Code == 0 {
-		info.logInfo <- []interface{}{"Info", "视频分享成功"}
-	} else {
-		info.logInfo <- []interface{}{"Warn", "视频分享失败,原因: " + response.Message}
-	}
+func (info *Info) DailyVideoShare(param ...string) {
+	shareVideo(info.logInfo, info.params...)
 }
 
 // DailySliver2Coin 银瓜子换硬币信息
-func (info *Daily) DailySliver2Coin(param ...string) {
-	// 银瓜子兑换硬币汇率
-	var exchangeRate float64 = 700
-	response, err := utils.Get(api.ApiList.Sliver2CoinsStatus)
-	if err != nil {
-		info.logInfo <- []interface{}{"Fatal", err}
-	}
-	info.Slivers = response.Data["silver"].(float64)
-	info.Coins = response.Data["coin"].(float64)
-	if info.Slivers < exchangeRate {
-		info.logInfo <- []interface{}{"Error", "当前银瓜子余额为: ", info.Slivers, "，不足700,不进行兑换"}
-	} else {
-		response, err = utils.Get(api.ApiList.Sliver2Coins)
-		if response.Code != 403 && err != nil {
-			conf.Log.Fatal(err)
-		}
-		if response.Code == 0 {
-			info.logInfo <- []interface{}{"Info", "银瓜子兑换成功: "}
-			info.Coins++
-			info.Slivers -= exchangeRate
-			info.logInfo <- []interface{}{"Info", "当前银瓜子余额: ", info.Slivers}
-			info.logInfo <- []interface{}{"Info", "兑换银瓜子后硬币余额: ", info.Coins}
-		} else {
-			info.logInfo <- []interface{}{"Warn", "银瓜子兑换硬币失败 原因是: " + response.Message}
-		}
-	}
+func (info *Info) DailySliver2Coin(param ...string) {
+	sliver2Coins(info.logInfo, info.params...)
 }
 
 // DailyLiveCheckin 直播签到信息
-func (info *Daily) DailyLiveCheckin(param ...string) {
-	response, err := utils.Get(api.ApiList.LiveCheckin)
-	if err != nil {
-		info.logInfo <- []interface{}{"Fatal", err}
-	}
-	if response.Code == 0 {
-		info.logInfo <- []interface{}{"Info", "直播签到成功，本次签到获得" + response.Data["text"].(string) + "," + response.Data["specialText"].(string)}
-	} else {
-		info.logInfo <- []interface{}{"Warn", "直播签到失败: " + response.Message}
-	}
-
+func (info *Info) DailyLiveCheckin(param ...string) {
+	info.logInfo <- checkLive(info.params...)
 }
