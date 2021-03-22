@@ -1,10 +1,11 @@
 package api
 
 import (
-	"bili/conf"
-	"bili/utils"
 	"fmt"
 	"log"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/conf"
+	"github.com/tsubasa597/BILIBILI-HELPER/utils"
 )
 
 var config conf.Config = *conf.Init()

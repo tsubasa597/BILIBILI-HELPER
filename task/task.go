@@ -1,13 +1,14 @@
 package task
 
 import (
-	"bili/api"
-	"bili/conf"
-	"bili/utils"
 	"math/rand"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/conf"
+	"github.com/tsubasa597/BILIBILI-HELPER/utils"
 )
 
 // Tasker 任务

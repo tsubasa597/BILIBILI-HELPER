@@ -1,7 +1,7 @@
 package task
 
 import (
-	"bili/conf"
+	"github.com/tsubasa597/BILIBILI-HELPER/conf"
 )
 
 // DailyInfo 任务信息

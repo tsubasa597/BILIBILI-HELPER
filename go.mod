@@ -1,4 +1,4 @@
-module bili
+module github.com/tsubasa597/BILIBILI-HELPER
 
 go 1.16
 

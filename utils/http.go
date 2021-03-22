@@ -1,12 +1,13 @@
 package utils
 
 import (
-	"bili/conf"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	urlpkg "net/url"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/conf"
 )
 
 // HTTP 请求的结构体

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bili/task"
+	"github.com/tsubasa597/BILIBILI-HELPER/task"
 )
 
 func main() {
