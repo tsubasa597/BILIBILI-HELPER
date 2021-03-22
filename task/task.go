@@ -123,5 +123,5 @@ func (info *Info) DailySliver2Coin(param ...string) {
 
 // DailyLiveCheckin 直播签到信息
 func (info *Info) DailyLiveCheckin(param ...string) {
-	info.logInfo <- checkLive(info.params...)
+	checkLive(info.logInfo, info.params...)
 }

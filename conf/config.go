@@ -1,5 +1,7 @@
 package conf
 
+// TODO : fix config.go
+
 import (
 	_ "embed"
 	"log"

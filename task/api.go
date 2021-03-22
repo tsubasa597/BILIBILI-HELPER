@@ -167,15 +167,15 @@ func sliver2Coins(logInfo chan []interface{}, v ...string) {
 	}
 }
 
-func checkLive(v ...string) (logInfo []interface{}) {
+func checkLive(logInfo chan []interface{}, v ...string) {
 	response, err := utils.Get(apiList["LiveCheckin"])
 	if err != nil {
-		logInfo = append(logInfo, []interface{}{"Fatal", err})
+		logInfo <- []interface{}{"Fatal", err}
+
 	}
 	if response.Code == 0 {
-		logInfo = append(logInfo, []interface{}{"Info", "直播签到成功，本次签到获得" + response.Data["text"].(string) + "," + response.Data["specialText"].(string)})
+		logInfo <- []interface{}{"Info", "直播签到成功，本次签到获得" + response.Data["text"].(string) + "," + response.Data["specialText"].(string)}
 	} else {
-		logInfo = append(logInfo, []interface{}{"Warn", "直播签到失败: " + response.Message})
+		logInfo <- []interface{}{"Warn", "直播签到失败: " + response.Message}
 	}
-	return
 }
