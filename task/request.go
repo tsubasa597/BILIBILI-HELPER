@@ -1,4 +1,4 @@
-package utils
+package task
 
 import (
 	"bytes"
@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	urlpkg "net/url"
-
-	"github.com/tsubasa597/BILIBILI-HELPER/conf"
 )
 
 // HTTP 请求的结构体
@@ -25,13 +23,12 @@ type Response struct {
 }
 
 var (
-	config conf.Config = *conf.Init()
-	ht     *HTTP       = &HTTP{
+	ht *HTTP = &HTTP{
 		request: &http.Request{
 			Header: http.Header{
 				"Connection":   []string{"keep-alive"},
-				"User-Agent":   []string{config.UserAgent},
-				"Cookie":       []string{config.Cookie.GetVerify()},
+				"User-Agent":   []string{conf.UserAgent},
+				"Cookie":       []string{conf.Cookie.GetVerify()},
 				"Content-Type": []string{"application/x-www-form-urlencoded"},
 			},
 			Method: "",

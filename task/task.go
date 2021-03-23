@@ -3,9 +3,9 @@ package task
 import (
 	"sync"
 	"time"
-
-	"github.com/tsubasa597/BILIBILI-HELPER/conf"
 )
+
+// TODO: 参数传递方式
 
 // DailyInfo 任务信息
 type Info struct {
@@ -14,8 +14,7 @@ type Info struct {
 	Slivers      float64
 	Coins        float64
 
-	params  []string
-	conf    conf.Config
+	params  map[string]string
 	tasks   []Task
 	isLogin bool
 	logInfo chan []interface{}
@@ -23,28 +22,28 @@ type Info struct {
 }
 
 // New 启动日常任务
-func New() (status *Info) {
+func NewDaliyTask() (status *Info) {
 	status = &Info{
-		conf:    *conf.Init(),
 		tasks:   []Task{},
 		logInfo: make(chan []interface{}, 4),
 		done:    make(chan int),
+		params:  make(map[string]string),
 	}
 	go status.readLog()
 	status.UserCheck()
 	if status.isLogin {
-		if status.conf.Status.IsLiveCheckin {
+		if conf.Status.IsLiveCheckin {
 			status.tasks = append(status.tasks, Task(status.DailyLiveCheckin))
 		}
-		if status.conf.Status.IsSliver2Coins {
+		if conf.Status.IsSliver2Coins {
 			status.tasks = append(status.tasks, Task(status.DailySliver2Coin))
 		}
-		if status.conf.Status.IsVideoWatch {
-			status.params = []string{"BV1NT4y137Jc"}
+		if conf.Status.IsVideoWatch {
+			status.params["bvid"] = "BV1NT4y137Jc"
 			status.tasks = append(status.tasks, Task(status.DailyVideo))
 		}
-		if status.conf.Status.IsVideoShare {
-			status.params = []string{"BV1NT4y137Jc"}
+		if conf.Status.IsVideoShare {
+			status.params["bvid"] = "BV1NT4y137Jc"
 			status.tasks = append(status.tasks, Task(status.DailyVideoShare))
 		}
 	}
@@ -58,13 +57,13 @@ Log:
 		case info := <-status.logInfo:
 			switch info[0].(string) {
 			case "Info":
-				conf.Log.Info(info[1:])
+				loger.Info(info[1:])
 			case "Warn":
-				conf.Log.Warnln(info[1:])
+				loger.Warnln(info[1:])
 			case "Error":
-				conf.Log.Errorln(info[1:])
+				loger.Errorln(info[1:])
 			case "Fatal":
-				conf.Log.Fatal(info[1:])
+				loger.Fatal(info[1:])
 			}
 		case <-status.done:
 			break Log
@@ -78,23 +77,22 @@ type Tasker interface {
 }
 
 // Task task 类型的函数
-type Task func(v ...string)
+type Task func(v map[string]string)
 
 // Run task 类型的函数调用
-func (t Task) Run(wg *sync.WaitGroup, v ...string) {
+func (t Task) Run(wg *sync.WaitGroup, v map[string]string) {
 	defer wg.Done()
-	t(v...)
+	t(v)
 }
 
 // Start 启动任务
-func Start() {
+func StartTask(task *Info) {
 	var wg sync.WaitGroup
-	task := New()
 	for _, i := range task.tasks {
 		// 防止请求过快出错
 		time.Sleep(time.Second)
 		wg.Add(1)
-		go i.Run(&wg, task.params...)
+		go i.Run(&wg, task.params)
 	}
 
 	wg.Wait()
@@ -103,25 +101,25 @@ func Start() {
 
 // UserCheck 用户检查
 func (info *Info) UserCheck() {
-	info.isLogin = userCheck(info.logInfo)
+	info.isLogin = userCheck(info.logInfo, nil)
 }
 
 // DailyVideo 观看视频
-func (info *Info) DailyVideo(param ...string) {
-	watchVideo(info.logInfo, info.params...)
+func (info *Info) DailyVideo(param map[string]string) {
+	watchVideo(info.logInfo, info.params)
 }
 
 // DailyVideoShare 分享视频
-func (info *Info) DailyVideoShare(param ...string) {
-	shareVideo(info.logInfo, info.params...)
+func (info *Info) DailyVideoShare(param map[string]string) {
+	shareVideo(info.logInfo, info.params)
 }
 
 // DailySliver2Coin 银瓜子换硬币信息
-func (info *Info) DailySliver2Coin(param ...string) {
-	sliver2Coins(info.logInfo, info.params...)
+func (info *Info) DailySliver2Coin(param map[string]string) {
+	sliver2Coins(info.logInfo, nil)
 }
 
 // DailyLiveCheckin 直播签到信息
-func (info *Info) DailyLiveCheckin(param ...string) {
-	checkLive(info.logInfo, info.params...)
+func (info *Info) DailyLiveCheckin(param map[string]string) {
+	checkLive(info.logInfo, nil)
 }

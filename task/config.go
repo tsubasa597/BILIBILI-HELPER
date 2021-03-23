@@ -1,6 +1,4 @@
-package conf
-
-// TODO : fix config.go
+package task
 
 import (
 	_ "embed"
@@ -9,6 +7,14 @@ import (
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	//go:embed conf.yaml
+	yamlFile []byte
+
+	loger *logrus.Logger = newLogFormat()
+	conf  *config        = newConf()
 )
 
 // Cookie 用于登录的必要参数
@@ -24,42 +30,35 @@ func (cookie Cookie) GetVerify() string {
 	return "bili_jct=" + cookie.BiliJct + ";SESSDATA=" + cookie.SessData + ";DedeUserID=" + cookie.UserID + ";"
 }
 
-// Config 配置
-type Config struct {
+// config 配置
+type config struct {
 	Cookie    Cookie
 	UserAgent string `yaml:"userAgent"`
-	Status    TaskStatus
+	Status    Status
 }
 
 // TaskStatus 任务信息
-type TaskStatus struct {
+type Status struct {
 	IsVideoWatch   bool `yaml:"isVideoWatch"`
 	IsVideoShare   bool `yaml:"isVideoShare"`
 	IsLiveCheckin  bool `yaml:"isLiveCheckin"`
 	IsSliver2Coins bool `yaml:"isSliver2Coins"`
 }
 
-//go:embed conf.yaml
-var yamlFile []byte
-
-func Init() *Config {
-
-	var conf *Config = &Config{}
+func newConf() *config {
+	conf := &config{}
 	yaml.Unmarshal(yamlFile, conf)
-	if conf == (&Config{}) {
+	if conf == (&config{}) {
 		log.Fatalln("无法读取数据")
 	}
 	return conf
 }
 
-var (
-	Log *logrus.Logger
-)
-
-func init() {
-	Log = logrus.New()
-	Log.SetFormatter(&nested.Formatter{
+func newLogFormat() *logrus.Logger {
+	log := logrus.New()
+	log.SetFormatter(&nested.Formatter{
 		HideKeys:    true,
 		FieldsOrder: []string{"component", "category"},
 	})
+	return log
 }
