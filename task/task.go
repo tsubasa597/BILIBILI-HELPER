@@ -15,7 +15,7 @@ type Info struct {
 	Coins        float64
 	Tasks        []TaskFunc
 
-	api     *API
+	*API
 	params  map[string]string
 	isLogin bool
 	logInfo chan []interface{}
@@ -28,7 +28,7 @@ func Default() (status *Info) {
 		logInfo: make(chan []interface{}, 4),
 		done:    make(chan int),
 		params:  make(map[string]string),
-		api:     newApi(*NewConfig("./conf.yaml")),
+		API:     newApi(*NewConfig("./conf.yaml")),
 	}
 
 	go status.readLog()
@@ -99,25 +99,25 @@ func Start(task *Info) {
 
 // UserCheck 用户检查
 func (info *Info) UserCheck() {
-	info.isLogin = info.api.userCheck(info.logInfo, nil)
+	info.isLogin = info.userCheck(info.logInfo, nil)
 }
 
 // DailyVideo 观看视频
 func (info *Info) DailyVideo(param map[string]string) {
-	info.api.watchVideo(info.logInfo, info.params)
+	info.watchVideo(info.logInfo, info.params)
 }
 
 // DailyVideoShare 分享视频
 func (info *Info) DailyVideoShare(param map[string]string) {
-	info.api.shareVideo(info.logInfo, info.params)
+	info.shareVideo(info.logInfo, info.params)
 }
 
 // DailySliver2Coin 银瓜子换硬币信息
 func (info *Info) DailySliver2Coin(param map[string]string) {
-	info.api.sliver2Coins(info.logInfo, nil)
+	info.sliver2Coins(info.logInfo, nil)
 }
 
 // DailyLiveCheckin 直播签到信息
 func (info *Info) DailyLiveCheckin(param map[string]string) {
-	info.api.checkLive(info.logInfo, nil)
+	info.checkLive(info.logInfo, nil)
 }

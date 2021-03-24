@@ -25,7 +25,7 @@ func (cookie Cookie) GetVerify() string {
 
 // config 配置
 type config struct {
-	Cookie Cookie
+	Cookie
 }
 
 func NewConfig(path string) *config {
