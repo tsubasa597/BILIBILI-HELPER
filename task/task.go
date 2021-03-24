@@ -13,44 +13,41 @@ type Info struct {
 	NextLevelExp float64
 	Slivers      float64
 	Coins        float64
+	Tasks        []TaskFunc
 
+	api     *API
 	params  map[string]string
-	tasks   []Task
 	isLogin bool
 	logInfo chan []interface{}
 	done    chan int
 }
 
-// New 启动日常任务
-func NewDaliyTask() (status *Info) {
+// Default 启动日常任务
+func Default() (status *Info) {
 	status = &Info{
-		tasks:   []Task{},
 		logInfo: make(chan []interface{}, 4),
 		done:    make(chan int),
 		params:  make(map[string]string),
+		api:     newApi(*NewConfig("./conf.yaml")),
 	}
+
 	go status.readLog()
+
 	status.UserCheck()
 	if status.isLogin {
-		if conf.Status.IsLiveCheckin {
-			status.tasks = append(status.tasks, Task(status.DailyLiveCheckin))
-		}
-		if conf.Status.IsSliver2Coins {
-			status.tasks = append(status.tasks, Task(status.DailySliver2Coin))
-		}
-		if conf.Status.IsVideoWatch {
-			status.params["bvid"] = "BV1NT4y137Jc"
-			status.tasks = append(status.tasks, Task(status.DailyVideo))
-		}
-		if conf.Status.IsVideoShare {
-			status.params["bvid"] = "BV1NT4y137Jc"
-			status.tasks = append(status.tasks, Task(status.DailyVideoShare))
-		}
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailyLiveCheckin))
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailySliver2Coin))
+		status.params["bvid"] = "BV1NT4y137Jc"
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideo))
+		status.params["bvid"] = "BV1NT4y137Jc"
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideoShare))
 	}
-	return status
+	return
 }
 
 func (status *Info) readLog() {
+	loger := newLogFormat()
+
 Log:
 	for {
 		select {
@@ -77,18 +74,19 @@ type Tasker interface {
 }
 
 // Task task 类型的函数
-type Task func(v map[string]string)
+type TaskFunc func(v map[string]string)
 
 // Run task 类型的函数调用
-func (t Task) Run(wg *sync.WaitGroup, v map[string]string) {
+func (t TaskFunc) Run(wg *sync.WaitGroup, v map[string]string) {
 	defer wg.Done()
 	t(v)
 }
 
 // Start 启动任务
-func StartTask(task *Info) {
+func Start(task *Info) {
 	var wg sync.WaitGroup
-	for _, i := range task.tasks {
+
+	for _, i := range task.Tasks {
 		// 防止请求过快出错
 		time.Sleep(time.Second)
 		wg.Add(1)
@@ -101,25 +99,25 @@ func StartTask(task *Info) {
 
 // UserCheck 用户检查
 func (info *Info) UserCheck() {
-	info.isLogin = userCheck(info.logInfo, nil)
+	info.isLogin = info.api.userCheck(info.logInfo, nil)
 }
 
 // DailyVideo 观看视频
 func (info *Info) DailyVideo(param map[string]string) {
-	watchVideo(info.logInfo, info.params)
+	info.api.watchVideo(info.logInfo, info.params)
 }
 
 // DailyVideoShare 分享视频
 func (info *Info) DailyVideoShare(param map[string]string) {
-	shareVideo(info.logInfo, info.params)
+	info.api.shareVideo(info.logInfo, info.params)
 }
 
 // DailySliver2Coin 银瓜子换硬币信息
 func (info *Info) DailySliver2Coin(param map[string]string) {
-	sliver2Coins(info.logInfo, nil)
+	info.api.sliver2Coins(info.logInfo, nil)
 }
 
 // DailyLiveCheckin 直播签到信息
 func (info *Info) DailyLiveCheckin(param map[string]string) {
-	checkLive(info.logInfo, nil)
+	info.api.checkLive(info.logInfo, nil)
 }

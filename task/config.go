@@ -2,19 +2,12 @@ package task
 
 import (
 	_ "embed"
+	"io/ioutil"
 	"log"
 
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-)
-
-var (
-	//go:embed conf.yaml
-	yamlFile []byte
-
-	loger *logrus.Logger = newLogFormat()
-	conf  *config        = newConf()
 )
 
 // Cookie 用于登录的必要参数
@@ -32,22 +25,12 @@ func (cookie Cookie) GetVerify() string {
 
 // config 配置
 type config struct {
-	Cookie    Cookie
-	UserAgent string `yaml:"userAgent"`
-	Status    Status
+	Cookie Cookie
 }
 
-// TaskStatus 任务信息
-type Status struct {
-	IsVideoWatch   bool `yaml:"isVideoWatch"`
-	IsVideoShare   bool `yaml:"isVideoShare"`
-	IsLiveCheckin  bool `yaml:"isLiveCheckin"`
-	IsSliver2Coins bool `yaml:"isSliver2Coins"`
-}
-
-func newConf() *config {
+func NewConfig(path string) *config {
 	conf := &config{}
-	yaml.Unmarshal(yamlFile, conf)
+	yaml.Unmarshal(loadYamlFile(path), conf)
 	if conf == (&config{}) {
 		log.Fatalln("无法读取数据")
 	}
@@ -61,4 +44,12 @@ func newLogFormat() *logrus.Logger {
 		FieldsOrder: []string{"component", "category"},
 	})
 	return log
+}
+
+func loadYamlFile(path string) []byte {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatalln("无法读取文件", err)
+	}
+	return file
 }
