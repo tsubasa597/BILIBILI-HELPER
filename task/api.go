@@ -11,6 +11,7 @@ type API struct {
 	UrlList  map[string]string
 	conf     config
 	requests Requests
+	logInfo  chan []interface{}
 }
 
 // GiveGift 直播赠送礼物
@@ -81,16 +82,16 @@ func (api API) sendGift(roomID string, uid string) {
 	}
 }
 
-func (api API) userCheck(logInfo chan []interface{}, params map[string]string) bool {
+func (api API) userCheck(params map[string]string) bool {
 	response, err := api.requests.Get(api.UrlList["Login"])
 	if err != nil {
-		logInfo <- []interface{}{"Fatal", err}
+		api.logInfo <- []interface{}{"Fatal", err}
 	}
 	if response.Code == 0 && response.Data["isLogin"].(bool) {
-		logInfo <- []interface{}{"Info", "Cookies有效，登录成功"}
+		api.logInfo <- []interface{}{"Info", "Cookies有效，登录成功"}
 		return true
 	} else {
-		logInfo <- []interface{}{"Fatal", "Cookies可能失效了,请仔细检查Github Secrets中DEDEUSERID SESSDATA BILI_JCT三项的值是否正确、过期"}
+		api.logInfo <- []interface{}{"Fatal", "Cookies可能失效了,请仔细检查Github Secrets中DEDEUSERID SESSDATA BILI_JCT三项的值是否正确、过期"}
 		return false
 	}
 	//info.Coins = response.Data["money"].(float64)
@@ -98,71 +99,71 @@ func (api API) userCheck(logInfo chan []interface{}, params map[string]string) b
 	//info.NextLevelExp = response.Data["level_info"].(map[string]interface{})["next_exp"].(float64) - response.Data["level_info"].(map[string]interface{})["current_exp"].(float64)
 }
 
-func (api API) watchVideo(logInfo chan []interface{}, params map[string]string) {
+func (api API) watchVideo(params map[string]string) {
 	postBody := []byte("bvid=" + params["bvid"] + "&played_time=" + strconv.Itoa(rand.Intn(90)))
 	response, err := api.requests.Post(api.UrlList["VideoHeartbeat"], postBody)
 	if err != nil {
-		logInfo <- []interface{}{"Fatal", err}
+		api.logInfo <- []interface{}{"Fatal", err}
 	}
 	if response.Code == 0 {
-		logInfo <- []interface{}{"Info", "视频播放成功"}
+		api.logInfo <- []interface{}{"Info", "视频播放成功"}
 	} else {
-		logInfo <- []interface{}{"Warn", "视频播放失败,原因: " + response.Message}
+		api.logInfo <- []interface{}{"Warn", "视频播放失败,原因: " + response.Message}
 	}
 }
 
-func (api API) shareVideo(logInfo chan []interface{}, params map[string]string) {
+func (api API) shareVideo(params map[string]string) {
 	// fmt.Println(params, api.conf)
 	postBody := []byte("bvid=" + params["bvid"] + "&csrf=" + api.conf.Cookie.BiliJct)
 	response, err := api.requests.Post(api.UrlList["AvShare"], postBody)
 	if err != nil && response.Code != 0 {
-		logInfo <- []interface{}{"Fatal", err}
+		api.logInfo <- []interface{}{"Fatal", err}
 	}
 	if response.Code == 0 {
-		logInfo <- []interface{}{"Info", "视频分享成功"}
+		api.logInfo <- []interface{}{"Info", "视频分享成功"}
 	} else {
-		logInfo <- []interface{}{"Warn", "视频分享失败,原因: " + response.Message}
+		api.logInfo <- []interface{}{"Warn", "视频分享失败,原因: " + response.Message}
 	}
 }
 
-func (api API) sliver2Coins(logInfo chan []interface{}, params map[string]string) {
+func (api API) sliver2Coins(params map[string]string) {
 	// 银瓜子兑换硬币汇率
 	var exchangeRate float64 = 700
 	response, err := api.requests.Get(api.UrlList["Sliver2CoinsStatus"])
 	if err != nil {
-		logInfo <- []interface{}{"Fatal", err}
+		api.logInfo <- []interface{}{"Fatal", err}
 	}
 	slivers := response.Data["silver"].(float64)
 	coins := response.Data["coin"].(float64)
 	if slivers < exchangeRate {
-		logInfo <- []interface{}{"Error", "当前银瓜子余额为: ", slivers, "，不足700,不进行兑换"}
+		api.logInfo <- []interface{}{"Error", "当前银瓜子余额为: ", slivers, "，不足700,不进行兑换"}
 	} else {
 		response, err = api.requests.Get(api.UrlList["Sliver2Coins"])
 		if response.Code != 403 && err != nil {
-			logInfo <- []interface{}{"Fatal", err}
+			api.logInfo <- []interface{}{"Fatal", err}
 		}
 		if response.Code == 0 {
-			logInfo <- []interface{}{"Info", "银瓜子兑换成功"}
+			api.logInfo <- []interface{}{"Info", "银瓜子兑换成功"}
 			coins++
 			slivers -= exchangeRate
-			logInfo <- []interface{}{"Info", "当前银瓜子余额: ", slivers}
-			logInfo <- []interface{}{"Info", "兑换银瓜子后硬币余额: ", coins}
+			api.logInfo <- []interface{}{"Info", "当前银瓜子余额: ", slivers}
+			api.logInfo <- []interface{}{"Info", "兑换银瓜子后硬币余额: ", coins}
 		} else {
-			logInfo <- []interface{}{"Warn", "银瓜子兑换硬币失败 原因是: " + response.Message}
+			api.logInfo <- []interface{}{"Warn", "银瓜子兑换硬币失败 原因是: " + response.Message}
 		}
 	}
 }
 
-func (api API) checkLive(logInfo chan []interface{}, params map[string]string) {
+func (api API) checkLive(params map[string]string) {
 	response, err := api.requests.Get(api.UrlList["LiveCheckin"])
 	if err != nil {
-		logInfo <- []interface{}{"Fatal", err}
+		api.logInfo <- []interface{}{"Fatal", err}
 
 	}
 	if response.Code == 0 {
-		logInfo <- []interface{}{"Info", "直播签到成功，本次签到获得" + response.Data["text"].(string) + "," + response.Data["specialText"].(string)}
+		api.logInfo <- []interface{}{"Info", "直播签到成功，本次签到获得" + response.Data["text"].(string) + "," + response.Data["specialText"].(string)}
 	} else {
-		logInfo <- []interface{}{"Warn", "直播签到失败: " + response.Message}
+		api.logInfo <- []interface{}{"Warn", "直播签到失败: " + response.Message}
 	}
 }
 
@@ -187,5 +188,6 @@ func newApi(conf config) *API {
 		UrlList:  getUrlList(),
 		conf:     conf,
 		requests: newRequests(conf),
+		logInfo:  make(chan []interface{}, 4),
 	}
 }

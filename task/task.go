@@ -18,17 +18,16 @@ type Info struct {
 	*API
 	params  map[string]string
 	isLogin bool
-	logInfo chan []interface{}
+	LogInfo []interface{}
 	done    chan int
 }
 
 // Default 启动日常任务
 func Default() (status *Info) {
 	status = &Info{
-		logInfo: make(chan []interface{}, 4),
-		done:    make(chan int),
-		params:  make(map[string]string),
-		API:     newApi(*NewConfig("./conf.yaml")),
+		done:   make(chan int),
+		params: make(map[string]string),
+		API:    newApi(*NewConfig("./config.yaml")),
 	}
 
 	go status.readLog()
@@ -45,13 +44,44 @@ func Default() (status *Info) {
 	return
 }
 
+func NewInfo(path string) (status *Info) {
+	status = &Info{
+		done:   make(chan int),
+		params: make(map[string]string),
+		API:    newApi(*NewConfig(path)),
+	}
+
+	go status.loadLog()
+
+	status.UserCheck()
+	if status.isLogin {
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailyLiveCheckin))
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailySliver2Coin))
+		status.params["bvid"] = "BV1NT4y137Jc"
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideo))
+		status.params["bvid"] = "BV1NT4y137Jc"
+		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideoShare))
+	}
+	return
+}
+
+func (status *Info) loadLog() {
+	for {
+		select {
+		case info := <-status.API.logInfo:
+			status.LogInfo = append(status.LogInfo, info)
+		case <-status.done:
+			return
+		}
+	}
+}
+
 func (status *Info) readLog() {
 	loger := newLogFormat()
 
-Log:
 	for {
 		select {
-		case info := <-status.logInfo:
+		case info := <-status.API.logInfo:
 			switch info[0].(string) {
 			case "Info":
 				loger.Info(info[1:])
@@ -63,7 +93,7 @@ Log:
 				loger.Fatal(info[1:])
 			}
 		case <-status.done:
-			break Log
+			return
 		}
 	}
 }
@@ -99,25 +129,25 @@ func Start(task *Info) {
 
 // UserCheck 用户检查
 func (info *Info) UserCheck() {
-	info.isLogin = info.userCheck(info.logInfo, nil)
+	info.isLogin = info.userCheck(nil)
 }
 
 // DailyVideo 观看视频
 func (info *Info) DailyVideo(param map[string]string) {
-	info.watchVideo(info.logInfo, info.params)
+	info.watchVideo(info.params)
 }
 
 // DailyVideoShare 分享视频
 func (info *Info) DailyVideoShare(param map[string]string) {
-	info.shareVideo(info.logInfo, info.params)
+	info.shareVideo(info.params)
 }
 
 // DailySliver2Coin 银瓜子换硬币信息
 func (info *Info) DailySliver2Coin(param map[string]string) {
-	info.sliver2Coins(info.logInfo, nil)
+	info.sliver2Coins(nil)
 }
 
 // DailyLiveCheckin 直播签到信息
 func (info *Info) DailyLiveCheckin(param map[string]string) {
-	info.checkLive(info.logInfo, nil)
+	info.checkLive(nil)
 }
