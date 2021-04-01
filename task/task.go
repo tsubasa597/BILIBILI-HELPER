@@ -7,7 +7,7 @@ import (
 
 // TODO: 参数传递方式
 
-// DailyInfo 任务信息
+// Info 任务信息
 type Info struct {
 	Level        float64
 	NextLevelExp float64
@@ -44,7 +44,8 @@ func Default() (status *Info) {
 	return
 }
 
-func NewInfo(path string) (status *Info) {
+// New
+func New(path string) (status *Info) {
 	status = &Info{
 		done:   make(chan int),
 		params: make(map[string]string),
@@ -113,7 +114,7 @@ func (t TaskFunc) Run(wg *sync.WaitGroup, v map[string]string) {
 }
 
 // Start 启动任务
-func Start(task *Info) {
+func Start(task *Info) []interface{} {
 	var wg sync.WaitGroup
 
 	for _, i := range task.Tasks {
@@ -125,6 +126,7 @@ func Start(task *Info) {
 
 	wg.Wait()
 	task.done <- 1
+	return task.LogInfo
 }
 
 // UserCheck 用户检查
