@@ -1,30 +1,216 @@
-package task
+package api
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
+	"net/http"
+	"net/url"
 	"strconv"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/global"
+)
+
+const (
+	Site         = "bilibili"
+	BaseHost     = "https://api.bilibili.com"
+	BaseLiveHost = "https://api.live.bilibili.com"
+	BaseVCHost   = "https://api.vc.bilibili.com"
+	VideoView    = "https://www.bilibili.com/video"
+	DynamicView  = "https://t.bilibili.com"
+
+	RoomInit               = BaseLiveHost + "/room/v1/Room/room_init"
+	SpaceAccInfo           = BaseHost + "/x/space/acc/info"
+	DynamicSrvSpaceHistory = BaseVCHost + "/dynamic_svr/v1/dynamic_svr/space_history"
+	GetRoomInfoOld         = BaseLiveHost + "/room/v1/Room/getRoomInfoOld"
+	DynamicSrvDynamicNew   = BaseVCHost + "/dynamic_svr/v1/dynamic_svr/dynamic_new"
+	RelationModify         = BaseHost + "/x/relation/modify"
+	RelationFeedList       = BaseLiveHost + "/relation/v1/feed/feed_list"
+	GetAttentionList       = BaseVCHost + "/feed/v1/feed/get_attention_list"
+	UserLogin              = BaseHost + "/x/web-interface/nav"
+	VideoHeartbeat         = BaseHost + "/x/click-interface/web/heartbeat"
+	AvShare                = BaseHost + "/x/web-interface/share/add"
+	Sliver2CoinsStatus     = BaseLiveHost + "/pay/v1/Exchange/getStatus"
+	Sliver2Coins           = BaseLiveHost + "/pay/v1/Exchange/silver2coin"
+	LiveCheckin            = BaseLiveHost + "/xlive/web-ucenter/v1/sign/DoSign"
 )
 
 type API struct {
-	UrlList  map[string]string
-	conf     config
-	requests Requests
-	logInfo  chan []interface{}
+	conf global.Cookie
+	r    *global.Requests
 }
 
+type Response struct {
+	Code    int                    `json:"code"`
+	Message string                 `json:"message"`
+	TTL     int                    `json:"ttl"`
+	Data    map[string]interface{} `json:"data"`
+}
+
+func (api API) GetDynamicMessage(hostUID int64) (s string, e error) {
+	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID)
+	if err != nil {
+		return "", err
+	}
+	if dynamicSvrSpaceHistoryResponse.Code != 0 {
+		return "", RequestErr{}
+	}
+	var dRToString func(int32, string)
+	dRToString = func(i int32, c string) {
+		switch i {
+		case 1:
+
+			dynamic := &CardWithOrig{}
+			err = json.Unmarshal([]byte(c), dynamic)
+			if err != nil {
+				e = err
+				return
+			}
+			dRToString(int32(dynamic.Item.OrigType), dynamic.Origin)
+
+		case 2:
+			dynamic := &CardWithImage{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.Item.Description
+		case 4:
+			dynamic := &CardTextOnly{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.Item.Content
+		case 8:
+			dynamic := &CardWithVideo{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.Desc
+		case 64:
+			dynamic := &CardWithPost{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.String()
+		case 256:
+			dynamic := &CardWithMusic{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.String()
+		case 512:
+			dynamic := &CardWithAnime{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.String()
+		case 2048:
+			dynamic := &CardWithSketch{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.Sketch.DescText
+		case 4200:
+			dynamic := &CardWithLive{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.String()
+		case 4308:
+			dynamic := &CardWithLiveV2{}
+			e = json.Unmarshal([]byte(c), dynamic)
+			s = dynamic.String()
+		}
+	}
+	dRToString(int32(dynamicSvrSpaceHistoryResponse.Data.Cards[0].Desc.Type), dynamicSvrSpaceHistoryResponse.Data.Cards[0].Card)
+	return
+}
+
+func (api API) GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
+	rep, err := api.r.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &DynamicSvrSpaceHistoryResponse{}
+
+	err = json.Unmarshal(rep, &resp)
+
+	return resp, err
+}
+
+func (api API) UserCheck() (*Response, error) {
+	rep, err := api.r.Get(UserLogin)
+	if err != nil {
+		return nil, err
+	}
+	resp := &Response{}
+	err = json.Unmarshal(rep, &resp)
+	return resp, err
+}
+
+func (api API) WatchVideo(bvid string) (*Response, error) {
+	data := url.Values{
+		"bvid":        []string{bvid},
+		"played_time": []string{strconv.Itoa(rand.Intn(90))},
+	}
+
+	rep, err := api.r.Post(VideoHeartbeat, data)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &Response{}
+	err = json.Unmarshal(rep, &resp)
+
+	return resp, err
+}
+
+func (api API) ShareVideo(bvid string) (*Response, error) {
+	data := url.Values{
+		"bvid": []string{bvid},
+		"csrf": []string{api.conf.BiliJct},
+	}
+	rep, err := api.r.Post(AvShare, data)
+	if err != nil {
+		return nil, err
+	}
+	resp := &Response{}
+	err = json.Unmarshal(rep, &resp)
+	return resp, err
+}
+
+func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
+	rep, err := api.r.Get(Sliver2CoinsStatus)
+	if err != nil {
+		return nil, err
+	}
+	resp := &Sliver2CoinsStatusResponse{}
+	err = json.Unmarshal(rep, &resp)
+	return resp, err
+}
+
+func (api API) Sliver2Coins() (*Response, error) {
+	rep, err := api.r.Get(Sliver2Coins)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &Response{}
+	err = json.Unmarshal(rep, &resp)
+
+	return resp, err
+}
+
+func (api API) LiveCheckin() (*Response, error) {
+	rep, err := api.r.Get(LiveCheckin)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &Response{}
+	err = json.Unmarshal(rep, &resp)
+
+	return resp, err
+}
+
+/**
 // GiveGift 直播赠送礼物
-func (info *Info) GiveGift(param []string) {
+func (api *API) GiveGift(param []string) {
 	// info.api.sendGift("510", "7706705", info.api.Cookie.UserID, conf.Cookie.BiliJct)
 }
 
 // liveGetRecommend 随机获取一个直播间的 room_id
-func (api API) liveGetRecommend() float64 {
-	res, err := api.requests.Get(api.UrlList["LiveRecommend"])
+func (api API) liveGetRecommend() (float64, error) {
+	res, err := api.r.Get(api.UrlList["LiveRecommend"])
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	return res.Data["list"].([]interface{})[0].(map[string]interface{})["roomid"].(float64)
 }
 
@@ -166,7 +352,7 @@ func (api API) checkLive(params map[string]string) {
 		api.logInfo <- []interface{}{"Warn", "直播签到失败: " + response.Message}
 	}
 }
-
+*/
 func getUrlList() map[string]string {
 	return map[string]string{
 		"LiveCheckin":        "https://api.live.bilibili.com/xlive/web-ucenter/v1/sign/DoSign",
@@ -180,14 +366,20 @@ func getUrlList() map[string]string {
 		"RoomInfoOld":        "http://api.live.bilibili.com/room/v1/Room/getRoomInfoOld",
 		"GiftBagList":        "https://api.live.bilibili.com/xlive/web-room/v1/gift/bag_list",
 		"GiftSend":           "https://api.live.bilibili.com/gift/v2/live/bag_send",
+		"Dynamic":            "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history",
 	}
 }
 
-func newApi(conf config) *API {
+func New(c global.Cookie) *API {
+	r := global.New()
+	r.SetHeader(http.Header{
+		"Connection":   []string{"keep-alive"},
+		"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
+		"Cookie":       []string{c.GetVerify()},
+		"Content-Type": []string{"application/x-www-form-urlencoded"},
+	})
 	return &API{
-		UrlList:  getUrlList(),
-		conf:     conf,
-		requests: newRequests(conf),
-		logInfo:  make(chan []interface{}, 4),
+		r:    r,
+		conf: c,
 	}
 }

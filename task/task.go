@@ -1,155 +1,153 @@
 package task
 
 import (
+	"errors"
 	"sync"
 	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/global"
 )
 
-// TODO: 参数传递方式
+type Bili struct {
+	api.API
 
-// Info 任务信息
-type Info struct {
-	Level        float64
-	NextLevelExp float64
-	Slivers      float64
-	Coins        float64
-	Tasks        []TaskFunc
-
-	*API
-	params  map[string]string
-	isLogin bool
-	LogInfo []interface{}
-	done    chan int
+	info []string
+	errs []error
+	wg   *sync.WaitGroup
 }
 
-// Default 启动日常任务
-func Default() (status *Info) {
-	status = &Info{
-		done:   make(chan int),
-		params: make(map[string]string),
-		API:    newApi(*NewConfig("./config.yaml")),
-	}
+func New(c global.Cookie) *Bili {
+	return &Bili{
+		API: *api.New(c),
 
-	go status.readLog()
-
-	status.UserCheck()
-	if status.isLogin {
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailyLiveCheckin))
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailySliver2Coin))
-		status.params["bvid"] = "BV1NT4y137Jc"
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideo))
-		status.params["bvid"] = "BV1NT4y137Jc"
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideoShare))
-	}
-	return
-}
-
-// New
-func New(path string) (status *Info) {
-	status = &Info{
-		done:   make(chan int),
-		params: make(map[string]string),
-		API:    newApi(*NewConfig(path)),
-	}
-
-	go status.loadLog()
-
-	status.UserCheck()
-	if status.isLogin {
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailyLiveCheckin))
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailySliver2Coin))
-		status.params["bvid"] = "BV1NT4y137Jc"
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideo))
-		status.params["bvid"] = "BV1NT4y137Jc"
-		status.Tasks = append(status.Tasks, TaskFunc(status.DailyVideoShare))
-	}
-	return
-}
-
-func (status *Info) loadLog() {
-	for {
-		select {
-		case info := <-status.API.logInfo:
-			status.LogInfo = append(status.LogInfo, info)
-		case <-status.done:
-			return
-		}
+		info: make([]string, 0),
+		errs: make([]error, 0),
+		wg:   &sync.WaitGroup{},
 	}
 }
 
-func (status *Info) readLog() {
-	loger := newLogFormat()
-
-	for {
-		select {
-		case info := <-status.API.logInfo:
-			switch info[0].(string) {
-			case "Info":
-				loger.Info(info[1:])
-			case "Warn":
-				loger.Warnln(info[1:])
-			case "Error":
-				loger.Errorln(info[1:])
-			case "Fatal":
-				loger.Fatal(info[1:])
-			}
-		case <-status.done:
-			return
-		}
-	}
-}
-
-// Tasker 任务
-type Tasker interface {
-	Run()
-}
-
-// Task task 类型的函数
-type TaskFunc func(v map[string]string)
-
-// Run task 类型的函数调用
-func (t TaskFunc) Run(wg *sync.WaitGroup, v map[string]string) {
-	defer wg.Done()
-	t(v)
-}
-
-// Start 启动任务
-func Start(task *Info) []interface{} {
-	var wg sync.WaitGroup
-
-	for _, i := range task.Tasks {
-		// 防止请求过快出错
+func Run(b *Bili) ([]string, []error) {
+	if ok := b.userCheck(); ok {
+		b.wg.Add(1)
+		go b.watchVideo("BV1NT4y137Jc")
 		time.Sleep(time.Second)
-		wg.Add(1)
-		go i.Run(&wg, task.params)
+
+		b.wg.Add(1)
+		go b.shareVideo("BV1NT4y137Jc")
+		time.Sleep(time.Second)
+
+		b.wg.Add(1)
+		go b.sliver2Coins()
+		time.Sleep(time.Second)
+
+		b.wg.Add(1)
+		go b.liveCheckin()
+		time.Sleep(time.Second)
 	}
 
-	wg.Wait()
-	task.done <- 1
-	return task.LogInfo
+	b.wg.Wait()
+
+	return b.info, b.errs
 }
 
-// UserCheck 用户检查
-func (info *Info) UserCheck() {
-	info.isLogin = info.userCheck(nil)
+func (b *Bili) userCheck() bool {
+	resp, err := b.UserCheck()
+	if err != nil {
+		b.errs = append(b.errs, err)
+		return false
+	}
+
+	if resp.Code == 0 {
+		return true
+	}
+
+	b.errs = append(b.errs, errors.New(resp.Message))
+	return false
 }
 
-// DailyVideo 观看视频
-func (info *Info) DailyVideo(param map[string]string) {
-	info.watchVideo(info.params)
+func (b *Bili) watchVideo(bvid string) {
+	defer b.wg.Done()
+
+	resp, err := b.WatchVideo(bvid)
+	if err != nil {
+		b.errs = append(b.errs, err)
+		return
+	}
+
+	if resp.Code == 0 {
+		b.info = append(b.info, "播放成功")
+		return
+	}
+
+	b.errs = append(b.errs, errors.New(resp.Message))
 }
 
-// DailyVideoShare 分享视频
-func (info *Info) DailyVideoShare(param map[string]string) {
-	info.shareVideo(info.params)
+func (b *Bili) sliver2Coins() {
+	defer b.wg.Done()
+
+	const exchangeRate int64 = 700
+	status, err := b.Sliver2CoinsStatus()
+	if err != nil {
+		b.errs = append(b.errs, err)
+		return
+	}
+
+	if status.Data.Silver < exchangeRate {
+		b.errs = append(b.errs, errors.New("当前银瓜子余额不足700,不进行兑换"))
+		return
+	}
+
+	resp, err := b.Sliver2Coins()
+
+	if resp.Code == 0 {
+		b.info = append(b.info, "兑换成功")
+		return
+	}
+
+	if resp.Code == 403 {
+		b.errs = append(b.errs, errors.New(resp.Message))
+		return
+	}
+
+	if err != nil {
+		b.errs = append(b.errs, err)
+		return
+	}
+
+	b.errs = append(b.errs, errors.New(resp.Message))
 }
 
-// DailySliver2Coin 银瓜子换硬币信息
-func (info *Info) DailySliver2Coin(param map[string]string) {
-	info.sliver2Coins(nil)
+func (b *Bili) shareVideo(bvid string) {
+	defer b.wg.Done()
+
+	resp, err := b.ShareVideo(bvid)
+	if err != nil {
+		b.errs = append(b.errs, err)
+		return
+	}
+
+	if resp.Code == 0 {
+		b.info = append(b.info, "分享成功")
+		return
+	}
+
+	b.errs = append(b.errs, errors.New(resp.Message))
 }
 
-// DailyLiveCheckin 直播签到信息
-func (info *Info) DailyLiveCheckin(param map[string]string) {
-	info.checkLive(nil)
+func (b *Bili) liveCheckin() {
+	defer b.wg.Done()
+
+	resp, err := b.LiveCheckin()
+	if err != nil {
+		b.errs = append(b.errs, err)
+		return
+	}
+
+	if resp.Code == 0 {
+		b.info = append(b.info, resp.Message)
+		return
+	}
+
+	b.errs = append(b.errs, errors.New("重复签到"))
 }
