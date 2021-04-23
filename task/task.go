@@ -145,7 +145,7 @@ func (b *Bili) liveCheckin() {
 	}
 
 	if resp.Code == 0 {
-		b.info = append(b.info, resp.Message)
+		b.info = append(b.info, "签到成功")
 		return
 	}
 

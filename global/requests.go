@@ -12,7 +12,7 @@ type Requests struct {
 	req *http.Request
 }
 
-func New() *Requests {
+func NewRequests() *Requests {
 	return &Requests{
 		cli: &http.Client{},
 		req: &http.Request{},

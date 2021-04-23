@@ -17,12 +17,4 @@ func main() {
 	info, errs := task.Run(task.New(*c))
 
 	fmt.Println(errs, info)
-	/**
-	for _, e := range errs {
-		fmt.Println(e)
-	}
-	for _, i := range info {
-		fmt.Println(i)
-	}
-	*/
 }
