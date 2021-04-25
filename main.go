@@ -14,7 +14,5 @@ func main() {
 		return
 	}
 
-	info, errs := task.Run(task.New(*c))
-
-	fmt.Println(errs, info)
+	fmt.Println(task.Run(task.New(*c)))
 }
