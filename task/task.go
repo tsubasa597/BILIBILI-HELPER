@@ -42,7 +42,7 @@ func (b *Bili) userCheck() (string, bool) {
 
 func (b *Bili) watchVideo(bvid string) string {
 	resp, err := b.WatchVideo(bvid)
-	if err != nil {
+	if err != nil && resp.Code != 0 {
 		return err.Error()
 	}
 
