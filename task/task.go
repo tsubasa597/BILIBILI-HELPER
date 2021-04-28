@@ -83,7 +83,7 @@ func (b *Bili) sliver2Coins() string {
 
 func (b *Bili) shareVideo(bvid string) string {
 	resp, err := b.ShareVideo(bvid)
-	if err != nil {
+	if err != nil && resp.Code != 0 {
 		return err.Error()
 	}
 

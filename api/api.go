@@ -47,7 +47,7 @@ type Response struct {
 }
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
-func (api API) GetDynamicMessage(hostUID int64) (s string, e error) {
+func (api API) GetDynamicMessage(hostUID int64) (interface{}, error) {
 	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
 		return "", err
@@ -61,15 +61,15 @@ func (api API) GetDynamicMessage(hostUID int64) (s string, e error) {
 }
 
 // GetOriginCard 获取 Card 的源动态
-func GetOriginCard(c *Card) (string, error) {
+func GetOriginCard(c *Card) (interface{}, error) {
 	switch c.Desc.Type {
 	case 0:
-		return "", DynamicUnknownErr{}
+		return nil, DynamicUnknownErr{}
 	case 1:
 		dynamic := &CardWithOrig{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		return GetOriginCard(&Card{
@@ -82,18 +82,18 @@ func GetOriginCard(c *Card) (string, error) {
 		dynamic := &CardWithImage{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.Item.Description, nil
+		return dynamic, nil
 	case 4:
 		dynamic := &CardTextOnly{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.Item.Content, nil
+		return dynamic, nil
 	case 8:
 		dynamic := &CardWithVideo{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
@@ -101,58 +101,58 @@ func GetOriginCard(c *Card) (string, error) {
 			return "", err
 		}
 
-		return dynamic.Title, nil
+		return dynamic, nil
 	case 64:
 		dynamic := &CardWithPost{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.String(), nil
+		return dynamic, nil
 	case 256:
 		dynamic := &CardWithMusic{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.String(), nil
+		return dynamic, nil
 	case 512:
 		dynamic := &CardWithAnime{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.String(), nil
+		return dynamic, nil
 	case 2048:
 		dynamic := &CardWithSketch{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.Sketch.DescText, nil
+		return dynamic, nil
 	case 4200:
 		dynamic := &CardWithLive{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.String(), nil
+		return dynamic, nil
 	case 4308:
 		dynamic := &CardWithLiveV2{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return dynamic.String(), nil
+		return dynamic, nil
 	}
 
-	return "", LoadErr{}
+	return nil, LoadErr{}
 }
 
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
