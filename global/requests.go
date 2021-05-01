@@ -26,11 +26,11 @@ func (r *Requests) SetHeader(h http.Header) {
 func (r Requests) Post(url string, params URL.Values) ([]byte, error) {
 	r.req.Method = "POST"
 
-	if u, err := URL.Parse(url); err != nil {
+	u, err := URL.Parse(url)
+	if err != nil {
 		return nil, err
-	} else {
-		r.req.URL = u
 	}
+	r.req.URL = u
 
 	r.req.PostForm = params
 
@@ -51,11 +51,11 @@ func (r Requests) Post(url string, params URL.Values) ([]byte, error) {
 func (r Requests) Get(url string) ([]byte, error) {
 	r.req.Method = "GET"
 
-	if u, err := URL.Parse(url); err != nil {
+	u, err := URL.Parse(url)
+	if err != nil {
 		return nil, err
-	} else {
-		r.req.URL = u
 	}
+	r.req.URL = u
 
 	rep, err := r.cli.Do(r.req)
 	if err != nil {
@@ -72,4 +72,67 @@ func (r Requests) Get(url string) ([]byte, error) {
 
 func Json(resp []byte, v interface{}) error {
 	return json.Unmarshal(resp, v)
+}
+
+func Get(url string) ([]byte, error) {
+	req := &http.Request{}
+	cli := http.Client{}
+	req.Method = "GET"
+
+	req.Header = http.Header{
+		"Connection":   []string{"keep-alive"},
+		"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
+		"Content-Type": []string{"application/x-www-form-urlencoded"},
+	}
+
+	u, err := URL.Parse(url)
+	if err != nil {
+		return nil, err
+	}
+	req.URL = u
+
+	rep, err := cli.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(rep.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func Post(url string, params URL.Values) ([]byte, error) {
+	req := &http.Request{}
+	cli := http.Client{}
+	req.Method = "POST"
+
+	req.Header = http.Header{
+		"Connection":   []string{"keep-alive"},
+		"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
+		"Content-Type": []string{"application/x-www-form-urlencoded"},
+	}
+
+	u, err := URL.Parse(url)
+	if err != nil {
+		return nil, err
+	}
+	req.URL = u
+
+	req.PostForm = params
+
+	rep, err := cli.PostForm(url, params)
+	if err != nil {
+		return nil, err
+	}
+	defer rep.Body.Close()
+
+	data, err := ioutil.ReadAll(rep.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
