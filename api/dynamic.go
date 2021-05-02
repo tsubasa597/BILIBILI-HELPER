@@ -1,21 +1,21 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/global"
 )
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
-func (api API) GetDynamicMessage(hostUID int64) (int32, interface{}, error) {
-	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID)
+func GetDynamicMessage(hostUID int64) (int32, interface{}, error) {
+	dynamicSvrSpaceHistoryResponse, err := GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
 		return -1, nil, err
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Code != 0 {
-		return -1, nil, RequestErr{}
+		return -1, nil, fmt.Errorf("请求发生错误: " + dynamicSvrSpaceHistoryResponse.Message)
 	}
 
 	c, e := GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[0])
@@ -29,7 +29,7 @@ func (api API) GetDynamicMessage(hostUID int64) (int32, interface{}, error) {
 func GetOriginCard(c *Card) ([]interface{}, error) {
 	switch c.Desc.Type {
 	case 0:
-		return []interface{}{-1, nil}, DynamicUnknownErr{}
+		return []interface{}{-1, nil}, fmt.Errorf("未知动态")
 	case 1:
 		dynamic := &CardWithOrig{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
@@ -117,12 +117,12 @@ func GetOriginCard(c *Card) ([]interface{}, error) {
 		return []interface{}{c.Desc.Timestamp, dynamic}, nil
 	}
 
-	return []interface{}{-1, nil}, LoadErr{}
+	return []interface{}{-1, nil}, fmt.Errorf("解析错误")
 }
 
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
-func (api API) GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
-	rep, err := api.r.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
+func GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
+	rep, err := global.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
 	if err != nil {
 		return nil, err
 	}
@@ -132,22 +132,4 @@ func (api API) GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistory
 	err = json.Unmarshal(rep, &resp)
 
 	return resp, err
-}
-
-func (api API) ListenDynamic(uid int64, ctx context.Context, ch chan<- []interface{}) context.CancelFunc {
-	listen := func(c context.Context) {
-		for {
-			select {
-			case <-c.Done():
-				close(ch)
-				return
-			case <-time.NewTicker(time.Minute).C:
-				t, c, e := api.GetDynamicMessage(uid)
-				ch <- []interface{}{t, c, e}
-			}
-		}
-	}
-	ct, c := context.WithCancel(ctx)
-	go listen(ct)
-	return c
 }

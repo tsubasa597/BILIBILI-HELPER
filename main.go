@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/tsubasa597/BILIBILI-HELPER/daily"
 	"github.com/tsubasa597/BILIBILI-HELPER/global"
-	"github.com/tsubasa597/BILIBILI-HELPER/task"
 )
 
 func main() {
@@ -14,5 +14,5 @@ func main() {
 		return
 	}
 
-	fmt.Println(task.Run(task.New(*c)))
+	fmt.Println(daily.Run(daily.New(*c)))
 }

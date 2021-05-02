@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	URL "net/url"
+	"sync"
 )
 
 type Requests struct {
@@ -79,11 +80,7 @@ func Get(url string) ([]byte, error) {
 	cli := http.Client{}
 	req.Method = "GET"
 
-	req.Header = http.Header{
-		"Connection":   []string{"keep-alive"},
-		"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
-		"Content-Type": []string{"application/x-www-form-urlencoded"},
-	}
+	req.Header = pool.Get().(http.Header)
 
 	u, err := URL.Parse(url)
 	if err != nil {
@@ -109,11 +106,7 @@ func Post(url string, params URL.Values) ([]byte, error) {
 	cli := http.Client{}
 	req.Method = "POST"
 
-	req.Header = http.Header{
-		"Connection":   []string{"keep-alive"},
-		"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
-		"Content-Type": []string{"application/x-www-form-urlencoded"},
-	}
+	req.Header = pool.Get().(http.Header)
 
 	u, err := URL.Parse(url)
 	if err != nil {
@@ -135,4 +128,15 @@ func Post(url string, params URL.Values) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+// 增加 http.Header 对象重用率
+var pool *sync.Pool = &sync.Pool{
+	New: func() interface{} {
+		return http.Header{
+			"Connection":   []string{"keep-alive"},
+			"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
+			"Content-Type": []string{"application/x-www-form-urlencoded"},
+		}
+	},
 }

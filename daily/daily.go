@@ -1,4 +1,4 @@
-package task
+package daily
 
 import (
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
