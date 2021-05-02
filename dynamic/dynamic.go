@@ -15,14 +15,15 @@ type DynamicListen struct {
 	ups    map[int64]context.CancelFunc
 }
 
-func (d *DynamicListen) ListenDynamic(uid int64) {
+func (d *DynamicListen) ListenDynamic(uid int64) context.Context {
 	if _, ok := d.ups[uid]; ok {
-		return
+		return nil
 	}
 
 	ct, cl := context.WithCancel(d.ctx)
 	d.ups[uid] = cl
 	go listen(uid, ct, d.C)
+	return ct
 }
 
 func (d *DynamicListen) StopListenUP(uid int64) error {

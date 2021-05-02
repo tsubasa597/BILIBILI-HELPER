@@ -8,6 +8,8 @@ import (
 )
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
+//
+// return : 时间戳、Card 实例、错误信息
 func GetDynamicMessage(hostUID int64) (int32, interface{}, error) {
 	dynamicSvrSpaceHistoryResponse, err := GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
@@ -26,6 +28,8 @@ func GetDynamicMessage(hostUID int64) (int32, interface{}, error) {
 }
 
 // GetOriginCard 获取 Card 的源动态
+//
+// return []interface{} : 时间戳、Card 实例、错误信息
 func GetOriginCard(c *Card) ([]interface{}, error) {
 	switch c.Desc.Type {
 	case 0:
