@@ -10,23 +10,24 @@ import (
 
 type DynamicListen struct {
 	T             *time.Ticker
-	C             chan api.Info
 	ctx           context.Context
 	cancel        context.CancelFunc
 	upsCancelFunc map[int64]context.CancelFunc
 	upsContext    map[int64]context.Context
 }
 
-func (d *DynamicListen) ListenDynamic(uid int64) context.Context {
+func (d *DynamicListen) ListenDynamic(uid int64) (context.Context, chan api.Info, error) {
 	if _, ok := d.upsCancelFunc[uid]; ok {
-		return d.upsContext[uid]
+		return d.upsContext[uid], nil, fmt.Errorf("重复监听")
 	}
 
 	ct, cl := context.WithCancel(d.ctx)
 	d.upsContext[uid] = ct
 	d.upsCancelFunc[uid] = cl
-	go listen(*d.T, uid, ct, d.C)
-	return ct
+	c := make(chan api.Info, 5)
+	go listen(*d.T, uid, ct, c)
+
+	return ct, c, nil
 }
 
 func (d *DynamicListen) StopListenUP(uid int64) error {
@@ -58,7 +59,6 @@ func New() *DynamicListen {
 	c, cl := context.WithCancel(context.Background())
 	return &DynamicListen{
 		T:             time.NewTicker(time.Minute),
-		C:             make(chan api.Info, 1),
 		ctx:           c,
 		cancel:        cl,
 		upsCancelFunc: make(map[int64]context.CancelFunc),
