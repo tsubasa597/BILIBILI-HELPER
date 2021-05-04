@@ -18,15 +18,19 @@ func GetDynamicMessage(hostUID int64) Info {
 	dynamicSvrSpaceHistoryResponse, err := GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
 		return Info{
-			T:   -1,
 			Err: err,
 		}
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Code != 0 {
 		return Info{
-			T:   -1,
 			Err: fmt.Errorf("请求发生错误: " + dynamicSvrSpaceHistoryResponse.Message),
+		}
+	}
+
+	if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
+		return Info{
+			Err: fmt.Errorf("该用户没有动态"),
 		}
 	}
 
