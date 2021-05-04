@@ -5,17 +5,17 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/global"
 )
 
-type Bili struct {
+type Daily struct {
 	api.API
 }
 
-func New(c global.Cookie) *Bili {
-	return &Bili{
+func New(c global.Cookie) *Daily {
+	return &Daily{
 		API: *api.New(c),
 	}
 }
 
-func Run(b *Bili) (res string) {
+func Run(b *Daily) (res string) {
 	if err, ok := b.userCheck(); ok {
 		res += "WatchVideo: " + b.watchVideo("BV1NT4y137Jc") + "\n"
 		res += "ShareVideo: " + b.shareVideo("BV1NT4y137Jc") + "\n"
@@ -27,7 +27,7 @@ func Run(b *Bili) (res string) {
 	return
 }
 
-func (b *Bili) userCheck() (string, bool) {
+func (b *Daily) userCheck() (string, bool) {
 	resp, err := b.UserCheck()
 	if err != nil {
 		return err.Error(), false
@@ -40,7 +40,7 @@ func (b *Bili) userCheck() (string, bool) {
 	return resp.Message, false
 }
 
-func (b *Bili) watchVideo(bvid string) string {
+func (b *Daily) watchVideo(bvid string) string {
 	resp, err := b.WatchVideo(bvid)
 	if err != nil && resp.Code != 0 {
 		return err.Error()
@@ -53,7 +53,7 @@ func (b *Bili) watchVideo(bvid string) string {
 	return resp.Message
 }
 
-func (b *Bili) sliver2Coins() string {
+func (b *Daily) sliver2Coins() string {
 	const exchangeRate int64 = 700
 	status, err := b.Sliver2CoinsStatus()
 	if err != nil {
@@ -81,7 +81,7 @@ func (b *Bili) sliver2Coins() string {
 	return resp.Message
 }
 
-func (b *Bili) shareVideo(bvid string) string {
+func (b *Daily) shareVideo(bvid string) string {
 	resp, err := b.ShareVideo(bvid)
 	if err != nil && resp.Code != 0 {
 		return err.Error()
@@ -94,7 +94,7 @@ func (b *Bili) shareVideo(bvid string) string {
 	return resp.Message
 }
 
-func (b *Bili) liveCheckin() string {
+func (b *Daily) liveCheckin() string {
 	resp, err := b.LiveCheckin()
 	if err != nil {
 		return err.Error()
