@@ -8,9 +8,10 @@ import (
 )
 
 type Info struct {
-	T    int32
-	Err  error
-	Card interface{}
+	T       int32
+	Err     error
+	Content string
+	Card    interface{}
 }
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
@@ -54,12 +55,17 @@ func GetOriginCard(c *Card) (info Info) {
 			return
 		}
 
-		return GetOriginCard(&Card{
+		info = GetOriginCard(&Card{
 			Desc: &Card_Desc{
 				Type: dynamic.Item.OrigType,
 			},
 			Card: dynamic.Origin,
 		})
+
+		info.Content = dynamic.Item.Content
+		info.T = c.Desc.Timestamp
+
+		return
 	case 2:
 		dynamic := &CardWithImage{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
