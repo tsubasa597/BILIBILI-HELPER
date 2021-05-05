@@ -150,6 +150,13 @@ message Card {
     string bvid = 11;
     string dynamic_id_str = 12;
     int64 uid = 13;
+    message UserProfile {
+        message Info {
+            string uname = 1;
+        }
+        Info info = 1;
+    }
+    UserProfile user_profile = 14;
   }
   message Extra {
     int32 is_space_top = 1;

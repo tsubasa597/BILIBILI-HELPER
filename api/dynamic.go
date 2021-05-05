@@ -12,6 +12,7 @@ type Info struct {
 	Err     error
 	Content string
 	Card    interface{}
+	Name    string
 }
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
@@ -40,8 +41,9 @@ func GetDynamicMessage(hostUID int64) Info {
 
 // GetOriginCard 获取 Card 的源动态
 func GetOriginCard(c *Card) (info Info) {
-	info = Info{
-		T: c.Desc.Timestamp,
+	if c.Extra == nil {
+		info.T = c.Desc.Timestamp
+		info.Name = c.Desc.UserProfile.Info.Uname
 	}
 	switch c.Desc.Type {
 	case 0:
@@ -57,14 +59,14 @@ func GetOriginCard(c *Card) (info Info) {
 
 		info = GetOriginCard(&Card{
 			Desc: &Card_Desc{
-				Type: dynamic.Item.OrigType,
+				Type:        dynamic.Item.OrigType,
+				Timestamp:   c.Desc.Timestamp,
+				UserProfile: c.Desc.UserProfile,
 			},
 			Card: dynamic.Origin,
 		})
 
 		info.Content = dynamic.Item.Content
-		info.T = c.Desc.Timestamp
-
 		return
 	case 2:
 		dynamic := &CardWithImage{}
@@ -75,6 +77,7 @@ func GetOriginCard(c *Card) (info Info) {
 		}
 
 		info.Card = dynamic
+
 		return
 	case 4:
 		dynamic := &CardTextOnly{}
