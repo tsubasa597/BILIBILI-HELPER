@@ -24,7 +24,7 @@ func (d *DynamicListen) ListenDynamic(uid int64) (context.Context, chan api.Info
 	ct, cl := context.WithCancel(d.ctx)
 	d.upsContext[uid] = ct
 	d.upsCancelFunc[uid] = cl
-	c := make(chan api.Info, 5)
+	c := make(chan api.Info, 1)
 	go listen(*d.T, uid, ct, c)
 
 	return ct, c, nil

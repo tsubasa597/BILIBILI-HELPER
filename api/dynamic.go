@@ -41,10 +41,9 @@ func GetDynamicMessage(hostUID int64) Info {
 
 // GetOriginCard 获取 Card 的源动态
 func GetOriginCard(c *Card) (info Info) {
-	if c.Extra == nil {
-		info.T = c.Desc.Timestamp
-		info.Name = c.Desc.UserProfile.Info.Uname
-	}
+	info.T = c.Desc.Timestamp
+	info.Name = c.Desc.UserProfile.Info.Uname
+
 	switch c.Desc.Type {
 	case 0:
 		info.Err = fmt.Errorf("未知动态")
