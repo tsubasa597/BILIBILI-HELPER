@@ -8,22 +8,33 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 )
 
-type DynamicListen struct {
-	T             *time.Ticker
-	ctx           context.Context
-	cancel        context.CancelFunc
-	upsCancelFunc map[int64]context.CancelFunc
-	upsContext    map[int64]context.Context
+var (
+	errNotLinsten = fmt.Errorf("该用户未监听")
+)
+
+type upRoutine struct {
+	cancel context.CancelFunc
+	ctx    context.Context
 }
 
-func (d *DynamicListen) ListenDynamic(uid int64) (context.Context, chan api.Info, error) {
-	if _, ok := d.upsCancelFunc[uid]; ok {
-		return d.upsContext[uid], nil, fmt.Errorf("重复监听")
+type DynamicListen struct {
+	T      *time.Ticker
+	ctx    context.Context
+	cancel context.CancelFunc
+	ups    map[int64]upRoutine
+}
+
+func (d *DynamicListen) Listen(uid int64) (context.Context, chan api.Info, error) {
+	if _, ok := d.ups[uid]; ok {
+		return d.ups[uid].ctx, nil, fmt.Errorf("重复监听")
 	}
 
 	ct, cl := context.WithCancel(d.ctx)
-	d.upsContext[uid] = ct
-	d.upsCancelFunc[uid] = cl
+	d.ups[uid] = upRoutine{
+		cancel: cl,
+		ctx:    ct,
+	}
+
 	c := make(chan api.Info, 1)
 	go listen(*d.T, uid, ct, c)
 
@@ -31,11 +42,11 @@ func (d *DynamicListen) ListenDynamic(uid int64) (context.Context, chan api.Info
 }
 
 func (d *DynamicListen) StopListenUP(uid int64) error {
-	if _, ok := d.upsCancelFunc[uid]; !ok {
-		return fmt.Errorf("该用户未监听")
+	if _, ok := d.ups[uid]; !ok {
+		return errNotLinsten
 	}
 
-	d.upsCancelFunc[uid]()
+	d.ups[uid].cancel()
 	return nil
 }
 
@@ -58,10 +69,9 @@ func listen(ticker time.Ticker, uid int64, ctx context.Context, ch chan<- api.In
 func New() *DynamicListen {
 	c, cl := context.WithCancel(context.Background())
 	return &DynamicListen{
-		T:             time.NewTicker(time.Minute),
-		ctx:           c,
-		cancel:        cl,
-		upsCancelFunc: make(map[int64]context.CancelFunc),
-		upsContext:    make(map[int64]context.Context),
+		T:      time.NewTicker(time.Minute),
+		ctx:    c,
+		cancel: cl,
+		ups:    make(map[int64]upRoutine),
 	}
 }

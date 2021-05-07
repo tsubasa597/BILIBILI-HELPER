@@ -27,6 +27,8 @@ const (
 	Sliver2CoinsStatus     = BaseLiveHost + "/pay/v1/Exchange/getStatus"
 	Sliver2Coins           = BaseLiveHost + "/pay/v1/Exchange/silver2coin"
 	LiveCheckin            = BaseLiveHost + "/xlive/web-ucenter/v1/sign/DoSign"
+	LiverRoomID            = BaseLiveHost + "/room/v1/Room/getRoomInfoOld"
+	LiverStatus            = BaseHost + "/x/space/acc/info"
 )
 
 type API struct {

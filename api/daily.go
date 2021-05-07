@@ -44,6 +44,7 @@ func (api API) ShareVideo(bvid string) (*Response, error) {
 		"bvid": []string{bvid},
 		"csrf": []string{api.conf.BiliJct},
 	}
+
 	rep, err := api.r.Post(AvShare, data)
 	if err != nil {
 		return nil, err

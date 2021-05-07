@@ -15,6 +15,12 @@ type Info struct {
 	Name    string
 }
 
+var (
+	errGetDynamic    = fmt.Errorf("请求发生错误")
+	errNoDynamic     = fmt.Errorf("该用户没有动态")
+	errUnknowDynamic = fmt.Errorf("未知动态")
+)
+
 // GetDynamicMessage 获取目标 uid 的第一条记录
 func GetDynamicMessage(hostUID int64) Info {
 	dynamicSvrSpaceHistoryResponse, err := GetDynamicSrvSpaceHistory(hostUID)
@@ -26,13 +32,13 @@ func GetDynamicMessage(hostUID int64) Info {
 
 	if dynamicSvrSpaceHistoryResponse.Code != 0 {
 		return Info{
-			Err: fmt.Errorf("请求发生错误: " + dynamicSvrSpaceHistoryResponse.Message),
+			Err: errGetDynamic,
 		}
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
 		return Info{
-			Err: fmt.Errorf("该用户没有动态"),
+			Err: errNoDynamic,
 		}
 	}
 
@@ -46,7 +52,7 @@ func GetOriginCard(c *Card) (info Info) {
 
 	switch c.Desc.Type {
 	case 0:
-		info.Err = fmt.Errorf("未知动态")
+		info.Err = errUnknowDynamic
 		return
 	case 1:
 		dynamic := &CardWithOrig{}
