@@ -3,8 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/tsubasa597/BILIBILI-HELPER/global"
 )
 
 type Info struct {
@@ -22,8 +20,8 @@ var (
 )
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
-func GetDynamicMessage(hostUID int64) Info {
-	dynamicSvrSpaceHistoryResponse, err := GetDynamicSrvSpaceHistory(hostUID)
+func (api API) GetDynamicMessage(hostUID int64) Info {
+	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
 		return Info{
 			Err: err,
@@ -42,11 +40,11 @@ func GetDynamicMessage(hostUID int64) Info {
 		}
 	}
 
-	return GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[0])
+	return getOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[0])
 }
 
 // GetOriginCard 获取 Card 的源动态
-func GetOriginCard(c *Card) (info Info) {
+func getOriginCard(c *Card) (info Info) {
 	info.T = c.Desc.Timestamp
 	info.Name = c.Desc.UserProfile.Info.Uname
 
@@ -62,7 +60,7 @@ func GetOriginCard(c *Card) (info Info) {
 			return
 		}
 
-		info = GetOriginCard(&Card{
+		info = getOriginCard(&Card{
 			Desc: &Card_Desc{
 				Type:        dynamic.Item.OrigType,
 				Timestamp:   c.Desc.Timestamp,
@@ -171,8 +169,8 @@ func GetOriginCard(c *Card) (info Info) {
 }
 
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
-func GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
-	rep, err := global.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
+func (api API) GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
+	rep, err := api.r.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
 	if err != nil {
 		return nil, err
 	}

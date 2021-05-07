@@ -22,6 +22,7 @@ type DynamicListen struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	ups    map[int64]upRoutine
+	api    api.API
 }
 
 func (d *DynamicListen) Listen(uid int64) (context.Context, chan api.Info, error) {
@@ -36,7 +37,7 @@ func (d *DynamicListen) Listen(uid int64) (context.Context, chan api.Info, error
 	}
 
 	c := make(chan api.Info, 1)
-	go listen(*d.T, uid, ct, c)
+	go listen(d.api, *d.T, uid, ct, c)
 
 	return ct, c, nil
 }
@@ -55,7 +56,7 @@ func (d DynamicListen) Stop() {
 	d.cancel()
 }
 
-func listen(ticker time.Ticker, uid int64, ctx context.Context, ch chan<- api.Info) {
+func listen(api api.API, ticker time.Ticker, uid int64, ctx context.Context, ch chan<- api.Info) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -66,12 +67,13 @@ func listen(ticker time.Ticker, uid int64, ctx context.Context, ch chan<- api.In
 	}
 }
 
-func New() *DynamicListen {
+func New(api api.API) *DynamicListen {
 	c, cl := context.WithCancel(context.Background())
 	return &DynamicListen{
 		T:      time.NewTicker(time.Minute),
 		ctx:    c,
 		cancel: cl,
 		ups:    make(map[int64]upRoutine),
+		api:    api,
 	}
 }
