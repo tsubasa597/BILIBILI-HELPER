@@ -9,7 +9,7 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/global"
 )
 
-func (api API) LiverStatus(uid int64) (*XSpaceAccInfoResponse, error) {
+func (api API) liverStatus(uid int64) (*XSpaceAccInfoResponse, error) {
 	rep, err := global.Get(fmt.Sprintf("%s?mid=%d", LiverStatus, uid))
 	if err != nil {
 		return nil, err
@@ -20,8 +20,8 @@ func (api API) LiverStatus(uid int64) (*XSpaceAccInfoResponse, error) {
 	return resp, err
 }
 
-func (api API) GetLiverStatus(uid int64) (info Info) {
-	rep, err := api.LiverStatus(uid)
+func (l Listen) GetLiverStatus(uid int64) (info Info) {
+	rep, err := l.api.liverStatus(uid)
 	if err != nil {
 		info.Err = err
 		return
@@ -38,5 +38,5 @@ func (api API) GetLiverStatus(uid int64) (info Info) {
 }
 
 func (l Listen) LiveListen(uid int64) (context.Context, chan Info, error) {
-	return l.listen(uid, l.api.GetLiverStatus)
+	return l.listen(uid, l.GetLiverStatus)
 }

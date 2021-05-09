@@ -52,6 +52,12 @@ message Sliver2CoinsStatusResponse {
     Data data = 4;
 }
 
+message BaseResponse {
+    int32 code = 1;
+    string msg = 2;
+    string message = 3;
+}
+
 message RoomInitResponse {
   int32 code = 1;
   string message = 2;

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -38,6 +39,7 @@ const (
 	errUnknowDynamic = "未知动态"
 	errNotListen     = "该用户未监听"
 	errRepeatListen  = "重复监听"
+	errLoad          = "解析错误"
 )
 
 type API struct {
@@ -61,7 +63,7 @@ type Live struct {
 	LiveTitle   string
 }
 
-func New(c global.Cookie, log *logrus.Logger) *API {
+func New(c global.Cookie, log *logrus.Logger) API {
 	r := global.NewRequests()
 	r.SetHeader(http.Header{
 		"Connection":   []string{"keep-alive"},
@@ -69,7 +71,12 @@ func New(c global.Cookie, log *logrus.Logger) *API {
 		"Cookie":       []string{c.GetVerify()},
 		"Content-Type": []string{"application/x-www-form-urlencoded"},
 	})
-	return &API{
+
+	if log == nil {
+		log = global.NewLog(os.Stdout, logrus.InfoLevel)
+	}
+
+	return API{
 		r:    r,
 		conf: c,
 		log:  log,
