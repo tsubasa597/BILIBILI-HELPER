@@ -10,21 +10,21 @@ import (
 func (l Listen) GetDynamicMessage(hostUID int64) Info {
 	dynamicSvrSpaceHistoryResponse, err := l.api.getDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
-		l.api.log.Debugln(err)
+		l.api.entry.Debugln(err)
 		return Info{
 			Err: err,
 		}
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Code != 0 {
-		l.api.log.Debugln(dynamicSvrSpaceHistoryResponse.Message)
+		l.api.entry.Debugln(dynamicSvrSpaceHistoryResponse.Message)
 		return Info{
 			Err: fmt.Errorf(errGetDynamic),
 		}
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
-		l.api.log.Debugln(errNoDynamic)
+		l.api.entry.Debugln(errNoDynamic)
 		return Info{
 			Err: fmt.Errorf(errNoDynamic),
 		}
@@ -160,9 +160,9 @@ func getOriginCard(c *Card) (info Info) {
 
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
 func (api API) getDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
-	rep, err := api.r.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
+	rep, err := api.r.get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
 	if err != nil {
-		api.log.Debugln(err)
+		api.entry.Debugln(err)
 		return nil, err
 	}
 

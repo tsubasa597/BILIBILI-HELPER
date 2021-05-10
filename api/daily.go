@@ -9,7 +9,7 @@ import (
 
 // UserCheck 用户登录验证
 func (api API) UserCheck() (*BaseResponse, error) {
-	rep, err := api.r.Get(UserLogin)
+	rep, err := api.r.get(UserLogin)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
 		"played_time": []string{strconv.Itoa(rand.Intn(90))},
 	}
 
-	rep, err := api.r.Post(VideoHeartbeat, data)
+	rep, err := api.r.post(VideoHeartbeat, data)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 		"csrf": []string{api.conf.BiliJct},
 	}
 
-	rep, err := api.r.Post(AvShare, data)
+	rep, err := api.r.post(AvShare, data)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 
 // Sliver2CoinsStatus 获取银瓜子和硬币的数量
 func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
-	rep, err := api.r.Get(Sliver2CoinsStatus)
+	rep, err := api.r.get(Sliver2CoinsStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 
 // Sliver2Coins 将银瓜子兑换为硬币
 func (api API) Sliver2Coins() (*BaseResponse, error) {
-	rep, err := api.r.Get(Sliver2Coins)
+	rep, err := api.r.get(Sliver2Coins)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (api API) Sliver2Coins() (*BaseResponse, error) {
 
 // LiveCheckin 直播签到
 func (api API) LiveCheckin() (*BaseResponse, error) {
-	rep, err := api.r.Get(LiveCheckin)
+	rep, err := api.r.get(LiveCheckin)
 	if err != nil {
 		return nil, err
 	}
@@ -120,32 +120,32 @@ func (d Daily) Run() (res string) {
 func (d Daily) userCheck() (string, bool) {
 	resp, err := d.api.UserCheck()
 	if err != nil {
-		d.api.log.Debugln(err)
+		d.api.entry.Debugln(err)
 		return err.Error(), false
 	}
 
 	if resp.Code == 0 {
-		d.api.log.Debugln("登录成功")
+		d.api.entry.Debugln("登录成功")
 		return "登录成功", true
 	}
 
-	d.api.log.Debugln(resp.Message)
+	d.api.entry.Debugln(resp.Message)
 	return resp.Message, false
 }
 
 func (d Daily) watchVideo(bvid string) string {
 	resp, err := d.api.WatchVideo(bvid)
 	if err != nil && resp.Code != 0 {
-		d.api.log.Debugln(err)
+		d.api.entry.Debugln(err)
 		return err.Error()
 	}
 
 	if resp.Code == 0 {
-		d.api.log.Debugln("播放成功")
+		d.api.entry.Debugln("播放成功")
 		return "播放成功"
 	}
 
-	d.api.log.Debugln(resp.Message)
+	d.api.entry.Debugln(resp.Message)
 	return resp.Message
 }
 
@@ -153,19 +153,19 @@ func (d Daily) sliver2Coins() string {
 	const exchangeRate int64 = 700
 	status, err := d.api.Sliver2CoinsStatus()
 	if err != nil {
-		d.api.log.Debugln(err)
+		d.api.entry.Debugln(err)
 		return err.Error()
 	}
 
 	if status.Data.Silver < exchangeRate {
-		d.api.log.Debugln("当前银瓜子余额不足700,不进行兑换")
+		d.api.entry.Debugln("当前银瓜子余额不足700,不进行兑换")
 		return "当前银瓜子余额不足700,不进行兑换"
 	}
 
 	resp, err := d.api.Sliver2Coins()
 
 	if resp.Code == 0 {
-		d.api.log.Debugln("兑换成功")
+		d.api.entry.Debugln("兑换成功")
 		return "兑换成功"
 	}
 
@@ -174,42 +174,42 @@ func (d Daily) sliver2Coins() string {
 	}
 
 	if err != nil {
-		d.api.log.Debugln(err)
+		d.api.entry.Debugln(err)
 		return err.Error()
 	}
 
-	d.api.log.Debugln(resp.Message)
+	d.api.entry.Debugln(resp.Message)
 	return resp.Message
 }
 
 func (d Daily) shareVideo(bvid string) string {
 	resp, err := d.api.ShareVideo(bvid)
 	if err != nil && resp.Code != 0 {
-		d.api.log.Debugln(err)
+		d.api.entry.Debugln(err)
 		return err.Error()
 	}
 
 	if resp.Code == 0 {
-		d.api.log.Debugln("分享成功")
+		d.api.entry.Debugln("分享成功")
 		return "分享成功"
 	}
 
-	d.api.log.Debugln(resp.Message)
+	d.api.entry.Debugln(resp.Message)
 	return resp.Message
 }
 
 func (d Daily) liveCheckin() string {
 	resp, err := d.api.LiveCheckin()
 	if err != nil {
-		d.api.log.Debugln(err)
+		d.api.entry.Debugln(err)
 		return err.Error()
 	}
 
 	if resp.Code == 0 {
-		d.api.log.Debugln("签到成功")
+		d.api.entry.Debugln("签到成功")
 		return "签到成功"
 	}
 
-	d.api.log.Debugln("重复签到")
+	d.api.entry.Debugln("重复签到")
 	return "重复签到"
 }

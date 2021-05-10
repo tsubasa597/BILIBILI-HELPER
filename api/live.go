@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/tsubasa597/BILIBILI-HELPER/global"
 )
 
 func (api API) liverStatus(uid int64) (*XSpaceAccInfoResponse, error) {
-	rep, err := global.Get(fmt.Sprintf("%s?mid=%d", LiverStatus, uid))
+	rep, err := api.r.get(fmt.Sprintf("%s?mid=%d", LiverStatus, uid))
 	if err != nil {
 		return nil, err
 	}
