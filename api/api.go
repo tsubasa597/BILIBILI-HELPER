@@ -77,6 +77,3 @@ func New(c cookie, enrty *logrus.Entry) API {
 		entry: enrty,
 	}
 }
-
-func (api *API) SetLogPath(path string) {
-}

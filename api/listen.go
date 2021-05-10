@@ -21,7 +21,7 @@ type upRoutine struct {
 
 func (l *Listen) listen(uid int64, f func(int64) Info) (context.Context, chan Info, error) {
 	if _, ok := l.ups[uid]; ok {
-		l.api.entry.Debugln(l.ups[uid], fmt.Errorf(errRepeatListen))
+		l.api.entry.Debugln(uid, errRepeatListen)
 		return l.ups[uid].ctx, nil, fmt.Errorf(errRepeatListen)
 	}
 
@@ -33,11 +33,11 @@ func (l *Listen) listen(uid int64, f func(int64) Info) (context.Context, chan In
 	ch := make(chan Info, 1)
 
 	go func() {
-		l.api.entry.Debugln(fmt.Sprintf("Start : %T %d", f, uid))
+		l.api.entry.Debugf("Start : %T %d", f, uid)
 		for {
 			select {
 			case <-l.ctx.Done():
-				l.api.entry.Debugln(fmt.Sprintf("Stop : %T %d", f, uid))
+				l.api.entry.Debugf("Stop : %T %d", f, uid)
 				return
 			case <-l.Tick.C:
 				ch <- f(uid)
@@ -59,7 +59,7 @@ func (d *Listen) StopListenUP(uid int64) error {
 
 // Stop 释放资源
 func (d *Listen) Stop() {
-	d.api.entry.Infoln("All Goroutine Done")
+	d.api.entry.Infoln("All Goroutine Quit")
 	d.cancel()
 }
 
