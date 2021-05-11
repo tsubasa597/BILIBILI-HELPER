@@ -33,7 +33,7 @@ func (r *requests) setHeader(h http.Header) {
 	r.req.Header = h
 }
 
-func (r requests) post(url string, params URL.Values) ([]byte, error) {
+func (r requests) Post(url string, params URL.Values) ([]byte, error) {
 	if r.req.Header == nil {
 		r.req.Header = r.pool.Get().(http.Header)
 	}
@@ -62,7 +62,7 @@ func (r requests) post(url string, params URL.Values) ([]byte, error) {
 	return data, nil
 }
 
-func (r requests) get(url string) ([]byte, error) {
+func (r requests) Get(url string) ([]byte, error) {
 	if r.req.Header == nil {
 		r.req.Header = r.pool.Get().(http.Header)
 	}

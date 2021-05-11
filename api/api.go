@@ -38,9 +38,9 @@ const (
 )
 
 type API struct {
-	conf  cookie
-	r     requests
-	entry *logrus.Entry
+	conf     cookie
+	Requests requests
+	entry    *logrus.Entry
 }
 
 type Info struct {
@@ -72,8 +72,8 @@ func New(c cookie, enrty *logrus.Entry) API {
 	}
 
 	return API{
-		r:     r,
-		conf:  c,
-		entry: enrty,
+		Requests: r,
+		conf:     c,
+		entry:    enrty,
 	}
 }

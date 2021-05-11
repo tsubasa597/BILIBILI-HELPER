@@ -160,7 +160,7 @@ func getOriginCard(c *Card) (info Info) {
 
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
 func (api API) getDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
-	rep, err := api.r.get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
+	rep, err := api.Requests.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
 	if err != nil {
 		api.entry.Debugln(err)
 		return nil, err

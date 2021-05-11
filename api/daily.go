@@ -9,7 +9,7 @@ import (
 
 // UserCheck 用户登录验证
 func (api API) UserCheck() (*BaseResponse, error) {
-	rep, err := api.r.get(UserLogin)
+	rep, err := api.Requests.Get(UserLogin)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
 		"played_time": []string{strconv.Itoa(rand.Intn(90))},
 	}
 
-	rep, err := api.r.post(VideoHeartbeat, data)
+	rep, err := api.Requests.Post(VideoHeartbeat, data)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 		"csrf": []string{api.conf.BiliJct},
 	}
 
-	rep, err := api.r.post(AvShare, data)
+	rep, err := api.Requests.Post(AvShare, data)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 
 // Sliver2CoinsStatus 获取银瓜子和硬币的数量
 func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
-	rep, err := api.r.get(Sliver2CoinsStatus)
+	rep, err := api.Requests.Get(Sliver2CoinsStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 
 // Sliver2Coins 将银瓜子兑换为硬币
 func (api API) Sliver2Coins() (*BaseResponse, error) {
-	rep, err := api.r.get(Sliver2Coins)
+	rep, err := api.Requests.Get(Sliver2Coins)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (api API) Sliver2Coins() (*BaseResponse, error) {
 
 // LiveCheckin 直播签到
 func (api API) LiveCheckin() (*BaseResponse, error) {
-	rep, err := api.r.get(LiveCheckin)
+	rep, err := api.Requests.Get(LiveCheckin)
 	if err != nil {
 		return nil, err
 	}
