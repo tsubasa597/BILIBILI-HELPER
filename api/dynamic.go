@@ -160,5 +160,5 @@ func getOriginCard(c *Card) (info Info) {
 }
 
 func (l *Listen) DynamicListen(uid int64, ticker *time.Ticker) (context.Context, <-chan Info, error) {
-	return l.listen(ticker.C, uid, l.GetDynamicMessage)
+	return l.AddListen(uid, l.GetDynamicMessage)
 }

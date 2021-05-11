@@ -14,8 +14,8 @@ type cookie struct {
 }
 
 // GetVerify 将参数进行组合
-func (cookie cookie) getVerify() string {
-	return fmt.Sprintf("bili_jct=%s;SESSDATA=%s;DedeUserID=%s;", cookie.BiliJct, cookie.SessData, cookie.UserID)
+func (c cookie) getVerify() string {
+	return fmt.Sprintf("bili_jct=%s;SESSDATA=%s;DedeUserID=%s;", c.BiliJct, c.SessData, c.UserID)
 }
 
 func NewCookie(path string) cookie {

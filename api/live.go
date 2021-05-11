@@ -22,5 +22,5 @@ func (l *Listen) GetLiverStatus(uid int64) (info Info) {
 }
 
 func (l *Listen) LiveListen(uid int64, ticker *time.Ticker) (context.Context, chan Info, error) {
-	return l.listen(ticker.C, uid, l.GetLiverStatus)
+	return l.AddListen(uid, l.GetLiverStatus)
 }
