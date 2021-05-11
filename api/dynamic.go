@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
-func (l Listen) GetDynamicMessage(hostUID int64) Info {
-	dynamicSvrSpaceHistoryResponse, err := l.api.getDynamicSrvSpaceHistory(hostUID)
+func (l *Listen) GetDynamicMessage(hostUID int64) Info {
+	dynamicSvrSpaceHistoryResponse, err := l.api.GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
 		l.api.entry.Debugln(err)
 		return Info{
@@ -158,20 +159,6 @@ func getOriginCard(c *Card) (info Info) {
 	return
 }
 
-// GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
-func (api API) getDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
-	rep, err := api.Requests.Get(fmt.Sprintf("%s?host_uid=%d", DynamicSrvSpaceHistory, hostUID))
-	if err != nil {
-		api.entry.Debugln(err)
-		return nil, err
-	}
-
-	resp := &DynamicSvrSpaceHistoryResponse{}
-	err = json.Unmarshal(rep, &resp)
-
-	return resp, err
-}
-
-func (l Listen) DynamicListen(uid int64) (context.Context, <-chan Info, error) {
-	return l.listen(uid, l.GetDynamicMessage)
+func (l *Listen) DynamicListen(uid int64, ticker *time.Ticker) (context.Context, <-chan Info, error) {
+	return l.listen(ticker.C, uid, l.GetDynamicMessage)
 }

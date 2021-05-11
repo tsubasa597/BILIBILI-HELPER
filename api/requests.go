@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	URL "net/url"
@@ -85,4 +86,24 @@ func (r requests) Get(url string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (r requests) gets(url string, v interface{}) error {
+	rep, err := r.Get(url)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(rep, v)
+	return err
+}
+
+func (r requests) posts(url string, params URL.Values, v interface{}) error {
+	rep, err := r.Post(url, params)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(rep, v)
+	return err
 }
