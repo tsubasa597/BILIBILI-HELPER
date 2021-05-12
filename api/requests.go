@@ -79,6 +79,7 @@ func (r requests) Get(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rep.Body.Close()
 
 	data, err := ioutil.ReadAll(rep.Body)
 	if err != nil {
