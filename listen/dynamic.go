@@ -1,32 +1,33 @@
-package api
+package listen
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
 )
 
 // GetDynamicMessage 获取目标 uid 的第一条记录
-func (l *Listen) GetDynamicMessage(hostUID int64) Info {
+func (l *Listen) GetDynamicMessage(hostUID int64) api.Info {
 	dynamicSvrSpaceHistoryResponse, err := l.api.GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
-		l.api.entry.Debugln(err)
-		return Info{
+		l.api.Entry.Debugln(err)
+		return api.Info{
 			Err: err,
 		}
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Code != 0 {
-		l.api.entry.Debugln(dynamicSvrSpaceHistoryResponse.Message)
-		return Info{
+		l.api.Entry.Debugln(dynamicSvrSpaceHistoryResponse.Message)
+		return api.Info{
 			Err: fmt.Errorf(errGetDynamic),
 		}
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
-		l.api.entry.Debugln(errNoDynamic)
-		return Info{
+		l.api.Entry.Debugln(errNoDynamic)
+		return api.Info{
 			Err: fmt.Errorf(errNoDynamic),
 		}
 	}
@@ -35,7 +36,7 @@ func (l *Listen) GetDynamicMessage(hostUID int64) Info {
 }
 
 // GetOriginCard 获取 Card 的源动态
-func getOriginCard(c *Card) (info Info) {
+func getOriginCard(c *api.Card) (info api.Info) {
 	info.T = c.Desc.Timestamp
 	info.Name = c.Desc.UserProfile.Info.Uname
 
@@ -44,15 +45,15 @@ func getOriginCard(c *Card) (info Info) {
 		info.Err = fmt.Errorf(errUnknowDynamic)
 		return
 	case 1:
-		dynamic := &CardWithOrig{}
+		dynamic := &api.CardWithOrig{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
 			return
 		}
 
-		info = getOriginCard(&Card{
-			Desc: &Card_Desc{
+		info = getOriginCard(&api.Card{
+			Desc: &api.Card_Desc{
 				Type:        dynamic.Item.OrigType,
 				Timestamp:   c.Desc.Timestamp,
 				UserProfile: c.Desc.UserProfile,
@@ -63,7 +64,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Content = dynamic.Item.Content
 		return
 	case 2:
-		dynamic := &CardWithImage{}
+		dynamic := &api.CardWithImage{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -74,7 +75,7 @@ func getOriginCard(c *Card) (info Info) {
 
 		return
 	case 4:
-		dynamic := &CardTextOnly{}
+		dynamic := &api.CardTextOnly{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -84,7 +85,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Card = dynamic
 		return
 	case 8:
-		dynamic := &CardWithVideo{}
+		dynamic := &api.CardWithVideo{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -94,7 +95,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Card = dynamic
 		return
 	case 64:
-		dynamic := &CardWithPost{}
+		dynamic := &api.CardWithPost{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -104,7 +105,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Card = dynamic
 		return
 	case 256:
-		dynamic := &CardWithMusic{}
+		dynamic := &api.CardWithMusic{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -114,7 +115,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Card = dynamic
 		return
 	case 512:
-		dynamic := &CardWithAnime{}
+		dynamic := &api.CardWithAnime{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -124,7 +125,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Card = dynamic
 		return
 	case 2048:
-		dynamic := &CardWithSketch{}
+		dynamic := &api.CardWithSketch{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -134,7 +135,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Card = dynamic
 		return
 	case 4200:
-		dynamic := &CardWithLive{}
+		dynamic := &api.CardWithLive{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -144,7 +145,7 @@ func getOriginCard(c *Card) (info Info) {
 		info.Card = dynamic
 		return
 	case 4308:
-		dynamic := &CardWithLiveV2{}
+		dynamic := &api.CardWithLiveV2{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
 			info.Err = err
@@ -159,6 +160,6 @@ func getOriginCard(c *Card) (info Info) {
 	return
 }
 
-func (l *Listen) DynamicListen(uid int64, ticker *time.Ticker) (context.Context, <-chan Info, error) {
+func (l *Listen) DynamicListen(uid int64) (context.Context, <-chan api.Info, error) {
 	return l.AddListen(uid, l.GetDynamicMessage)
 }

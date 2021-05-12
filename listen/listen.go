@@ -1,10 +1,12 @@
-package api
+package listen
 
 import (
 	"context"
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
 )
 
 type Listen struct {
@@ -12,7 +14,7 @@ type Listen struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	ups      map[int64]*upRoutine
-	api      API
+	api      api.API
 	mutex    sync.RWMutex
 }
 
@@ -22,22 +24,22 @@ type upRoutine struct {
 	ctx    context.Context
 }
 
-func (listen *Listen) listen(tick <-chan time.Time, uid int64, f func(int64) Info, ch chan<- Info) {
-	listen.api.entry.Debugf("Start : %T %d", f, uid)
+func (listen *Listen) listen(tick <-chan time.Time, uid int64, f func(int64) api.Info, ch chan<- api.Info) {
+	listen.api.Entry.Debugf("Start : %T %d", f, uid)
 	for {
 		select {
 		case <-listen.ctx.Done():
-			listen.api.entry.Debugf("Stop : %T %d", f, uid)
+			listen.api.Entry.Debugf("Stop : %T %d", f, uid)
 			return
 		case <-tick:
+			listen.mutex.Lock()
 			in := f(uid)
 
-			listen.mutex.Lock()
 			if v, ok := listen.ups[uid]; ok && in.Name != "" {
 				v.name = in.Name
 			}
-			listen.mutex.Unlock()
 
+			listen.mutex.Unlock()
 			ch <- in
 		}
 	}
@@ -58,11 +60,11 @@ func (listen *Listen) StopListenUP(uid int64) error {
 
 // Stop 释放资源
 func (l *Listen) Stop() {
-	l.api.entry.Infoln("All Goroutine Quit")
+	l.api.Entry.Infoln("All Goroutine Quit")
 	l.cancel()
 }
 
-func NewListen(api API) *Listen {
+func NewListen(api api.API) *Listen {
 	c, cl := context.WithCancel(context.Background())
 	return &Listen{
 		Duration: time.Minute * 5,
@@ -84,12 +86,12 @@ func (l *Listen) GetListenList() (ups []string) {
 	return
 }
 
-func (listen *Listen) AddListen(uid int64, f func(int64) Info) (context.Context, chan Info, error) {
+func (listen *Listen) AddListen(uid int64, f func(int64) api.Info) (context.Context, chan api.Info, error) {
 	listen.mutex.Lock()
 	defer listen.mutex.Unlock()
 
 	if v, ok := listen.ups[uid]; ok {
-		listen.api.entry.Debugln(uid, errRepeatListen)
+		listen.api.Entry.Debugln(uid, errRepeatListen)
 		return v.ctx, nil, fmt.Errorf(errRepeatListen)
 	}
 
@@ -98,7 +100,7 @@ func (listen *Listen) AddListen(uid int64, f func(int64) Info) (context.Context,
 		cancel: cl,
 		ctx:    ct,
 	}
-	ch := make(chan Info, 1)
+	ch := make(chan api.Info, 1)
 
 	go listen.listen(time.NewTicker(listen.Duration).C, uid, f, ch)
 	return ct, ch, nil

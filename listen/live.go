@@ -1,11 +1,13 @@
-package api
+package listen
 
 import (
 	"context"
 	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
 )
 
-func (l *Listen) GetLiverStatus(uid int64) (info Info) {
+func (l *Listen) GetLiverStatus(uid int64) (info api.Info) {
 	rep, err := l.api.GetUserInfo(uid)
 	if err != nil {
 		info.Err = err
@@ -21,6 +23,6 @@ func (l *Listen) GetLiverStatus(uid int64) (info Info) {
 	return
 }
 
-func (l *Listen) LiveListen(uid int64, ticker *time.Ticker) (context.Context, chan Info, error) {
+func (l *Listen) LiveListen(uid int64) (context.Context, chan api.Info, error) {
 	return l.AddListen(uid, l.GetLiverStatus)
 }
