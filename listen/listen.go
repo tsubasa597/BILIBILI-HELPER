@@ -79,8 +79,8 @@ func (l *Listen) GetListenList() (ups []string) {
 	l.mutex.RLock()
 	defer l.mutex.RUnlock()
 
-	for _, v := range l.ups {
-		ups = append(ups, v.name)
+	for k, v := range l.ups {
+		ups = append(ups, fmt.Sprintf("%d : %s", k, v.name))
 	}
 
 	return
@@ -95,10 +95,16 @@ func (listen *Listen) AddListen(uid int64, f func(int64) api.Info) (context.Cont
 		return v.ctx, nil, fmt.Errorf(errRepeatListen)
 	}
 
+	v, err := listen.api.GetUserName(uid)
+	if err != nil {
+		listen.api.Entry.Errorln(err)
+	}
+
 	ct, cl := context.WithCancel(listen.ctx)
 	listen.ups[uid] = &upRoutine{
 		cancel: cl,
 		ctx:    ct,
+		name:   v,
 	}
 	ch := make(chan api.Info, 1)
 

@@ -54,6 +54,7 @@ func New(c cookie, enrty *logrus.Entry) API {
 func (api API) GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 	resp := &XSpaceAccInfoResponse{}
 	err := api.Requests.gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
+
 	return resp, err
 }
 
@@ -128,4 +129,13 @@ func (api API) LiverStatus(uid int64) (*GetRoomInfoOldResponse, error) {
 	err := api.Requests.gets(fmt.Sprintf("%s?mid=%d", getRoomInfoOld, uid), resp)
 
 	return resp, err
+}
+
+func (api API) GetUserName(uid int64) (string, error) {
+	info, err := api.GetUserInfo(uid)
+	if err != nil {
+		return "", err
+	}
+
+	return info.Data.Name, nil
 }
