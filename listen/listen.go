@@ -53,6 +53,7 @@ func (listen *Listen) StopListenUP(uid int64) error {
 		return fmt.Errorf(errNotListen)
 	} else {
 		v.cancel()
+		delete(listen.ups, uid)
 	}
 
 	return nil
