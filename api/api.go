@@ -8,11 +8,12 @@ import (
 	"strconv"
 
 	"github.com/sirupsen/logrus"
+	"github.com/tsubasa597/requests"
 )
 
 type API struct {
 	conf     cookie
-	Requests requests
+	Requests *requests.Requests
 	Entry    *logrus.Entry
 }
 
@@ -32,8 +33,8 @@ type Live struct {
 }
 
 func New(c cookie, enrty *logrus.Entry) API {
-	r := newRequests()
-	r.setHeader(http.Header{
+	r := requests.New()
+	r.SetHeader(http.Header{
 		"Connection":   []string{"keep-alive"},
 		"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
 		"Cookie":       []string{c.getVerify()},
@@ -53,7 +54,7 @@ func New(c cookie, enrty *logrus.Entry) API {
 
 func (api API) GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 	resp := &XSpaceAccInfoResponse{}
-	err := api.Requests.gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
+	err := api.Requests.Gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
 
 	return resp, err
 }
@@ -61,7 +62,7 @@ func (api API) GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 // UserCheck 用户登录验证
 func (api API) UserCheck() (*BaseResponse, error) {
 	resp := &BaseResponse{}
-	err := api.Requests.gets(userLogin, resp)
+	err := api.Requests.Gets(userLogin, resp)
 
 	return resp, err
 }
@@ -74,7 +75,7 @@ func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
 	}
 
 	resp := &BaseResponse{}
-	err := api.Requests.posts(videoHeartbeat, data, resp)
+	err := api.Requests.Posts(videoHeartbeat, data, resp)
 
 	return resp, err
 }
@@ -87,7 +88,7 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 	}
 
 	resp := &BaseResponse{}
-	err := api.Requests.posts(avShare, data, resp)
+	err := api.Requests.Posts(avShare, data, resp)
 
 	return resp, err
 }
@@ -95,7 +96,7 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 // Sliver2CoinsStatus 获取银瓜子和硬币的数量
 func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 	resp := &Sliver2CoinsStatusResponse{}
-	err := api.Requests.gets(sliver2CoinsStatus, resp)
+	err := api.Requests.Gets(sliver2CoinsStatus, resp)
 
 	return resp, err
 }
@@ -103,7 +104,7 @@ func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 // Sliver2Coins 将银瓜子兑换为硬币
 func (api API) Sliver2Coins() (*BaseResponse, error) {
 	resp := &BaseResponse{}
-	err := api.Requests.gets(sliver2Coins, resp)
+	err := api.Requests.Gets(sliver2Coins, resp)
 
 	return resp, err
 }
@@ -111,7 +112,7 @@ func (api API) Sliver2Coins() (*BaseResponse, error) {
 // LiveCheckin 直播签到
 func (api API) LiveCheckin() (*BaseResponse, error) {
 	resp := &BaseResponse{}
-	err := api.Requests.gets(liveCheckin, resp)
+	err := api.Requests.Gets(liveCheckin, resp)
 
 	return resp, err
 }
@@ -119,14 +120,14 @@ func (api API) LiveCheckin() (*BaseResponse, error) {
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
 func (api API) GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
-	err := api.Requests.gets(fmt.Sprintf("%s?host_uid=%d", dynamicSrvSpaceHistory, hostUID), resp)
+	err := api.Requests.Gets(fmt.Sprintf("%s?host_uid=%d", dynamicSrvSpaceHistory, hostUID), resp)
 
 	return resp, err
 }
 
 func (api API) LiverStatus(uid int64) (*GetRoomInfoOldResponse, error) {
 	resp := &GetRoomInfoOldResponse{}
-	err := api.Requests.gets(fmt.Sprintf("%s?mid=%d", getRoomInfoOld, uid), resp)
+	err := api.Requests.Gets(fmt.Sprintf("%s?mid=%d", getRoomInfoOld, uid), resp)
 
 	return resp, err
 }
