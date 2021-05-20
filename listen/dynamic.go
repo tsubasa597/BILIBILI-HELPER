@@ -6,37 +6,36 @@ import (
 	"fmt"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
+type Dynamic struct {
+	ups map[int64]*UpRoutine
+}
+
 // GetDynamicMessage 获取目标 uid 的第一条记录
-func (l *Listen) GetDynamicMessage(hostUID int64) api.Info {
-	dynamicSvrSpaceHistoryResponse, err := l.api.GetDynamicSrvSpaceHistory(hostUID)
+func getDynamicMessage(hostUID int64, a api.API) (dynamic info.Dynamic) {
+	dynamicSvrSpaceHistoryResponse, err := a.GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
-		l.api.Entry.Debugln(err)
-		return api.Info{
-			Err: err,
-		}
+		dynamic.Err = err
+		return
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Code != 0 {
-		l.api.Entry.Debugln(dynamicSvrSpaceHistoryResponse.Message)
-		return api.Info{
-			Err: fmt.Errorf(errGetDynamic),
-		}
+		dynamic.Err = fmt.Errorf(errGetDynamic)
+		return
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
-		l.api.Entry.Debugln(errNoDynamic)
-		return api.Info{
-			Err: fmt.Errorf(errNoDynamic),
-		}
+		dynamic.Err = fmt.Errorf(errNoDynamic)
+		return
 	}
 
 	return getOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[0])
 }
 
 // GetOriginCard 获取 Card 的源动态
-func getOriginCard(c *api.Card) (info api.Info) {
+func getOriginCard(c *api.Card) (info info.Dynamic) {
 	info.T = c.Desc.Timestamp
 	info.Name = c.Desc.UserProfile.Info.Uname
 
@@ -160,6 +159,43 @@ func getOriginCard(c *api.Card) (info api.Info) {
 	return
 }
 
-func (l *Listen) DynamicListen(uid int64) (context.Context, <-chan api.Info, error) {
-	return l.AddListen(uid, l.GetDynamicMessage)
+var _ Listener = (*Dynamic)(nil)
+
+func (dynamic Dynamic) Listen(uid int64, a api.API) info.Infoer {
+	return getDynamicMessage(uid, a)
+}
+
+func (dynamic *Dynamic) StopListenUP(uid int64) error {
+	if _, ok := dynamic.ups[uid]; ok {
+		delete(dynamic.ups, uid)
+		return nil
+	} else {
+		return fmt.Errorf("错误")
+	}
+}
+
+func (dynamic Dynamic) GetList() string {
+	var ups string
+	for _, v := range dynamic.ups {
+		ups += fmt.Sprintf("%s\n", v.Name)
+	}
+	return ups
+}
+
+func (dynamic *Dynamic) Add(uid int64, name string, ctx context.Context, cancel context.CancelFunc) error {
+	if _, ok := dynamic.ups[uid]; ok {
+		return fmt.Errorf("错误")
+	}
+	dynamic.ups[uid] = &UpRoutine{
+		Ctx:    ctx,
+		Cancel: cancel,
+		Name:   name,
+	}
+	return nil
+}
+
+func NewDynamic() *Dynamic {
+	return &Dynamic{
+		ups: make(map[int64]*UpRoutine),
+	}
 }

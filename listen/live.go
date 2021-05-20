@@ -2,13 +2,19 @@ package listen
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
-func (l *Listen) GetLiverStatus(uid int64) (info api.Info) {
-	rep, err := l.api.GetUserInfo(uid)
+type Live struct {
+	ups map[int64]*UpRoutine
+}
+
+func getLiverStatus(uid int64, api api.API) (info info.Live) {
+	rep, err := api.GetUserInfo(uid)
 	if err != nil {
 		info.Err = err
 		return
@@ -23,6 +29,43 @@ func (l *Listen) GetLiverStatus(uid int64) (info api.Info) {
 	return
 }
 
-func (l *Listen) LiveListen(uid int64) (context.Context, chan api.Info, error) {
-	return l.AddListen(uid, l.GetLiverStatus)
+var _ Listener = (*Live)(nil)
+
+func (live Live) Listen(uid int64, api api.API) info.Infoer {
+	return getLiverStatus(uid, api)
+}
+
+func (live *Live) StopListenUP(uid int64) error {
+	if _, ok := live.ups[uid]; ok {
+		delete(live.ups, uid)
+		return nil
+	} else {
+		return fmt.Errorf("错误")
+	}
+}
+
+func (live Live) GetList() string {
+	var ups string
+	for _, v := range live.ups {
+		ups += fmt.Sprintf("%s\n", v.Name)
+	}
+	return ups
+}
+
+func (live *Live) Add(uid int64, name string, ctx context.Context, cancel context.CancelFunc) error {
+	if _, ok := live.ups[uid]; ok {
+		return fmt.Errorf("错误")
+	}
+	live.ups[uid] = &UpRoutine{
+		Ctx:    ctx,
+		Cancel: cancel,
+		Name:   name,
+	}
+	return nil
+}
+
+func NewLive() *Live {
+	return &Live{
+		ups: make(map[int64]*UpRoutine),
+	}
 }

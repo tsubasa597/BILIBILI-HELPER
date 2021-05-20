@@ -2,113 +2,86 @@ package listen
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
-type Listen struct {
-	Duration time.Duration
-	ctx      context.Context
-	cancel   context.CancelFunc
-	ups      map[int64]*upRoutine
-	api      api.API
-	mutex    sync.RWMutex
+type Listener interface {
+	Listen(int64, api.API) info.Infoer
+	StopListenUP(int64) error
+	GetList() string
+	Add(int64, string, context.Context, context.CancelFunc) error
 }
 
-type upRoutine struct {
-	name   string
-	cancel context.CancelFunc
-	ctx    context.Context
+var (
+	listenCtx, listenCancel               = context.WithCancel(context.Background())
+	duration                time.Duration = time.Minute * 5
+	mutex                   sync.RWMutex
+)
+
+type UpRoutine struct {
+	Name   string
+	Cancel context.CancelFunc
+	Ctx    context.Context
 }
 
-func (listen *Listen) listen(tick <-chan time.Time, uid int64, f func(int64) api.Info, ch chan<- api.Info) {
-	listen.api.Entry.Debugf("Start : %T %d", f, uid)
+func listen(tick <-chan time.Time, uid int64, listener Listener, ch chan<- info.Infoer, api api.API, ctx context.Context) {
+	api.Entry.Debugf("Start : %T %d", listener, uid)
 	for {
 		select {
-		case <-listen.ctx.Done():
-			listen.api.Entry.Debugf("Stop : %T %d", f, uid)
+		case <-ctx.Done():
+			api.Entry.Debugf("Stop : %T %d", listener, uid)
 			return
 		case <-tick:
-			listen.mutex.Lock()
-			in := f(uid)
-
-			if v, ok := listen.ups[uid]; ok && in.Name != "" {
-				v.name = in.Name
-			}
-
-			listen.mutex.Unlock()
+			in := listener.Listen(uid, api)
 			ch <- in
 		}
 	}
 }
 
-func (listen *Listen) StopListenUP(uid int64) error {
-	listen.mutex.Lock()
-	defer listen.mutex.Unlock()
+func StopListenUP(uid int64, listener Listener) error {
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	if v, ok := listen.ups[uid]; !ok {
-		return fmt.Errorf(errNotListen)
-	} else {
-		v.cancel()
-		delete(listen.ups, uid)
-	}
+	listener.StopListenUP(uid)
 
 	return nil
 }
 
 // Stop 释放资源
-func (l *Listen) Stop() {
-	l.api.Entry.Infoln("All Goroutine Quit")
-	l.cancel()
+func Stop() {
+	listenCancel()
 }
 
-func NewListen(api api.API) *Listen {
-	c, cl := context.WithCancel(context.Background())
-	return &Listen{
-		Duration: time.Minute * 5,
-		ctx:      c,
-		cancel:   cl,
-		ups:      make(map[int64]*upRoutine),
-		api:      api,
-	}
+func GetListenList(listener Listener) string {
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	return listener.GetList()
 }
 
-func (l *Listen) GetListenList() (ups []string) {
-	l.mutex.RLock()
-	defer l.mutex.RUnlock()
+func AddListen(uid int64, listener Listener, api api.API) (context.Context, chan info.Infoer, error) {
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	for k, v := range l.ups {
-		ups = append(ups, fmt.Sprintf("%d : %s", k, v.name))
-	}
-
-	return
-}
-
-func (listen *Listen) AddListen(uid int64, f func(int64) api.Info) (context.Context, chan api.Info, error) {
-	listen.mutex.Lock()
-	defer listen.mutex.Unlock()
-
-	if v, ok := listen.ups[uid]; ok {
-		listen.api.Entry.Debugln(uid, errRepeatListen)
-		return v.ctx, nil, fmt.Errorf(errRepeatListen)
-	}
-
-	v, err := listen.api.GetUserName(uid)
+	ct, cl := context.WithCancel(listenCtx)
+	name, err := api.GetUserName(uid)
 	if err != nil {
-		listen.api.Entry.Errorln(err)
+		api.Entry.Warningf("错误")
 	}
-
-	ct, cl := context.WithCancel(listen.ctx)
-	listen.ups[uid] = &upRoutine{
-		cancel: cl,
-		ctx:    ct,
-		name:   v,
+	if err := listener.Add(uid, name, ct, cl); err != nil {
+		return nil, nil, err
 	}
-	ch := make(chan api.Info, 1)
+	ch := make(chan info.Infoer, 1)
 
-	go listen.listen(time.NewTicker(listen.Duration).C, uid, f, ch)
+	go listen(time.NewTicker(duration).C, uid, listener, ch, api, ct)
+
 	return ct, ch, nil
+}
+
+func SetDuration(d time.Duration) {
+	duration = d
 }

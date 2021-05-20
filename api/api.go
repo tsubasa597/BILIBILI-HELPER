@@ -17,21 +17,6 @@ type API struct {
 	Entry    *logrus.Entry
 }
 
-type Info struct {
-	T       int32
-	Err     error
-	Content string
-	Card    interface{}
-	Name    string
-	Live
-}
-
-type Live struct {
-	LiveStatus  bool
-	LiveRoomURL string
-	LiveTitle   string
-}
-
 func New(c cookie, enrty *logrus.Entry) API {
 	r := requests.New()
 	r.SetHeader(http.Header{
