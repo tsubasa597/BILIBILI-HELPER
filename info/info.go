@@ -1,8 +1,11 @@
 package info
 
-type Infoer interface{}
-
-var _ Infoer = (*Info)(nil)
+type Infoer interface {
+	GetErr() error
+	GetT() int32
+	GetName() string
+	GetData() []interface{}
+}
 
 type Info struct {
 	T    int32
@@ -12,4 +15,12 @@ type Info struct {
 
 func (info Info) GetName() string {
 	return info.Name
+}
+
+func (info Info) GetErr() error {
+	return info.Err
+}
+
+func (info Info) GetT() int32 {
+	return info.T
 }

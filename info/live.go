@@ -6,3 +6,7 @@ type Live struct {
 	LiveRoomURL string
 	LiveTitle   string
 }
+
+func (live Live) GetData() []interface{} {
+	return []interface{}{live.LiveRoomURL, live.LiveStatus, live.LiveTitle}
+}

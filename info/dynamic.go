@@ -7,3 +7,7 @@ type Dynamic struct {
 	Content string
 	Card    interface{}
 }
+
+func (dynamic Dynamic) GetData() []interface{} {
+	return []interface{}{dynamic.Card, dynamic.Content}
+}
