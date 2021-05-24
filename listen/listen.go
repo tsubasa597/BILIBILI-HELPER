@@ -28,7 +28,7 @@ type UpRoutine struct {
 	Ctx    context.Context
 }
 
-func listen(tick <-chan time.Time, uid int64, listener Listener, ch chan<- info.Infoer, api api.API, ctx context.Context) {
+func listen(ctx context.Context, uid int64, listener Listener, api api.API, tick <-chan time.Time, ch chan<- info.Infoer) {
 	api.Entry.Debugf("Start : %T %d", listener, uid)
 	for {
 		select {
@@ -42,7 +42,7 @@ func listen(tick <-chan time.Time, uid int64, listener Listener, ch chan<- info.
 	}
 }
 
-func StopListenUP(uid int64, listener Listener) error {
+func StopUP(uid int64, listener Listener) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -56,14 +56,14 @@ func Stop() {
 	listenCancel()
 }
 
-func GetListenList(listener Listener) string {
+func GetList(listener Listener) string {
 	mutex.RLock()
 	defer mutex.RUnlock()
 
 	return listener.GetList()
 }
 
-func AddListen(uid int64, listener Listener, api api.API) (context.Context, chan info.Infoer, error) {
+func Add(uid int64, listener Listener, api api.API) (context.Context, chan info.Infoer, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -77,7 +77,7 @@ func AddListen(uid int64, listener Listener, api api.API) (context.Context, chan
 	}
 	ch := make(chan info.Infoer, 1)
 
-	go listen(time.NewTicker(duration).C, uid, listener, ch, api, ct)
+	go listen(ct, uid, listener, api, time.NewTicker(duration).C, ch)
 
 	return ct, ch, nil
 }
