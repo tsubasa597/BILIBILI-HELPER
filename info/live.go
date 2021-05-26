@@ -7,6 +7,8 @@ type Live struct {
 	LiveTitle   string
 }
 
-func (live Live) GetData() []interface{} {
-	return []interface{}{live.LiveRoomURL, live.LiveStatus, live.LiveTitle}
+var _ Infoer = (*Live)(nil)
+
+func (Live) Type() Type {
+	return TLive
 }

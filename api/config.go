@@ -18,7 +18,7 @@ func (c cookie) getVerify() string {
 	return fmt.Sprintf("bili_jct=%s;SESSDATA=%s;DedeUserID=%s;", c.BiliJct, c.SessData, c.UserID)
 }
 
-func NewCookie(path string) cookie {
+func newCookie(path string) cookie {
 	vip := viper.New()
 	vip.SetConfigFile(path)
 	vip.ReadInConfig()

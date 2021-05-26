@@ -177,6 +177,10 @@ github.com/tsubasa597/requests v0.0.0-20210515023916-ae066bf32523 h1:0Wx0LCQDhRJ
 github.com/tsubasa597/requests v0.0.0-20210515023916-ae066bf32523/go.mod h1:Frf56sBht+/z/6tOzksYN3l9Lk/tsJwN+R9cCeMb0vI=
 github.com/tsubasa597/requests v0.0.0-20210516055044-5d2054cd0e08 h1:g6vQfnXduJkeRCC3vNWHUDQuGjlduZNZ4ZPPS26SXtw=
 github.com/tsubasa597/requests v0.0.0-20210516055044-5d2054cd0e08/go.mod h1:Frf56sBht+/z/6tOzksYN3l9Lk/tsJwN+R9cCeMb0vI=
+github.com/tsubasa597/requests v0.0.0-20210524131014-623d43ec816f h1:sObYqtoNH1XNa8Gjj/bBpDN/5MakbnWHGf7eDpWAvMo=
+github.com/tsubasa597/requests v0.0.0-20210524131014-623d43ec816f/go.mod h1:Frf56sBht+/z/6tOzksYN3l9Lk/tsJwN+R9cCeMb0vI=
+github.com/tsubasa597/requests v0.0.0-20210525073858-c11370bd516a h1:QdiKrDyc6Kj8ClsLmDDKkr5c8jPYUfQY/ShQxmNxEPg=
+github.com/tsubasa597/requests v0.0.0-20210525073858-c11370bd516a/go.mod h1:Frf56sBht+/z/6tOzksYN3l9Lk/tsJwN+R9cCeMb0vI=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=

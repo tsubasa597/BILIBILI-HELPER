@@ -8,6 +8,6 @@ type Dynamic struct {
 	Card    interface{}
 }
 
-func (dynamic Dynamic) GetData() []interface{} {
-	return []interface{}{dynamic.Card, dynamic.Content}
+func (Dynamic) Type() Type {
+	return TDynamic
 }

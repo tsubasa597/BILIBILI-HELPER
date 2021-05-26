@@ -12,34 +12,40 @@ import (
 )
 
 type API struct {
-	conf     cookie
-	Requests *requests.Requests
-	Entry    *logrus.Entry
+	cookie cookie
+	Entry  *logrus.Entry
+	req    requests.Requests
 }
 
-func New(c cookie, enrty *logrus.Entry) API {
-	r := requests.New()
-	r.SetHeader(http.Header{
-		"Connection":   []string{"keep-alive"},
-		"User-Agent":   []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70"},
-		"Cookie":       []string{c.getVerify()},
-		"Content-Type": []string{"application/x-www-form-urlencoded"},
-	})
+func New(path string, enrty *logrus.Entry) API {
+	c := newCookie(path)
 
 	if enrty == nil {
 		enrty = logrus.NewEntry(newLog())
 	}
 
 	return API{
-		Requests: r,
-		conf:     c,
-		Entry:    enrty,
+		cookie: c,
+		Entry:  enrty,
+		req: requests.Requests{
+			Client: &http.Client{},
+			Headers: map[string]string{
+				"Connection":   "keep-alive",
+				"User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.70",
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			Cookies: map[string]string{
+				"DedeUserID": c.UserID,
+				"SESSDATA":   c.SessData,
+				"bili_jct":   c.BiliJct,
+			},
+		},
 	}
 }
 
 func (api API) GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 	resp := &XSpaceAccInfoResponse{}
-	err := api.Requests.Gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
+	err := api.req.Gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
 
 	return resp, err
 }
@@ -47,7 +53,7 @@ func (api API) GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 // UserCheck 用户登录验证
 func (api API) UserCheck() (*BaseResponse, error) {
 	resp := &BaseResponse{}
-	err := api.Requests.Gets(userLogin, resp)
+	err := api.req.Gets(userLogin, resp)
 
 	return resp, err
 }
@@ -60,7 +66,7 @@ func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
 	}
 
 	resp := &BaseResponse{}
-	err := api.Requests.Posts(videoHeartbeat, data, resp)
+	err := api.req.Posts(videoHeartbeat, data, resp)
 
 	return resp, err
 }
@@ -69,11 +75,11 @@ func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
 func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 	data := url.Values{
 		"bvid": []string{bvid},
-		"csrf": []string{api.conf.BiliJct},
+		"csrf": []string{api.cookie.BiliJct},
 	}
 
 	resp := &BaseResponse{}
-	err := api.Requests.Posts(avShare, data, resp)
+	err := api.req.Posts(avShare, data, resp)
 
 	return resp, err
 }
@@ -81,7 +87,7 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 // Sliver2CoinsStatus 获取银瓜子和硬币的数量
 func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 	resp := &Sliver2CoinsStatusResponse{}
-	err := api.Requests.Gets(sliver2CoinsStatus, resp)
+	err := api.req.Gets(sliver2CoinsStatus, resp)
 
 	return resp, err
 }
@@ -89,7 +95,7 @@ func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 // Sliver2Coins 将银瓜子兑换为硬币
 func (api API) Sliver2Coins() (*BaseResponse, error) {
 	resp := &BaseResponse{}
-	err := api.Requests.Gets(sliver2Coins, resp)
+	err := api.req.Gets(sliver2Coins, resp)
 
 	return resp, err
 }
@@ -97,7 +103,7 @@ func (api API) Sliver2Coins() (*BaseResponse, error) {
 // LiveCheckin 直播签到
 func (api API) LiveCheckin() (*BaseResponse, error) {
 	resp := &BaseResponse{}
-	err := api.Requests.Gets(liveCheckin, resp)
+	err := api.req.Gets(liveCheckin, resp)
 
 	return resp, err
 }
@@ -105,14 +111,14 @@ func (api API) LiveCheckin() (*BaseResponse, error) {
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
 func (api API) GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
-	err := api.Requests.Gets(fmt.Sprintf("%s?host_uid=%d", dynamicSrvSpaceHistory, hostUID), resp)
+	err := api.req.Gets(fmt.Sprintf("%s?host_uid=%d", dynamicSrvSpaceHistory, hostUID), resp)
 
 	return resp, err
 }
 
 func (api API) LiverStatus(uid int64) (*GetRoomInfoOldResponse, error) {
 	resp := &GetRoomInfoOldResponse{}
-	err := api.Requests.Gets(fmt.Sprintf("%s?mid=%d", getRoomInfoOld, uid), resp)
+	err := api.req.Gets(fmt.Sprintf("%s?mid=%d", getRoomInfoOld, uid), resp)
 
 	return resp, err
 }

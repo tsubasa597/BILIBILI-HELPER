@@ -36,8 +36,7 @@ func listen(ctx context.Context, uid int64, listener Listener, api api.API, tick
 			api.Entry.Debugf("Stop : %T %d", listener, uid)
 			return
 		case <-tick:
-			in := listener.Listen(uid, api)
-			ch <- in
+			ch <- listener.Listen(uid, api)
 		}
 	}
 }
