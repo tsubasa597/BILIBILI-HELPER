@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/requests"
@@ -130,4 +131,17 @@ func (api API) GetUserName(uid int64) (string, error) {
 	}
 
 	return info.Data.Name, nil
+}
+
+func (api API) GetRandomAV() (string, error) {
+	resp := &RandomAvResponse{}
+	err := api.req.Gets(randomAV, resp)
+	if err != nil {
+		return "", err
+	}
+	parms := strings.Split(resp.Data.Url, "/")
+	if strings.HasPrefix(parms[len(parms)-1], "BV") {
+		return parms[len(parms)-1], nil
+	}
+	return "", nil
 }

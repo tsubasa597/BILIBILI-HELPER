@@ -58,6 +58,16 @@ message BaseResponse {
     string message = 3;
 }
 
+message RandomAvResponse {
+    int32 code = 1;
+    string msg = 2;
+    string message = 3;
+    message Data {
+        string url = 1;
+    }
+    Data data = 4;
+}
+
 message RoomInitResponse {
   int32 code = 1;
   string message = 2;
