@@ -1,20 +1,30 @@
-package daily
+package task
 
 import "github.com/tsubasa597/BILIBILI-HELPER/api"
 
-func Run(api api.API) (res string) {
-	if err, ok := UserCheck(api); ok {
-		res += "WatchVideo: " + WatchVideo(api, "BV1NT4y137Jc") + "\n"
-		res += "ShareVideo: " + ShareVideo(api, "BV1NT4y137Jc") + "\n"
-		res += "Sliver2Coins: " + Sliver2Coins(api) + "\n"
-		res += "LiveCheckin: " + LiveCheckin(api)
+var _ Tasker = (*Daily)(nil)
+
+type Daily struct {
+	VideoAvID string
+}
+
+func (daily Daily) Run(api api.API) (res string) {
+	if daily.VideoAvID == "" {
+		daily.VideoAvID = getRandomAV(api)
+	}
+
+	if err, ok := userCheck(api); ok {
+		res += "WatchVideo: " + watchVideo(api, daily.VideoAvID) + "\n"
+		res += "ShareVideo: " + shareVideo(api, daily.VideoAvID) + "\n"
+		res += "Sliver2Coins: " + sliver2Coins(api) + "\n"
+		res += "LiveCheckin: " + liveCheckin(api)
 	} else {
 		res += "UserCheck: " + err
 	}
 	return
 }
 
-func UserCheck(api api.API) (string, bool) {
+func userCheck(api api.API) (string, bool) {
 	resp, err := api.UserCheck()
 	if err != nil {
 		api.Entry.Debugln(err)
@@ -30,7 +40,11 @@ func UserCheck(api api.API) (string, bool) {
 	return resp.Message, false
 }
 
-func WatchVideo(api api.API, bvid string) string {
+func watchVideo(api api.API, bvid string) string {
+	if bvid == "" {
+		return "Bvid 为空，跳过"
+	}
+
 	resp, err := api.WatchVideo(bvid)
 	if err != nil && resp.Code != 0 {
 		api.Entry.Debugln(err)
@@ -46,7 +60,7 @@ func WatchVideo(api api.API, bvid string) string {
 	return resp.Message
 }
 
-func Sliver2Coins(api api.API) string {
+func sliver2Coins(api api.API) string {
 	const exchangeRate int64 = 700
 	status, err := api.Sliver2CoinsStatus()
 	if err != nil {
@@ -79,7 +93,11 @@ func Sliver2Coins(api api.API) string {
 	return resp.Message
 }
 
-func ShareVideo(api api.API, bvid string) string {
+func shareVideo(api api.API, bvid string) string {
+	if bvid == "" {
+		return "Bvid 为空，跳过"
+	}
+
 	resp, err := api.ShareVideo(bvid)
 	if err != nil && resp.Code != 0 {
 		api.Entry.Debugln(err)
@@ -95,7 +113,7 @@ func ShareVideo(api api.API, bvid string) string {
 	return resp.Message
 }
 
-func LiveCheckin(api api.API) string {
+func liveCheckin(api api.API) string {
 	resp, err := api.LiveCheckin()
 	if err != nil {
 		api.Entry.Debugln(err)
@@ -109,4 +127,12 @@ func LiveCheckin(api api.API) string {
 
 	api.Entry.Debugln("重复签到")
 	return "重复签到"
+}
+
+func getRandomAV(api api.API) string {
+	s, err := api.GetRandomAV()
+	if err != nil || s == "" {
+		return ""
+	}
+	return s
 }
