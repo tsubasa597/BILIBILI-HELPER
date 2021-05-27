@@ -12,3 +12,7 @@ var _ Infoer = (*Live)(nil)
 func (Live) Type() Type {
 	return TLive
 }
+
+func (live Live) GetData() []interface{} {
+	return []interface{} {live.LiveStatus, live.LiveRoomURL, live.LiveTitle}
+}

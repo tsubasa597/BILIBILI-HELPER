@@ -11,3 +11,7 @@ type Dynamic struct {
 func (Dynamic) Type() Type {
 	return TDynamic
 }
+
+func (dynamic Dynamic) GetData() []interface{} {
+	return []interface{}{dynamic.Content, dynamic.Card}
+}
