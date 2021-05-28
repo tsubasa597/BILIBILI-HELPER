@@ -3,6 +3,9 @@ package info
 type Infoer interface {
 	Type() Type
 	GetData() []interface{}
+	GetT() int32
+	GetErr() error
+	GetName() string
 }
 
 type Type int16
