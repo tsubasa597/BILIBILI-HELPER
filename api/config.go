@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/spf13/viper"
 )
 
@@ -11,11 +9,6 @@ type cookie struct {
 	UserID   string
 	SessData string
 	BiliJct  string
-}
-
-// GetVerify 将参数进行组合
-func (c cookie) getVerify() string {
-	return fmt.Sprintf("bili_jct=%s;SESSDATA=%s;DedeUserID=%s;", c.BiliJct, c.SessData, c.UserID)
 }
 
 func newCookie(path string) cookie {

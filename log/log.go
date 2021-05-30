@@ -1,11 +1,11 @@
-package api
+package log
 
 import (
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"github.com/sirupsen/logrus"
 )
 
-func newLog() *logrus.Logger {
+func NewLog() *logrus.Logger {
 	log := logrus.New()
 	log.SetFormatter(&nested.Formatter{
 		HideKeys:    true,

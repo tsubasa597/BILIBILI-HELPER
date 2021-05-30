@@ -3,6 +3,7 @@ package listen
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
@@ -10,7 +11,7 @@ import (
 )
 
 type Live struct {
-	ups map[int64]*UpRoutine
+	ups sync.Map
 }
 
 func getLiverStatus(uid int64, api api.API) (info info.Live) {
@@ -31,41 +32,49 @@ func getLiverStatus(uid int64, api api.API) (info info.Live) {
 
 var _ Listener = (*Live)(nil)
 
-func (live Live) Listen(uid int64, api api.API) info.Infoer {
-	return getLiverStatus(uid, api)
+func (live *Live) Listen(uid int64, api api.API) []info.Infoer {
+	return []info.Infoer{getLiverStatus(uid, api)}
 }
 
 func (live *Live) StopListenUP(uid int64) error {
-	if _, ok := live.ups[uid]; ok {
-		delete(live.ups, uid)
+	if _, ok := live.ups.Load(uid); ok {
+		live.ups.Delete(uid)
 		return nil
 	} else {
-		return fmt.Errorf("错误")
+		return fmt.Errorf(ErrNotListen)
 	}
 }
 
-func (live Live) GetList() string {
-	var ups string
-	for _, v := range live.ups {
-		ups += fmt.Sprintf("%s\n", v.Name)
-	}
+func (live *Live) GetList() (ups [][]string) {
+	live.ups.Range(func(key, value interface{}) bool {
+		ups = append(ups, []string{value.(*UpRoutine).Name, fmt.Sprint(value.(*UpRoutine).Time)})
+		return true
+	})
+
 	return ups
 }
 
-func (live *Live) Add(uid int64, name string, ctx context.Context, cancel context.CancelFunc) error {
-	if _, ok := live.ups[uid]; ok {
-		return fmt.Errorf("错误")
+func (live *Live) Add(uid, _ int64, api api.API, ctx context.Context, cancel context.CancelFunc) error {
+	if _, ok := live.ups.Load(uid); ok {
+		return fmt.Errorf(ErrRepeatListen)
 	}
-	live.ups[uid] = &UpRoutine{
+
+	var name string
+
+	if s, err := api.GetUserName(uid); err == nil {
+		name = s
+	}
+
+	live.ups.Store(uid, &UpRoutine{
 		Ctx:    ctx,
 		Cancel: cancel,
 		Name:   name,
-	}
+	})
 	return nil
 }
 
 func NewLive() *Live {
 	return &Live{
-		ups: make(map[int64]*UpRoutine),
+		ups: sync.Map{},
 	}
 }
