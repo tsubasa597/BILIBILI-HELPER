@@ -11,7 +11,7 @@ import (
 )
 
 type Dynamic struct {
-	ups sync.Map
+	UPs sync.Map
 }
 
 // GetDynamicMessage 获取目标 uid 的指定记录
@@ -184,7 +184,7 @@ var _ Listener = (*Dynamic)(nil)
 func (dynamic *Dynamic) Listen(uid int64, a api.API) (infos []info.Infoer) {
 	var dynamics []info.Dynamic
 
-	if value, ok := dynamic.ups.Load(uid); ok {
+	if value, ok := dynamic.UPs.Load(uid); ok {
 		dynamics = getDynamicMessage(uid, value.(*UpRoutine).Time, a)
 
 		if len(dynamics) > 0 {
@@ -202,8 +202,8 @@ func (dynamic *Dynamic) Listen(uid int64, a api.API) (infos []info.Infoer) {
 }
 
 func (dynamic *Dynamic) StopListenUP(uid int64) error {
-	if _, ok := dynamic.ups.Load(uid); ok {
-		dynamic.ups.Delete(uid)
+	if _, ok := dynamic.UPs.Load(uid); ok {
+		dynamic.UPs.Delete(uid)
 		return nil
 	} else {
 		return fmt.Errorf(ErrNotListen)
@@ -211,7 +211,7 @@ func (dynamic *Dynamic) StopListenUP(uid int64) error {
 }
 
 func (dynamic *Dynamic) GetList() (ups [][]string) {
-	dynamic.ups.Range(func(key, value interface{}) bool {
+	dynamic.UPs.Range(func(key, value interface{}) bool {
 		ups = append(ups, []string{value.(*UpRoutine).Name, fmt.Sprint(value.(*UpRoutine).Time)})
 		return true
 	})
@@ -220,7 +220,7 @@ func (dynamic *Dynamic) GetList() (ups [][]string) {
 }
 
 func (dynamic *Dynamic) Add(uid, t int64, api api.API, ctx context.Context, cancel context.CancelFunc) error {
-	if _, ok := dynamic.ups.Load(uid); ok {
+	if _, ok := dynamic.UPs.Load(uid); ok {
 		return fmt.Errorf(ErrRepeatListen)
 	}
 
@@ -230,7 +230,7 @@ func (dynamic *Dynamic) Add(uid, t int64, api api.API, ctx context.Context, canc
 		name = s
 	}
 
-	dynamic.ups.Store(uid, &UpRoutine{
+	dynamic.UPs.Store(uid, &UpRoutine{
 		Ctx:    ctx,
 		Cancel: cancel,
 		Name:   name,
@@ -241,6 +241,6 @@ func (dynamic *Dynamic) Add(uid, t int64, api api.API, ctx context.Context, canc
 
 func NewDynamic() *Dynamic {
 	return &Dynamic{
-		ups: sync.Map{},
+		UPs: sync.Map{},
 	}
 }
