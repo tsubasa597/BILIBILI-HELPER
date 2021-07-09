@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	fmt "fmt"
 	"math/rand"
 	"net/http"
@@ -145,4 +146,17 @@ func (api API) GetRandomAV() (string, error) {
 		return parms[len(parms)-1], nil
 	}
 	return "", nil
+}
+
+func GetComments() (*Comments, error) {
+	resp := &Comments{}
+	rep, err := requests.Get(reply)
+	if err != nil {
+		return nil, err
+	}
+	json.Unmarshal(rep, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

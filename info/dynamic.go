@@ -6,6 +6,7 @@ type Dynamic struct {
 	Info
 	Content string
 	Card    interface{}
+	URL     string
 }
 
 func (Dynamic) Type() Type {

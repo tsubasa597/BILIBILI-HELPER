@@ -387,3 +387,20 @@ message CardWithLiveV2 {
   int64 style = 2;
   int64 type = 3;
 }
+
+message Comments {
+    int32 code = 1;
+    string message = 2;
+    message Data {
+        message Replies {
+            int64 ctime = 1;
+            message Content {
+                string message = 1;
+            }
+            Content content = 2;
+            int64 mid = 3;
+        }
+        repeated Replies replies = 1;
+    }
+    Data data = 3;
+}

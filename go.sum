@@ -181,6 +181,8 @@ github.com/tsubasa597/requests v0.0.0-20210524131014-623d43ec816f h1:sObYqtoNH1X
 github.com/tsubasa597/requests v0.0.0-20210524131014-623d43ec816f/go.mod h1:Frf56sBht+/z/6tOzksYN3l9Lk/tsJwN+R9cCeMb0vI=
 github.com/tsubasa597/requests v0.0.0-20210525073858-c11370bd516a h1:QdiKrDyc6Kj8ClsLmDDKkr5c8jPYUfQY/ShQxmNxEPg=
 github.com/tsubasa597/requests v0.0.0-20210525073858-c11370bd516a/go.mod h1:Frf56sBht+/z/6tOzksYN3l9Lk/tsJwN+R9cCeMb0vI=
+github.com/tsubasa597/requests v0.0.0-20210705080220-9b59f997ce19 h1:B0Beg/M3CeSLrA1RZIxdzBYMQTpKsWnJbonqL0pRvyU=
+github.com/tsubasa597/requests v0.0.0-20210705080220-9b59f997ce19/go.mod h1:Frf56sBht+/z/6tOzksYN3l9Lk/tsJwN+R9cCeMb0vI=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=

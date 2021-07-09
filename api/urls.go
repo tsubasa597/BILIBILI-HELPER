@@ -22,4 +22,5 @@ const (
 	sliver2Coins           = baseLiveHost + "/pay/v1/Exchange/silver2coin"
 	liveCheckin            = baseLiveHost + "/xlive/web-ucenter/v1/sign/DoSign"
 	randomAV               = baseHost + "/x/web-interface/search/default"
+	reply                  = baseHost + "x/v2/reply"
 )
