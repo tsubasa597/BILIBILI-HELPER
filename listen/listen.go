@@ -30,7 +30,7 @@ var (
 	duration                time.Duration = time.Minute * 5
 	defaultAPI              api.API       = api.API{
 		Entry: logrus.NewEntry(log.NewLog()),
-		Req: requests.Requests{
+		Req: &requests.Requests{
 			Client: &http.Client{},
 		},
 	}

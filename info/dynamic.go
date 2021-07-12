@@ -4,9 +4,11 @@ var _ Infoer = (*Dynamic)(nil)
 
 type Dynamic struct {
 	Info
-	Content string
-	Card    interface{}
-	URL     string
+	Content     string
+	Card        interface{}
+	URL         string
+	RID         int64
+	CommentType uint8
 }
 
 func (Dynamic) Type() Type {

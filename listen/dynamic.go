@@ -2,7 +2,6 @@ package listen
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -43,140 +42,15 @@ func getDynamicMessage(hostUID, t int64, a api.API) (dynamics []info.Dynamic) {
 	}
 
 	if t == int64(NewListen) {
-		return append(dynamics, getOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index]))
+		return append(dynamics, api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index]))
 	}
 
 	for int64(dynamicSvrSpaceHistoryResponse.Data.Cards[index].Desc.Timestamp) > t {
-		dynamics = append(dynamics, getOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index]))
+		dynamics = append(dynamics, api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index]))
 		index++
 	}
 
 	return dynamics
-}
-
-// GetOriginCard 获取 Card 的源动态
-func getOriginCard(c *api.Card) (info info.Dynamic) {
-	info.T = c.Desc.Timestamp
-	info.Name = c.Desc.UserProfile.Info.Uname
-
-	switch c.Desc.Type {
-	case 0:
-		info.Err = fmt.Errorf(ErrUnknowDynamic)
-		return
-	case 1:
-		dynamic := &api.CardWithOrig{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info = getOriginCard(&api.Card{
-			Desc: &api.Card_Desc{
-				Type:        dynamic.Item.OrigType,
-				Timestamp:   c.Desc.Timestamp,
-				UserProfile: c.Desc.UserProfile,
-			},
-			Card: dynamic.Origin,
-		})
-
-		info.Content = dynamic.Item.Content
-		return
-	case 2:
-		dynamic := &api.CardWithImage{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-
-		return
-	case 4:
-		dynamic := &api.CardTextOnly{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	case 8:
-		dynamic := &api.CardWithVideo{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	case 64:
-		dynamic := &api.CardWithPost{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	case 256:
-		dynamic := &api.CardWithMusic{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	case 512:
-		dynamic := &api.CardWithAnime{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	case 2048:
-		dynamic := &api.CardWithSketch{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	case 4200:
-		dynamic := &api.CardWithLive{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	case 4308:
-		dynamic := &api.CardWithLiveV2{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		return
-	}
-
-	info.Err = fmt.Errorf(ErrLoad)
-	return
 }
 
 var _ Listener = (*Dynamic)(nil)
