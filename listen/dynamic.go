@@ -14,9 +14,9 @@ type Dynamic struct {
 }
 
 // GetDynamicMessage 获取目标 uid 的指定记录
-func getDynamicMessage(hostUID, t int64, a api.API) (dynamics []info.Dynamic) {
+func getDynamicMessage(hostUID, t int64) (dynamics []info.Dynamic) {
 	var index int
-	dynamicSvrSpaceHistoryResponse, err := a.GetDynamicSrvSpaceHistory(hostUID)
+	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID)
 	if err != nil {
 		return append(dynamics, info.Dynamic{
 			Info: info.Info{
@@ -55,17 +55,17 @@ func getDynamicMessage(hostUID, t int64, a api.API) (dynamics []info.Dynamic) {
 
 var _ Listener = (*Dynamic)(nil)
 
-func (dynamic *Dynamic) Listen(uid int64, a api.API) (infos []info.Infoer) {
+func (dynamic *Dynamic) Listen(uid int64, _ api.API) (infos []info.Infoer) {
 	var dynamics []info.Dynamic
 
 	if value, ok := dynamic.UPs.Load(uid); ok {
-		dynamics = getDynamicMessage(uid, value.(*UpRoutine).Time, a)
+		dynamics = getDynamicMessage(uid, value.(*UpRoutine).Time)
 
 		if len(dynamics) > 0 {
 			value.(*UpRoutine).Time = int64(dynamics[0].T)
 		}
 	} else {
-		dynamics = getDynamicMessage(uid, int64(NewListen), a)
+		dynamics = getDynamicMessage(uid, int64(NewListen))
 	}
 
 	for _, v := range dynamics {
@@ -93,7 +93,7 @@ func (dynamic *Dynamic) GetList() (ups [][]string) {
 	return ups
 }
 
-func (dynamic *Dynamic) Add(uid, t int64, api api.API, ctx context.Context, cancel context.CancelFunc) error {
+func (dynamic *Dynamic) Add(uid, t int64, _ api.API, ctx context.Context, cancel context.CancelFunc) error {
 	if _, ok := dynamic.UPs.Load(uid); ok {
 		return fmt.Errorf(ErrRepeatListen)
 	}

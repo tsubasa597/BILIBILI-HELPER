@@ -37,31 +37,17 @@ const (
 	CommentDynamic
 )
 
-const (
-	DynamicUnknow = iota
-	DynamicOrig
-	DynamicImage
-	DynamicText    = (iota + 1)
-	DynamicVideo   = iota << 1
-	DynamicPost    = (iota - 1) << 4
-	DynamicMusic   = (iota + 2) << 5
-	DynamicAnime   = (iota + 1) << 6
-	DynamichSketch = iota << 8
-	DynamicLive    = 4200
-	DynamicLive2   = 4308
-)
-
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
-func (api API) GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
+func GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
-	err := api.Req.Gets(fmt.Sprintf("%s?host_uid=%d", dynamicSrvSpaceHistory, hostUID), resp)
+	err := requests.Gets(fmt.Sprintf("%s?host_uid=%d", dynamicSrvSpaceHistory, hostUID), resp)
 
 	return resp, err
 }
 
-func GetComments(type_, oid int) (*Comments, error) {
+func GetComments(commentType uint8, oid int64) (*Comments, error) {
 	resp := &Comments{}
-	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d", reply, type_, oid), resp)
+	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d", reply, commentType, oid), resp)
 	if err != nil {
 		return nil, err
 	}
@@ -74,10 +60,10 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 	info.Name = c.Desc.UserProfile.Info.Uname
 
 	switch c.Desc.Type {
-	case DynamicUnknow:
+	case DynamicDescType_Unknown:
 		info.Err = fmt.Errorf(ErrUnknowDynamic)
 		return
-	case DynamicOrig:
+	case DynamicDescType_WithOrigin:
 		dynamic := &CardWithOrig{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -90,12 +76,14 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 				Type:        dynamic.Item.OrigType,
 				Timestamp:   c.Desc.Timestamp,
 				UserProfile: c.Desc.UserProfile,
+				Rid:         c.Desc.Origin.Rid,
 			},
 			Card: dynamic.Origin,
 		})
 		info.Content = dynamic.Item.Content
+		info.RID = c.Desc.Origin.Rid
 		return
-	case DynamicImage:
+	case DynamicDescType_WithImage:
 		dynamic := &CardWithImage{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -105,8 +93,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 
 		info.Card = dynamic
 		info.CommentType = CommentDynamicImage
+		info.RID = c.Desc.Rid
 		return
-	case DynamicText:
+	case DynamicDescType_TextOnly:
 		dynamic := &CardTextOnly{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -116,8 +105,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 
 		info.Card = dynamic
 		info.CommentType = CommentDynamic
+		info.RID = c.Desc.Rid
 		return
-	case DynamicVideo:
+	case DynamicDescType_WithVideo:
 		dynamic := &CardWithVideo{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -127,8 +117,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 
 		info.Card = dynamic
 		info.CommentType = CommentViedo
+		info.RID = c.Desc.Rid
 		return
-	case DynamicPost:
+	case DynamicDescType_WithPost:
 		dynamic := &CardWithPost{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -137,8 +128,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 		}
 
 		info.Card = dynamic
+		info.RID = c.Desc.Rid
 		return
-	case DynamicMusic:
+	case DynamicDescType_WithMusic:
 		dynamic := &CardWithMusic{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -148,8 +140,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 
 		info.Card = dynamic
 		info.CommentType = CommentAudio
+		info.RID = c.Desc.Rid
 		return
-	case DynamicAnime:
+	case DynamicDescType_WithAnime:
 		dynamic := &CardWithAnime{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -158,8 +151,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 		}
 
 		info.Card = dynamic
+		info.RID = c.Desc.Rid
 		return
-	case DynamichSketch:
+	case DynamicDescType_WithSketch:
 		dynamic := &CardWithSketch{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -168,8 +162,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 		}
 
 		info.Card = dynamic
+		info.RID = c.Desc.Rid
 		return
-	case DynamicLive:
+	case DynamicDescType_WithLive:
 		dynamic := &CardWithLive{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -178,8 +173,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 		}
 
 		info.Card = dynamic
+		info.RID = c.Desc.Rid
 		return
-	case DynamicLive2:
+	case DynamicDescType_WithLiveV2:
 		dynamic := &CardWithLiveV2{}
 		err := json.Unmarshal([]byte(c.Card), dynamic)
 		if err != nil {
@@ -188,9 +184,9 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 		}
 
 		info.Card = dynamic
+		info.RID = c.Desc.Rid
 		return
 	}
-
 	info.Err = fmt.Errorf(ErrLoad)
 	return
 }

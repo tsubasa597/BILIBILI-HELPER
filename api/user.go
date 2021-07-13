@@ -1,10 +1,14 @@
 package api
 
-import fmt "fmt"
+import (
+	fmt "fmt"
 
-func (api API) GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
+	"github.com/tsubasa597/requests"
+)
+
+func GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 	resp := &XSpaceAccInfoResponse{}
-	err := api.Req.Gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
+	err := requests.Gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
 
 	return resp, err
 }
@@ -17,8 +21,8 @@ func (api API) UserCheck() (*BaseResponse, error) {
 	return resp, err
 }
 
-func (api API) GetUserName(uid int64) (string, error) {
-	info, err := api.GetUserInfo(uid)
+func GetUserName(uid int64) (string, error) {
+	info, err := GetUserInfo(uid)
 	if err != nil {
 		return "", err
 	}

@@ -14,7 +14,7 @@ type Live struct {
 	ups sync.Map
 }
 
-func getLiverStatus(uid int64, api api.API) (info info.Live) {
+func getLiverStatus(uid int64) (info info.Live) {
 	rep, err := api.GetUserInfo(uid)
 	if err != nil {
 		info.Err = err
@@ -32,8 +32,8 @@ func getLiverStatus(uid int64, api api.API) (info info.Live) {
 
 var _ Listener = (*Live)(nil)
 
-func (live *Live) Listen(uid int64, api api.API) []info.Infoer {
-	return []info.Infoer{getLiverStatus(uid, api)}
+func (live *Live) Listen(uid int64, _ api.API) []info.Infoer {
+	return []info.Infoer{getLiverStatus(uid)}
 }
 
 func (live *Live) StopListenUP(uid int64) error {
@@ -54,7 +54,7 @@ func (live *Live) GetList() (ups [][]string) {
 	return ups
 }
 
-func (live *Live) Add(uid, _ int64, api api.API, ctx context.Context, cancel context.CancelFunc) error {
+func (live *Live) Add(uid, _ int64, _ api.API, ctx context.Context, cancel context.CancelFunc) error {
 	if _, ok := live.ups.Load(uid); ok {
 		return fmt.Errorf(ErrRepeatListen)
 	}

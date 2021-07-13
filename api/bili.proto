@@ -173,6 +173,11 @@ message Card {
         Info info = 1;
     }
     UserProfile user_profile = 14;
+    int64 rid = 15;
+    message Origin {
+        int64 rid = 1;
+    }
+    Origin origin = 16;
   }
   message Extra {
     int32 is_space_top = 1;
