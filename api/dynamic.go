@@ -45,9 +45,9 @@ func GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, 
 	return resp, err
 }
 
-func GetComments(commentType uint8, oid int64) (*Comments, error) {
+func GetComments(commentType uint8, oid int64, ps, pn int) (*Comments, error) {
 	resp := &Comments{}
-	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d", reply, commentType, oid), resp)
+	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&ps=%d&pn=%d", reply, commentType, oid, ps, pn), resp)
 	if err != nil {
 		return nil, err
 	}
