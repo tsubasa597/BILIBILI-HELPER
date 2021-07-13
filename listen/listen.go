@@ -2,14 +2,14 @@ package listen
 
 import (
 	"context"
-	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
-	"github.com/tsubasa597/BILIBILI-HELPER/log"
-	"github.com/tsubasa597/requests"
+)
+
+const (
+	NewListen = iota + 1
 )
 
 type Listener interface {
@@ -19,22 +19,11 @@ type Listener interface {
 	Add(int64, int64, api.API, context.Context, context.CancelFunc) error
 }
 
-type State int64
-
-const (
-	NewListen State = iota + 1
-)
-
-var (
-	listenCtx, listenCancel               = context.WithCancel(context.Background())
-	duration                time.Duration = time.Minute * 5
-	defaultAPI              api.API       = api.API{
-		Entry: logrus.NewEntry(log.NewLog()),
-		Req: &requests.Requests{
-			Client: &http.Client{},
-		},
-	}
-)
+type Listen struct {
+	listenCtx    context.Context
+	listenCancel context.CancelFunc
+	api          api.API
+}
 
 type UpRoutine struct {
 	Name   string
@@ -43,15 +32,15 @@ type UpRoutine struct {
 	Time   int64
 }
 
-func listen(ctx context.Context, uid int64, listener Listener, tick <-chan time.Time, ch chan<- []info.Infoer) {
-	defaultAPI.Entry.Debugf("Start : %T %d", listener, uid)
+func (listen *Listen) listen(ctx context.Context, uid int64, listener Listener, tick <-chan time.Time, ch chan<- []info.Infoer) {
+	listen.api.Entry.Debugf("Start : %T %d", listener, uid)
 	for {
 		select {
 		case <-ctx.Done():
-			defaultAPI.Entry.Debugf("Stop : %T %d", listener, uid)
+			listen.api.Entry.Debugf("Stop : %T %d", listener, uid)
 			return
 		case <-tick:
-			ch <- listener.Listen(uid, defaultAPI)
+			ch <- listener.Listen(uid, listen.api)
 		}
 	}
 }
@@ -63,30 +52,31 @@ func StopUP(uid int64, listener Listener) error {
 }
 
 // Stop 释放资源
-func Stop() {
-	listenCancel()
+func (listen *Listen) Stop() {
+	listen.listenCancel()
 }
 
 func GetList(listener Listener) [][]string {
 	return listener.GetList()
 }
 
-func Add(uid, t int64, listener Listener) (context.Context, chan []info.Infoer, error) {
-	ct, cl := context.WithCancel(listenCtx)
-	if err := listener.Add(uid, t, defaultAPI, ct, cl); err != nil {
+func (listen *Listen) Add(uid, t int64, listener Listener, duration time.Duration) (context.Context, chan []info.Infoer, error) {
+	ct, cl := context.WithCancel(listen.listenCtx)
+	if err := listener.Add(uid, t, listen.api, ct, cl); err != nil {
 		return nil, nil, err
 	}
 	ch := make(chan []info.Infoer, 1)
 
-	go listen(ct, uid, listener, time.NewTicker(duration).C, ch)
+	go listen.listen(ct, uid, listener, time.NewTicker(duration).C, ch)
 
 	return ct, ch, nil
 }
 
-func SetDuration(d time.Duration) {
-	duration = d
-}
-
-func SetAPI(api api.API) {
-	defaultAPI = api
+func New(api api.API) *Listen {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Listen{
+		listenCtx:    ctx,
+		listenCancel: cancel,
+		api:          api,
+	}
 }
