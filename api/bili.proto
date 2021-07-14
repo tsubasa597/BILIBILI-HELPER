@@ -406,8 +406,12 @@ message Comments {
             message Content {
                 string message = 1;
             }
+            message Member {
+                string uname = 1;
+            }
             Content content = 2;
             int64 mid = 3;
+            Member member = 4;
         }
         repeated Replies replies = 1;
         Page page = 2;
