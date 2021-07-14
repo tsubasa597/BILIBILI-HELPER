@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	fmt "fmt"
+	"strconv"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
@@ -76,12 +77,15 @@ func GetOriginCard(c *Card) (info info.Dynamic) {
 				Type:        dynamic.Item.OrigType,
 				Timestamp:   c.Desc.Timestamp,
 				UserProfile: c.Desc.UserProfile,
-				Rid:         c.Desc.Origin.Rid,
 			},
 			Card: dynamic.Origin,
 		})
 		info.Content = dynamic.Item.Content
-		info.RID = c.Desc.Origin.Rid
+
+		var rid int
+		rid, info.Err = strconv.Atoi(c.Desc.DynamicIdStr)
+		info.RID = int64(rid)
+
 		return
 	case DynamicDescType_WithImage:
 		dynamic := &CardWithImage{}
