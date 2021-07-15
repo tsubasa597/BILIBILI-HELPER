@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
@@ -14,39 +15,42 @@ type Dynamic struct {
 }
 
 // GetDynamicMessage 获取目标 uid 的指定记录
-func getDynamicMessage(hostUID, t int64) (dynamics []info.Dynamic) {
-	var index int
-	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID)
+func getDynamicMessage(hostUID, t int64, log *logrus.Entry) (dynamics []info.Dynamic) {
+	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID, 0)
 	if err != nil {
-		return append(dynamics, info.Dynamic{
-			Info: info.Info{
-				Err: err,
-			},
-		})
+		log.Errorln(err)
+		return
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Code != 0 {
-		return append(dynamics, info.Dynamic{
-			Info: info.Info{
-				Err: fmt.Errorf(ErrGetDynamic),
-			},
-		})
+		log.Errorln(ErrGetDynamic)
+		return
 	}
 
 	if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
-		return append(dynamics, info.Dynamic{
-			Info: info.Info{
-				Err: fmt.Errorf(ErrNoDynamic),
-			},
-		})
+		log.Errorln(ErrNoDynamic)
+		return
 	}
 
+	var index int
 	if t == int64(NewListen) {
-		return append(dynamics, api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index]))
+		info, err := api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index])
+		if err != nil {
+			log.Errorln(err)
+			return
+		}
+
+		return append(dynamics, info)
 	}
 
 	for int64(dynamicSvrSpaceHistoryResponse.Data.Cards[index].Desc.Timestamp) > t {
-		dynamics = append(dynamics, api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index]))
+		info, err := api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index])
+		if err != nil {
+			log.Errorln(err)
+			continue
+		}
+
+		dynamics = append(dynamics, info)
 		index++
 	}
 
@@ -55,17 +59,17 @@ func getDynamicMessage(hostUID, t int64) (dynamics []info.Dynamic) {
 
 var _ Listener = (*Dynamic)(nil)
 
-func (dynamic *Dynamic) Listen(uid int64, _ api.API) (infos []info.Infoer) {
+func (dynamic *Dynamic) Listen(uid int64, _ api.API, log *logrus.Entry) (infos []info.Infoer) {
 	var dynamics []info.Dynamic
 
 	if value, ok := dynamic.UPs.Load(uid); ok {
-		dynamics = getDynamicMessage(uid, value.(*UpRoutine).Time)
+		dynamics = getDynamicMessage(uid, value.(*UpRoutine).Time, log)
 
 		if len(dynamics) > 0 {
 			value.(*UpRoutine).Time = int64(dynamics[0].T)
 		}
 	} else {
-		dynamics = getDynamicMessage(uid, int64(NewListen))
+		dynamics = getDynamicMessage(uid, int64(NewListen), log)
 	}
 
 	for _, v := range dynamics {

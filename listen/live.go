@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
@@ -14,10 +15,10 @@ type Live struct {
 	ups sync.Map
 }
 
-func getLiverStatus(uid int64) (info info.Live) {
+func getLiverStatus(uid int64, log *logrus.Entry) (info info.Live) {
 	rep, err := api.GetUserInfo(uid)
 	if err != nil {
-		info.Err = err
+		log.Errorln(err)
 		return
 	}
 	info.Name = rep.Data.Name
@@ -32,8 +33,8 @@ func getLiverStatus(uid int64) (info info.Live) {
 
 var _ Listener = (*Live)(nil)
 
-func (live *Live) Listen(uid int64, _ api.API) []info.Infoer {
-	return []info.Infoer{getLiverStatus(uid)}
+func (live *Live) Listen(uid int64, _ api.API, log *logrus.Entry) []info.Infoer {
+	return []info.Infoer{getLiverStatus(uid, log)}
 }
 
 func (live *Live) StopListenUP(uid int64) error {

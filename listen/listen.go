@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
+	log "github.com/tsubasa597/BILIBILI-HELPER/log"
 )
 
 const (
@@ -13,7 +15,7 @@ const (
 )
 
 type Listener interface {
-	Listen(int64, api.API) []info.Infoer
+	Listen(int64, api.API, *logrus.Entry) []info.Infoer
 	StopListenUP(int64) error
 	GetList() [][]string
 	Add(int64, int64, api.API, context.Context, context.CancelFunc) error
@@ -23,6 +25,7 @@ type Listen struct {
 	listenCtx    context.Context
 	listenCancel context.CancelFunc
 	api          api.API
+	log          *logrus.Entry
 }
 
 type UpRoutine struct {
@@ -33,14 +36,14 @@ type UpRoutine struct {
 }
 
 func (listen *Listen) listen(ctx context.Context, uid int64, listener Listener, tick <-chan time.Time, ch chan<- []info.Infoer) {
-	listen.api.Entry.Debugf("Start : %T %d", listener, uid)
+	listen.log.Debugf("Start : %T %d", listener, uid)
 	for {
 		select {
 		case <-ctx.Done():
-			listen.api.Entry.Debugf("Stop : %T %d", listener, uid)
+			listen.log.Debugf("Stop : %T %d", listener, uid)
 			return
 		case <-tick:
-			ch <- listener.Listen(uid, listen.api)
+			ch <- listener.Listen(uid, listen.api, listen.log)
 		}
 	}
 }
@@ -72,11 +75,16 @@ func (listen *Listen) Add(uid, t int64, listener Listener, duration time.Duratio
 	return ct, ch, nil
 }
 
-func New(api api.API) *Listen {
+func New(api api.API, entry *logrus.Entry) *Listen {
+	if entry == nil {
+		entry = logrus.NewEntry(log.NewLog())
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Listen{
 		listenCtx:    ctx,
 		listenCancel: cancel,
 		api:          api,
+		log:          entry,
 	}
 }

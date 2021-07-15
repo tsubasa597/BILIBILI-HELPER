@@ -39,158 +39,78 @@ const (
 )
 
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
-func GetDynamicSrvSpaceHistory(hostUID int64) (*DynamicSvrSpaceHistoryResponse, error) {
+func GetDynamicSrvSpaceHistory(hostUID, nextOffect int64) (*DynamicSvrSpaceHistoryResponse, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
-	err := requests.Gets(fmt.Sprintf("%s?host_uid=%d", dynamicSrvSpaceHistory, hostUID), resp)
+	err := requests.Gets(fmt.Sprintf("%s?host_uid=%d?offset_dynamic_id=%d",
+		dynamicSrvSpaceHistory, hostUID, nextOffect), resp)
 
 	return resp, err
 }
 
 func GetComments(commentType uint8, oid int64, ps, pn int) (*Comments, error) {
 	resp := &Comments{}
-	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&ps=%d&pn=%d", reply, commentType, oid, ps, pn), resp)
+	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&ps=%d&pn=%d",
+		reply, commentType, oid, ps, pn), resp)
 	if err != nil {
 		return nil, err
 	}
-	return resp, err
+
+	return resp, nil
 }
 
 // GetOriginCard 获取 Card 的源动态
-func GetOriginCard(c *Card) (info info.Dynamic) {
-	info.T = c.Desc.Timestamp
-	info.Name = c.Desc.UserProfile.Info.Uname
+func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
+	dynamic.T = c.Desc.Timestamp
+	dynamic.Name = c.Desc.UserProfile.Info.Uname
+	dynamic.Card = c.Card
+
+	i, err := strconv.Atoi(c.Desc.DynamicIdStr)
+	if err != nil {
+		return
+	}
+	dynamic.RID = int64(i)
 
 	switch c.Desc.Type {
 	case DynamicDescType_Unknown:
-		info.Err = fmt.Errorf(ErrUnknowDynamic)
-		return
+		return info.Dynamic{}, fmt.Errorf(ErrUnknowDynamic)
 	case DynamicDescType_WithOrigin:
-		dynamic := &CardWithOrig{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
+		orig := &CardWithOrig{}
+		err = json.Unmarshal([]byte(c.Card), orig)
 		if err != nil {
-			info.Err = err
 			return
 		}
 
-		info = GetOriginCard(&Card{
+		var dy info.Dynamic
+		dy, err = GetOriginCard(&Card{
 			Desc: &Card_Desc{
-				Type:        dynamic.Item.OrigType,
-				Timestamp:   c.Desc.Timestamp,
-				UserProfile: c.Desc.UserProfile,
+				Type:         orig.Item.OrigType,
+				Timestamp:    c.Desc.Timestamp,
+				UserProfile:  c.Desc.UserProfile,
+				DynamicIdStr: c.Desc.DynamicIdStr,
 			},
-			Card: dynamic.Origin,
+			Card: orig.Origin,
 		})
-		info.Content = dynamic.Item.Content
+		if err != nil {
+			return dy, err
+		}
 
-		var rid int
-		rid, info.Err = strconv.Atoi(c.Desc.DynamicIdStr)
-		info.RID = int64(rid)
+		dynamic.CommentType = CommentDynamic
+		dynamic.Content = orig.Item.Content
 
-		return
 	case DynamicDescType_WithImage:
-		dynamic := &CardWithImage{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
+		dynamic.CommentType = CommentDynamicImage
 
-		info.Card = dynamic
-		info.CommentType = CommentDynamicImage
-		info.RID = c.Desc.Rid
-		return
 	case DynamicDescType_TextOnly:
-		dynamic := &CardTextOnly{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
+		dynamic.CommentType = CommentDynamic
 
-		info.Card = dynamic
-		info.CommentType = CommentDynamic
-		info.RID = c.Desc.Rid
-		return
 	case DynamicDescType_WithVideo:
-		dynamic := &CardWithVideo{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
+		dynamic.CommentType = CommentViedo
 
-		info.Card = dynamic
-		info.CommentType = CommentViedo
-		info.RID = c.Desc.Rid
-		return
-	case DynamicDescType_WithPost:
-		dynamic := &CardWithPost{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		info.RID = c.Desc.Rid
-		return
 	case DynamicDescType_WithMusic:
-		dynamic := &CardWithMusic{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
+		dynamic.CommentType = CommentAudio
 
-		info.Card = dynamic
-		info.CommentType = CommentAudio
-		info.RID = c.Desc.Rid
-		return
-	case DynamicDescType_WithAnime:
-		dynamic := &CardWithAnime{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		info.RID = c.Desc.Rid
-		return
-	case DynamicDescType_WithSketch:
-		dynamic := &CardWithSketch{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		info.RID = c.Desc.Rid
-		return
-	case DynamicDescType_WithLive:
-		dynamic := &CardWithLive{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		info.RID = c.Desc.Rid
-		return
-	case DynamicDescType_WithLiveV2:
-		dynamic := &CardWithLiveV2{}
-		err := json.Unmarshal([]byte(c.Card), dynamic)
-		if err != nil {
-			info.Err = err
-			return
-		}
-
-		info.Card = dynamic
-		info.RID = c.Desc.Rid
-		return
+	default:
+		err = fmt.Errorf(ErrLoad)
 	}
-	info.Err = fmt.Errorf(ErrLoad)
 	return
 }

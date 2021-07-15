@@ -4,26 +4,19 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tsubasa597/BILIBILI-HELPER/log"
 	"github.com/tsubasa597/requests"
 )
 
 type API struct {
 	cookie cookie
-	Entry  *logrus.Entry
 	Req    *requests.Requests
 }
 
 func New(path string, enrty *logrus.Entry) API {
 	c := newCookie(path)
 
-	if enrty == nil {
-		enrty = logrus.NewEntry(log.NewLog())
-	}
-
 	return API{
 		cookie: c,
-		Entry:  enrty,
 		Req: &requests.Requests{
 			Client: &http.Client{},
 			Headers: map[string]string{
