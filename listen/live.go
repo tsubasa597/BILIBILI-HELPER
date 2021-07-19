@@ -22,7 +22,7 @@ func getLiverStatus(uid int64, log *logrus.Entry) (info info.Live) {
 		return
 	}
 	info.Name = rep.Data.Name
-	info.T = int32(time.Now().Unix())
+	info.Time = int32(time.Now().Unix())
 	info.LiveRoomURL = rep.Data.LiveRoom.Url
 	info.LiveTitle = rep.Data.LiveRoom.Title
 	if rep.Data.LiveRoom.RoomStatus == 1 {
@@ -34,7 +34,8 @@ func getLiverStatus(uid int64, log *logrus.Entry) (info info.Live) {
 var _ Listener = (*Live)(nil)
 
 func (live *Live) Listen(uid int64, _ api.API, log *logrus.Entry) []info.Infoer {
-	return []info.Infoer{getLiverStatus(uid, log)}
+	status := getLiverStatus(uid, log)
+	return []info.Infoer{&status}
 }
 
 func (live *Live) StopListenUP(uid int64) error {

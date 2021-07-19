@@ -1,7 +1,8 @@
 package info
 
 type Live struct {
-	Info
+	Name        string
+	Time        int32
 	LiveStatus  bool
 	LiveRoomURL string
 	LiveTitle   string
@@ -14,5 +15,9 @@ func (Live) Type() Type {
 }
 
 func (live Live) GetData() []interface{} {
-	return []interface{} {live.LiveStatus, live.LiveRoomURL, live.LiveTitle}
+	return []interface{}{live.LiveStatus, live.LiveRoomURL, live.LiveTitle}
+}
+
+func (live *Live) GetInstance() interface{} {
+	return live
 }

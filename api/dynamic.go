@@ -60,7 +60,7 @@ func GetComments(commentType uint8, oid int64, ps, pn int) (*Comments, error) {
 
 // GetOriginCard 获取 Card 的源动态
 func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
-	dynamic.T = c.Desc.Timestamp
+	dynamic.Time = c.Desc.Timestamp
 	dynamic.Name = c.Desc.UserProfile.Info.Uname
 	dynamic.Card = c.Card
 

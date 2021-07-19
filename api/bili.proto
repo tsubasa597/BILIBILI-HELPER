@@ -412,6 +412,7 @@ message Comments {
             Content content = 2;
             int64 mid = 3;
             Member member = 4;
+            int64 rpid = 5;
         }
         repeated Replies replies = 1;
         Page page = 2;

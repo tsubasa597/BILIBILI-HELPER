@@ -66,14 +66,14 @@ func (dynamic *Dynamic) Listen(uid int64, _ api.API, log *logrus.Entry) (infos [
 		dynamics = getDynamicMessage(uid, value.(*UpRoutine).Time, log)
 
 		if len(dynamics) > 0 {
-			value.(*UpRoutine).Time = int64(dynamics[0].T)
+			value.(*UpRoutine).Time = int64(dynamics[0].Time)
 		}
 	} else {
 		dynamics = getDynamicMessage(uid, int64(NewListen), log)
 	}
 
 	for _, v := range dynamics {
-		infos = append(infos, v)
+		infos = append(infos, &v)
 	}
 
 	return
