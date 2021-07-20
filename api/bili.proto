@@ -405,6 +405,10 @@ message Comments {
             int64 ctime = 1;
             message Content {
                 string message = 1;
+                message Emote {
+                    int32 id = 1;
+                }
+                map<string, Emote> emote = 2;
             }
             message Member {
                 string uname = 1;
