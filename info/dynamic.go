@@ -9,6 +9,7 @@ type Dynamic struct {
 	Card        string
 	RID         int64
 	CommentType uint8
+	DynamicID   int64
 }
 
 func (Dynamic) Type() Type {

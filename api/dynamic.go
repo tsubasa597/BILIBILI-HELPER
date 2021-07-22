@@ -69,6 +69,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		return
 	}
 	dynamic.RID = int64(i)
+	dynamic.DynamicID = int64(i)
 
 	switch c.Desc.Type {
 	case DynamicDescType_Unknown:
