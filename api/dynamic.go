@@ -41,7 +41,7 @@ const (
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
 func GetDynamicSrvSpaceHistory(hostUID, nextOffect int64) (*DynamicSvrSpaceHistoryResponse, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
-	err := requests.Gets(fmt.Sprintf("%s?host_uid=%d?offset_dynamic_id=%d",
+	err := requests.Gets(fmt.Sprintf("%s?host_uid=%d&offset_dynamic_id=%d",
 		dynamicSrvSpaceHistory, hostUID, nextOffect), resp)
 
 	return resp, err
@@ -101,8 +101,20 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 	case DynamicDescType_WithImage:
 		dynamic.CommentType = CommentDynamicImage
 
+		item := &CardWithImage{}
+		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
+			return
+		}
+		dynamic.Content = item.Item.Description
+
 	case DynamicDescType_TextOnly:
 		dynamic.CommentType = CommentDynamic
+
+		item := &CardTextOnly{}
+		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
+			return
+		}
+		dynamic.Content = item.Item.Content
 
 	case DynamicDescType_WithVideo:
 		dynamic.CommentType = CommentViedo
