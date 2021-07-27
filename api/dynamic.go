@@ -120,6 +120,10 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.CommentType = CommentViedo
 		dynamic.RID = c.Desc.Rid
 
+	case DynamicDescType_WithPost:
+		dynamic.CommentType = CommentColumn
+		dynamic.RID = c.Desc.Rid
+
 	case DynamicDescType_WithMusic:
 		dynamic.CommentType = CommentAudio
 
