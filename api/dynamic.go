@@ -41,16 +41,16 @@ const (
 // GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
 func GetDynamicSrvSpaceHistory(hostUID, nextOffect int64) (*DynamicSvrSpaceHistoryResponse, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
-	err := requests.Gets(fmt.Sprintf("%s?host_uid=%d&offset_dynamic_id=%d",
+	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
 		dynamicSrvSpaceHistory, hostUID, nextOffect), resp)
 
 	return resp, err
 }
 
-func GetComments(commentType uint8, oid int64, ps, pn int) (*Comments, error) {
+func GetComments(commentType, sort uint8, oid int64, ps, pn int) (*Comments, error) {
 	resp := &Comments{}
-	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&ps=%d&pn=%d",
-		reply, commentType, oid, ps, pn), resp)
+	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&sort=%d&ps=%d&pn=%d",
+		reply, commentType, oid, sort, ps, pn), resp)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +105,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
 			return
 		}
+		dynamic.RID = item.Item.Id
 		dynamic.Content = item.Item.Description
 
 	case DynamicDescType_TextOnly:
