@@ -18,7 +18,7 @@ type Listener interface {
 	Listen(int64, api.API, *logrus.Entry) []info.Infoer
 	StopListenUP(int64) error
 	GetList() [][]string
-	Add(int64, int64, api.API, context.Context, context.CancelFunc) error
+	Add(int64, int32, api.API, context.Context, context.CancelFunc) error
 }
 
 type Listen struct {
@@ -32,7 +32,7 @@ type UpRoutine struct {
 	Name   string
 	Cancel context.CancelFunc
 	Ctx    context.Context
-	Time   int64
+	Time   int32
 }
 
 func (listen *Listen) listen(ctx context.Context, uid int64, listener Listener, tick <-chan time.Time, ch chan<- []info.Infoer) {
@@ -63,7 +63,7 @@ func GetList(listener Listener) [][]string {
 	return listener.GetList()
 }
 
-func (listen *Listen) Add(uid, t int64, listener Listener, duration time.Duration) (context.Context, chan []info.Infoer, error) {
+func (listen *Listen) Add(uid int64, t int32, listener Listener, duration time.Duration) (context.Context, chan []info.Infoer, error) {
 	ct, cl := context.WithCancel(listen.listenCtx)
 	if err := listener.Add(uid, t, listen.api, ct, cl); err != nil {
 		return nil, nil, err
@@ -75,7 +75,7 @@ func (listen *Listen) Add(uid, t int64, listener Listener, duration time.Duratio
 	return ct, ch, nil
 }
 
-func New(api api.API, entry *logrus.Entry) *Listen {
+func New(api api.API, entry *logrus.Entry) (*Listen, context.Context) {
 	if entry == nil {
 		entry = logrus.NewEntry(log.NewLog())
 	}
@@ -86,5 +86,5 @@ func New(api api.API, entry *logrus.Entry) *Listen {
 		listenCancel: cancel,
 		api:          api,
 		log:          entry,
-	}
+	}, ctx
 }

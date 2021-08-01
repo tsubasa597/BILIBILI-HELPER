@@ -417,6 +417,7 @@ message Comments {
             int64 mid = 3;
             Member member = 4;
             int64 rpid = 5;
+            int32 like = 6;
         }
         repeated Replies replies = 1;
         Page page = 2;

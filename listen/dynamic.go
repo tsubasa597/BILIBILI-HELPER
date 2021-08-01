@@ -15,65 +15,64 @@ type Dynamic struct {
 }
 
 // GetDynamicMessage 获取目标 uid 的指定记录
-func getDynamicMessage(hostUID, t int64, log *logrus.Entry) (dynamics []info.Dynamic) {
-	dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID, 0)
-	if err != nil {
-		log.Errorln(err)
-		return
-	}
+func getDynamicMessage(hostUID int64, t int32, log *logrus.Entry) (dynamics []info.Infoer) {
+	var offect int64
+	for {
 
-	if dynamicSvrSpaceHistoryResponse.Code != 0 {
-		log.Errorln(ErrGetDynamic)
-		return
-	}
-
-	if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
-		log.Errorln(ErrNoDynamic)
-		return
-	}
-
-	var index int
-	if t == int64(NewListen) {
-		info, err := api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index])
+		dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(hostUID, offect)
 		if err != nil {
 			log.Errorln(err)
 			return
 		}
 
-		return append(dynamics, info)
-	}
-
-	for int64(dynamicSvrSpaceHistoryResponse.Data.Cards[index].Desc.Timestamp) > t {
-		info, err := api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[index])
-		if err != nil {
-			log.Errorln(err)
-			continue
+		if dynamicSvrSpaceHistoryResponse.Code != 0 {
+			log.Errorln(ErrGetDynamic)
+			return
 		}
 
-		dynamics = append(dynamics, info)
-		index++
-	}
+		if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
+			log.Errorln(ErrNoDynamic)
+			return
+		}
 
-	return dynamics
+		if t == NewListen {
+			info, err := api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[0])
+			if err != nil {
+				log.Errorln(err)
+				return
+			}
+
+			return append(dynamics, &info)
+		}
+
+		for _, card := range dynamicSvrSpaceHistoryResponse.Data.Cards {
+			if card.Desc.Timestamp > t {
+				info, err := api.GetOriginCard(card)
+				if err != nil {
+					log.Errorln(err)
+					continue
+				}
+				offect = info.DynamicID
+				dynamics = append(dynamics, &info)
+
+			} else {
+				return
+			}
+		}
+	}
 }
 
 var _ Listener = (*Dynamic)(nil)
 
 func (dynamic *Dynamic) Listen(uid int64, _ api.API, log *logrus.Entry) (infos []info.Infoer) {
-	var dynamics []info.Dynamic
-
 	if value, ok := dynamic.UPs.Load(uid); ok {
-		dynamics = getDynamicMessage(uid, value.(*UpRoutine).Time, log)
+		infos = getDynamicMessage(uid, value.(*UpRoutine).Time, log)
 
-		if len(dynamics) > 0 {
-			value.(*UpRoutine).Time = int64(dynamics[0].Time)
+		if len(infos) > 0 {
+			value.(*UpRoutine).Time = infos[0].(*info.Dynamic).Time
 		}
 	} else {
-		dynamics = getDynamicMessage(uid, int64(NewListen), log)
-	}
-
-	for _, v := range dynamics {
-		infos = append(infos, &v)
+		return getDynamicMessage(uid, NewListen, log)
 	}
 
 	return
@@ -97,7 +96,7 @@ func (dynamic *Dynamic) GetList() (ups [][]string) {
 	return ups
 }
 
-func (dynamic *Dynamic) Add(uid, t int64, _ api.API, ctx context.Context, cancel context.CancelFunc) error {
+func (dynamic *Dynamic) Add(uid int64, t int32, _ api.API, ctx context.Context, cancel context.CancelFunc) error {
 	if _, ok := dynamic.UPs.Load(uid); ok {
 		return fmt.Errorf(ErrRepeatListen)
 	}

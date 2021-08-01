@@ -56,7 +56,7 @@ func (live *Live) GetList() (ups [][]string) {
 	return ups
 }
 
-func (live *Live) Add(uid, _ int64, _ api.API, ctx context.Context, cancel context.CancelFunc) error {
+func (live *Live) Add(uid int64, _ int32, _ api.API, ctx context.Context, cancel context.CancelFunc) error {
 	if _, ok := live.ups.Load(uid); ok {
 		return fmt.Errorf(ErrRepeatListen)
 	}
