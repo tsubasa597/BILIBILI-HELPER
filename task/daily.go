@@ -6,26 +6,31 @@ var _ Tasker = (*Daily)(nil)
 
 type Daily struct {
 	VideoAvID string
+	api       api.API
 }
 
-func (daily Daily) Run(api api.API) (res string) {
+func (daily *Daily) Init(api api.API) {
+	daily.api = api
+}
+
+func (daily Daily) Run() (res string) {
 	if daily.VideoAvID == "" {
-		daily.VideoAvID = getRandomAV(api)
+		daily.getRandomAV()
 	}
 
-	if err, ok := userCheck(api); ok {
-		res += "WatchVideo: " + watchVideo(api, daily.VideoAvID) + "\n"
-		res += "ShareVideo: " + shareVideo(api, daily.VideoAvID) + "\n"
-		res += "Sliver2Coins: " + sliver2Coins(api) + "\n"
-		res += "LiveCheckin: " + liveCheckin(api)
+	if err, ok := daily.userCheck(); ok {
+		res += "WatchVideo: " + daily.watchVideo() + "\n"
+		res += "ShareVideo: " + daily.shareVideo() + "\n"
+		res += "Sliver2Coins: " + daily.sliver2Coins() + "\n"
+		res += "LiveCheckin: " + daily.liveCheckin()
 	} else {
 		res += "UserCheck: " + err
 	}
 	return
 }
 
-func userCheck(api api.API) (string, bool) {
-	resp, err := api.UserCheck()
+func (daily Daily) userCheck() (string, bool) {
+	resp, err := daily.api.UserCheck()
 	if err != nil {
 		return err.Error(), false
 	}
@@ -37,12 +42,12 @@ func userCheck(api api.API) (string, bool) {
 	return resp.Message, false
 }
 
-func watchVideo(api api.API, bvid string) string {
-	if bvid == "" {
+func (daily Daily) watchVideo() string {
+	if daily.VideoAvID == "" {
 		return "Bvid 为空，跳过"
 	}
 
-	resp, err := api.WatchVideo(bvid)
+	resp, err := daily.api.WatchVideo(daily.VideoAvID)
 	if err != nil && resp.Code != 0 {
 		return err.Error()
 	}
@@ -54,9 +59,9 @@ func watchVideo(api api.API, bvid string) string {
 	return resp.Message
 }
 
-func sliver2Coins(api api.API) string {
+func (daily Daily) sliver2Coins() string {
 	const exchangeRate int64 = 700
-	status, err := api.Sliver2CoinsStatus()
+	status, err := daily.api.Sliver2CoinsStatus()
 	if err != nil {
 		return err.Error()
 	}
@@ -65,7 +70,7 @@ func sliver2Coins(api api.API) string {
 		return "当前银瓜子余额不足700,不进行兑换"
 	}
 
-	resp, err := api.Sliver2Coins()
+	resp, err := daily.api.Sliver2Coins()
 
 	if resp.Code == 0 {
 		return "兑换成功"
@@ -82,12 +87,12 @@ func sliver2Coins(api api.API) string {
 	return resp.Message
 }
 
-func shareVideo(api api.API, bvid string) string {
-	if bvid == "" {
+func (daily Daily) shareVideo() string {
+	if daily.VideoAvID == "" {
 		return "Bvid 为空，跳过"
 	}
 
-	resp, err := api.ShareVideo(bvid)
+	resp, err := daily.api.ShareVideo(daily.VideoAvID)
 	if err != nil && resp.Code != 0 {
 		return err.Error()
 	}
@@ -99,8 +104,8 @@ func shareVideo(api api.API, bvid string) string {
 	return resp.Message
 }
 
-func liveCheckin(api api.API) string {
-	resp, err := api.LiveCheckin()
+func (daily Daily) liveCheckin() string {
+	resp, err := daily.api.LiveCheckin()
 	if err != nil {
 		return err.Error()
 	}
@@ -112,10 +117,10 @@ func liveCheckin(api api.API) string {
 	return "重复签到"
 }
 
-func getRandomAV(api api.API) string {
-	s, err := api.GetRandomAV()
+func (daily *Daily) getRandomAV() {
+	s, err := daily.api.GetRandomAV()
 	if err != nil || s == "" {
-		return ""
+		daily.VideoAvID = ""
 	}
-	return s
+	daily.VideoAvID = s
 }
