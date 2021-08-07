@@ -22,11 +22,11 @@ type Listener interface {
 }
 
 type Listen struct {
-	listener Listener
-	ctx      context.Context
-	cancel   context.CancelFunc
-	api      api.API
-	log      *logrus.Entry
+	Listener
+	ctx    context.Context
+	cancel context.CancelFunc
+	api    *api.API
+	log    *logrus.Entry
 }
 
 type UpRoutine struct {
@@ -37,22 +37,20 @@ type UpRoutine struct {
 }
 
 func (listen *Listen) listen(ctx context.Context, uid int64, tick <-chan time.Time, ch chan<- []info.Infoer) {
-	listen.log.Debugf("Start : %T %d", listen.listener, uid)
+	listen.log.Debugf("Start : %T %d", listen.Listener, uid)
 	for {
 		select {
 		case <-ctx.Done():
-			listen.log.Debugf("Stop : %T %d", listen.listener, uid)
+			listen.log.Debugf("Stop : %T %d", listen.Listener, uid)
 			return
 		case <-tick:
-			ch <- listen.listener.Listen(uid, listen.api, listen.log)
+			ch <- listen.Listener.Listen(uid, *listen.api, listen.log)
 		}
 	}
 }
 
-func StopUP(uid int64, listener Listener) error {
-	listener.StopListenUP(uid)
-
-	return nil
+func (listen *Listen) StopUP(uid int64, listener Listener) error {
+	return listen.Listener.StopListenUP(uid)
 }
 
 // Stop 释放资源
@@ -60,13 +58,13 @@ func (listen *Listen) Stop() {
 	listen.cancel()
 }
 
-func GetList(listener Listener) [][]string {
-	return listener.GetList()
+func (listen *Listen) GetList() [][]string {
+	return listen.Listener.GetList()
 }
 
 func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.Context, chan []info.Infoer, error) {
 	ct, cl := context.WithCancel(listen.ctx)
-	if err := listen.listener.Add(uid, t, listen.api, ct, cl); err != nil {
+	if err := listen.Listener.Add(uid, t, *listen.api, ct, cl); err != nil {
 		return nil, nil, err
 	}
 	ch := make(chan []info.Infoer, 1)
@@ -76,14 +74,14 @@ func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.C
 	return ct, ch, nil
 }
 
-func New(linster Listener, api api.API, entry *logrus.Entry) (*Listen, context.Context) {
+func New(linster Listener, api *api.API, entry *logrus.Entry) (*Listen, context.Context) {
 	if entry == nil {
 		entry = logrus.NewEntry(log.NewLog())
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Listen{
-		listener: linster,
+		Listener: linster,
 		ctx:      ctx,
 		cancel:   cancel,
 		api:      api,

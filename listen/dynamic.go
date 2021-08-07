@@ -79,8 +79,9 @@ func (dynamic *Dynamic) Listen(uid int64, _ api.API, log *logrus.Entry) (infos [
 }
 
 func (dynamic *Dynamic) StopListenUP(uid int64) error {
-	if _, ok := dynamic.UPs.Load(uid); ok {
+	if val, ok := dynamic.UPs.Load(uid); ok {
 		dynamic.UPs.Delete(uid)
+		val.(*UpRoutine).Cancel()
 		return nil
 	} else {
 		return fmt.Errorf(ErrNotListen)

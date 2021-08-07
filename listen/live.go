@@ -39,8 +39,9 @@ func (live *Live) Listen(uid int64, _ api.API, log *logrus.Entry) []info.Infoer 
 }
 
 func (live *Live) StopListenUP(uid int64) error {
-	if _, ok := live.ups.Load(uid); ok {
+	if val, ok := live.ups.Load(uid); ok {
 		live.ups.Delete(uid)
+		val.(*UpRoutine).Cancel()
 		return nil
 	} else {
 		return fmt.Errorf(ErrNotListen)
