@@ -128,6 +128,9 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 	case DynamicDescType_WithMusic:
 		dynamic.CommentType = CommentAudio
 
+	case DynamicDescType_WithMiss:
+		dynamic.CommentType = CommentDynamic
+
 	default:
 		err = fmt.Errorf(ErrLoad)
 	}
