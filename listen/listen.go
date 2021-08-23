@@ -36,14 +36,15 @@ type UpRoutine struct {
 	Time   int32
 }
 
-func (listen *Listen) listen(ctx context.Context, uid int64, tick <-chan time.Time, ch chan<- []info.Infoer) {
+func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker, ch chan<- []info.Infoer) {
 	listen.log.Debugf("Start : %T %d", listen.Listener, uid)
 	for {
 		select {
 		case <-ctx.Done():
 			listen.log.Debugf("Stop : %T %d", listen.Listener, uid)
+			ticker.Stop()
 			return
-		case <-tick:
+		case <-ticker.C:
 			ch <- listen.Listener.Listen(uid, *listen.api, listen.log)
 		}
 	}
@@ -69,7 +70,7 @@ func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.C
 	}
 	ch := make(chan []info.Infoer, 1)
 
-	go listen.listen(ct, uid, time.NewTicker(duration).C, ch)
+	go listen.listen(ct, uid, time.NewTicker(duration), ch)
 
 	return ct, ch, nil
 }
