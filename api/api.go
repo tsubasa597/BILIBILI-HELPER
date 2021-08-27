@@ -7,11 +7,13 @@ import (
 	"github.com/tsubasa597/requests"
 )
 
+// API 发起请求所需的数据
 type API struct {
 	cookie cookie
 	Req    *requests.Requests
 }
 
+// New 初始化
 func New(path string, enrty *logrus.Entry) API {
 	c := newCookie(path)
 

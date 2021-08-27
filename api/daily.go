@@ -49,6 +49,7 @@ func (api API) Sliver2Coins() (*BaseResponse, error) {
 	return resp, err
 }
 
+// GetRandomAV 随机获取一个视频的 av 号
 func (api API) GetRandomAV() (string, error) {
 	resp := &RandomAvResponse{}
 	err := api.Req.Gets(randomAV, resp)

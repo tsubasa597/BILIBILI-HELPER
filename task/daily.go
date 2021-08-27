@@ -4,15 +4,21 @@ import "github.com/tsubasa597/BILIBILI-HELPER/api"
 
 var _ Tasker = (*Daily)(nil)
 
+// Daily 日常任务
 type Daily struct {
 	VideoAvID string
 	api       api.API
 }
 
-func (daily *Daily) Init(api api.API) {
-	daily.api = api
+// NewDaily 初始化
+func NewDaily(api api.API, av string) Daily {
+	return Daily{
+		api:       api,
+		VideoAvID: av,
+	}
 }
 
+// Run 运行日常任务
 func (daily Daily) Run() (res string) {
 	if daily.VideoAvID == "" {
 		daily.getRandomAV()

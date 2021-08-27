@@ -7,28 +7,31 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
-	log "github.com/tsubasa597/BILIBILI-HELPER/log"
 )
 
 const (
+	//NewListen 新监听动态的时间，防止返回大量数据
 	NewListen = iota + 1
 )
 
+// Listener 所需要监听的信息的接口
 type Listener interface {
 	Listen(int64, api.API, *logrus.Entry) []info.Infoer
 	StopListenUP(int64) error
-	GetList() [][]string
-	Add(int64, int32, api.API, context.Context, context.CancelFunc) error
+	GetList() [][2]string
+	Add(context.Context, context.CancelFunc, int64, int32, api.API) error
 }
 
+// Listen 管理监听状态
 type Listen struct {
-	Listener
-	ctx    context.Context
-	cancel context.CancelFunc
-	api    *api.API
-	log    *logrus.Entry
+	listener Listener
+	ctx      context.Context
+	cancel   context.CancelFunc
+	api      *api.API
+	log      *logrus.Entry
 }
 
+// UpRoutine 监听信息
 type UpRoutine struct {
 	Name   string
 	Cancel context.CancelFunc
@@ -36,22 +39,24 @@ type UpRoutine struct {
 	Time   int32
 }
 
+// listen 以固定时间间隔进行监听
 func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker, ch chan<- []info.Infoer) {
-	listen.log.Debugf("Start : %T %d", listen.Listener, uid)
+	listen.log.Debugf("Start : %T %d", listen.listener, uid)
 	for {
 		select {
 		case <-ctx.Done():
-			listen.log.Debugf("Stop : %T %d", listen.Listener, uid)
+			listen.log.Debugf("Stop : %T %d", listen.listener, uid)
 			ticker.Stop()
 			return
 		case <-ticker.C:
-			ch <- listen.Listener.Listen(uid, *listen.api, listen.log)
+			ch <- listen.listener.Listen(uid, *listen.api, listen.log)
 		}
 	}
 }
 
+// StopUP 停止监听
 func (listen *Listen) StopUP(uid int64, listener Listener) error {
-	return listen.Listener.StopListenUP(uid)
+	return listen.listener.StopListenUP(uid)
 }
 
 // Stop 释放资源
@@ -59,30 +64,33 @@ func (listen *Listen) Stop() {
 	listen.cancel()
 }
 
-func (listen *Listen) GetList() [][]string {
-	return listen.Listener.GetList()
+// GetList 返回监听状态
+func (listen *Listen) GetList() [][2]string {
+	return listen.listener.GetList()
 }
 
+// Add 添加 uid 进行监听
 func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.Context, chan []info.Infoer, error) {
-	ct, cl := context.WithCancel(listen.ctx)
-	if err := listen.Listener.Add(uid, t, *listen.api, ct, cl); err != nil {
+	ctx, cl := context.WithCancel(listen.ctx)
+	if err := listen.listener.Add(ctx, cl, uid, t, *listen.api); err != nil {
 		return nil, nil, err
 	}
 	ch := make(chan []info.Infoer, 1)
 
-	go listen.listen(ct, uid, time.NewTicker(duration), ch)
+	go listen.listen(ctx, uid, time.NewTicker(duration), ch)
 
-	return ct, ch, nil
+	return ctx, ch, nil
 }
 
+// New 初始化监控
 func New(linster Listener, api *api.API, entry *logrus.Entry) (*Listen, context.Context) {
 	if entry == nil {
-		entry = logrus.NewEntry(log.NewLog())
+		entry = logrus.NewEntry(logrus.New())
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Listen{
-		Listener: linster,
+		listener: linster,
 		ctx:      ctx,
 		cancel:   cancel,
 		api:      api,

@@ -6,6 +6,7 @@ import (
 	"github.com/tsubasa597/requests"
 )
 
+// GetUserInfo 用户详情
 func GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 	resp := &XSpaceAccInfoResponse{}
 	err := requests.Gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp)
@@ -21,6 +22,7 @@ func (api API) UserCheck() (*BaseResponse, error) {
 	return resp, err
 }
 
+// GetUserName 获取用户姓名
 func GetUserName(uid int64) (string, error) {
 	info, err := GetUserInfo(uid)
 	if err != nil {

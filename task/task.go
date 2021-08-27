@@ -1,8 +1,6 @@
 package task
 
-import "github.com/tsubasa597/BILIBILI-HELPER/api"
-
+// Tasker 任务接口
 type Tasker interface {
 	Run() string
-	Init(api.API)
 }

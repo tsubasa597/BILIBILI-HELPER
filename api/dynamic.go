@@ -10,31 +10,42 @@ import (
 )
 
 const (
-	ErrGetDynamic    = "请求发生错误"
-	ErrNoDynamic     = "该用户没有动态"
-	ErrUnknowDynamic = "未知动态"
-	ErrNotListen     = "该用户未监听"
-	ErrRepeatListen  = "重复监听"
-	ErrLoad          = "解析错误"
+	errGetDynamic    = "请求发生错误"
+	errNoDynamic     = "该用户没有动态"
+	errUnknowDynamic = "未知动态"
+	errNotListen     = "该用户未监听"
+	errRepeatListen  = "重复监听"
+	errLoad          = "解析错误"
 )
 
 const (
+	// CommentViedo 视频
 	CommentViedo = iota + 1
+	// CommentTopic 话题
 	CommentTopic
 	_
+	// CommentActivity 活动
 	CommentActivity
 	_
 	_
+	// CommentNotice 公告
 	CommentNotice
+	// CommentLiveActivity 直播活动
 	CommentLiveActivity
+	// CommentActivityViedo 活动稿件
 	CommentActivityViedo
+	// CommentLiveNotice 直播公告
 	CommentLiveNotice
+	// CommentDynamicImage 相簿（图片动态）
 	CommentDynamicImage
+	// CommentColumn 专栏
 	CommentColumn
 	_
+	// CommentAudio 音频
 	CommentAudio
 	_
 	_
+	// CommentDynamic 动态（纯文字动态&分享）
 	CommentDynamic
 )
 
@@ -47,6 +58,7 @@ func GetDynamicSrvSpaceHistory(hostUID, nextOffect int64) (*DynamicSvrSpaceHisto
 	return resp, err
 }
 
+// GetComments 获取评论
 func GetComments(commentType, sort uint8, oid int64, ps, pn int) (*Comments, error) {
 	resp := &Comments{}
 	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&sort=%d&ps=%d&pn=%d",
@@ -73,7 +85,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 
 	switch c.Desc.Type {
 	case DynamicDescType_Unknown:
-		return info.Dynamic{}, fmt.Errorf(ErrUnknowDynamic)
+		return info.Dynamic{}, fmt.Errorf(errUnknowDynamic)
 	case DynamicDescType_WithOrigin:
 		orig := &CardWithOrig{}
 		err = json.Unmarshal([]byte(c.Card), orig)
@@ -132,7 +144,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.CommentType = CommentDynamic
 
 	default:
-		err = fmt.Errorf(ErrLoad)
+		err = fmt.Errorf(errLoad)
 	}
 	return
 }

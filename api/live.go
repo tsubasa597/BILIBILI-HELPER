@@ -10,6 +10,7 @@ func (api API) LiveCheckin() (*BaseResponse, error) {
 	return resp, err
 }
 
+// LiverStatus 直播状态
 func (api API) LiverStatus(uid int64) (*GetRoomInfoOldResponse, error) {
 	resp := &GetRoomInfoOldResponse{}
 	err := api.Req.Gets(fmt.Sprintf("%s?mid=%d", getRoomInfoOld, uid), resp)
