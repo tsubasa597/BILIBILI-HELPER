@@ -2,8 +2,6 @@ package listen
 
 import (
 	"context"
-	"fmt"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -11,9 +9,10 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
-// Live 所有 uid 的状态 sync.Map -> map[int64]UpRoutine
+// Live 所有 uid 的状态
 type Live struct {
-	ups sync.Map
+	ups Infoer
+	log *logrus.Entry
 }
 
 func getLiverStatus(uid int64, log *logrus.Entry) (info info.Live) {
@@ -35,36 +34,25 @@ func getLiverStatus(uid int64, log *logrus.Entry) (info info.Live) {
 var _ Listener = (*Live)(nil)
 
 // Listen 监听直播信息
-func (live *Live) Listen(uid int64, _ api.API, log *logrus.Entry) []info.Infoer {
-	status := getLiverStatus(uid, log)
+func (live *Live) Listen(uid int64) []info.Infoer {
+	status := getLiverStatus(uid, live.log)
 	return []info.Infoer{&status}
 }
 
 // StopListenUP 停止监听
 func (live *Live) StopListenUP(uid int64) error {
-	if val, ok := live.ups.Load(uid); ok {
-		live.ups.Delete(uid)
-		val.(*UpRoutine).Cancel()
-		return nil
-	}
-
-	return fmt.Errorf(errNotListen)
+	return live.ups.StopOne(uid)
 }
 
 // GetList 所有监听的状态
-func (live *Live) GetList() (ups [][2]string) {
-	live.ups.Range(func(key, value interface{}) bool {
-		ups = append(ups, [2]string{value.(*UpRoutine).Name, fmt.Sprint(value.(*UpRoutine).Time)})
-		return true
-	})
-
-	return ups
+func (live *Live) GetList() []*UpRoutine {
+	return live.ups.GetAll()
 }
 
 // Add 添加监听
-func (live *Live) Add(ctx context.Context, cancel context.CancelFunc, uid int64, _ int32, _ api.API) error {
-	if _, ok := live.ups.Load(uid); ok {
-		return fmt.Errorf(errRepeatListen)
+func (live *Live) Add(ctx context.Context, cancel context.CancelFunc, uid int64, _ int32) error {
+	if _, err := live.ups.Get(uid); err != nil {
+		return err
 	}
 
 	var name string
@@ -73,17 +61,14 @@ func (live *Live) Add(ctx context.Context, cancel context.CancelFunc, uid int64,
 		name = s
 	}
 
-	live.ups.Store(uid, &UpRoutine{
-		Ctx:    ctx,
-		Cancel: cancel,
-		Name:   name,
-	})
+	live.ups.Put(uid, NewUpRoutine(ctx, cancel, StateRuning, 0, name))
 	return nil
 }
 
 // NewLive 初始化
-func NewLive() *Live {
+func NewLive(log *logrus.Entry) *Live {
 	return &Live{
-		ups: sync.Map{},
+		ups: NewDefaultInfos(),
+		log: log,
 	}
 }

@@ -7,4 +7,5 @@ const (
 	errNotListen     = "该用户未监听"
 	errRepeatListen  = "重复监听"
 	errLoad          = "解析错误"
+	errPause         = "正在暂停"
 )

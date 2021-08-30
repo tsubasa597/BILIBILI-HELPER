@@ -3,16 +3,16 @@ package listen
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
-// Dynamic 所有 uid 的状态 sync.Map -> map[int64]UpRoutine
+// Dynamic 所有 uid 的状态
 type Dynamic struct {
-	UPs sync.Map
+	ups Infoer
+	log *logrus.Entry
 }
 
 // GetDynamicMessage 获取目标 uid 的指定记录
@@ -66,44 +66,39 @@ func getDynamicMessage(hostUID int64, t int32, log *logrus.Entry) (dynamics []in
 var _ Listener = (*Dynamic)(nil)
 
 // Listen 返回从现在到指定时间为止所有 uid 的动态。若没有监听指定 uid，则返回第一条记录。
-func (dynamic *Dynamic) Listen(uid int64, _ api.API, log *logrus.Entry) (infos []info.Infoer) {
-	if value, ok := dynamic.UPs.Load(uid); ok {
-		infos = getDynamicMessage(uid, value.(*UpRoutine).Time, log)
-
-		if len(infos) > 0 {
-			value.(*UpRoutine).Time = infos[0].(*info.Dynamic).Time
-		}
-	} else {
-		return getDynamicMessage(uid, NewListen, log)
+func (dynamic *Dynamic) Listen(uid int64) (infos []info.Infoer) {
+	val, err := dynamic.ups.Get(uid)
+	if err != nil {
+		return getDynamicMessage(uid, NewListen, dynamic.log)
 	}
 
-	return
+	if val.GetState() != StateRuning {
+		dynamic.log.Infof("uid: %d, name:%s 正在暂停", uid, val.Name)
+		return nil
+	}
+
+	infos = getDynamicMessage(uid, val.Time, dynamic.log)
+
+	if len(infos) > 0 {
+		val.Time = infos[0].(*info.Dynamic).Time
+	}
+
+	return infos
 }
 
 // StopListenUP 停止监听 uid。若没有监听，则返回错误
 func (dynamic *Dynamic) StopListenUP(uid int64) error {
-	if val, ok := dynamic.UPs.Load(uid); ok {
-		dynamic.UPs.Delete(uid)
-		val.(*UpRoutine).Cancel()
-		return nil
-	}
-
-	return fmt.Errorf(errNotListen)
+	return dynamic.ups.StopOne(uid)
 }
 
-// GetList 获取正在监听的状态。returns []string{Name, Time}
-func (dynamic *Dynamic) GetList() (ups [][2]string) {
-	dynamic.UPs.Range(func(key, value interface{}) bool {
-		ups = append(ups, [2]string{value.(*UpRoutine).Name, fmt.Sprint(value.(*UpRoutine).Time)})
-		return true
-	})
-
-	return ups
+// GetList 获取正在监听的状态。
+func (dynamic *Dynamic) GetList() []*UpRoutine {
+	return dynamic.ups.GetAll()
 }
 
 // Add 添加 uid 进行监听
-func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid int64, t int32, _ api.API) error {
-	if _, ok := dynamic.UPs.Load(uid); ok {
+func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid int64, t int32) error {
+	if _, err := dynamic.ups.Get(uid); err == nil {
 		return fmt.Errorf(errRepeatListen)
 	}
 
@@ -113,18 +108,14 @@ func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid 
 		name = s
 	}
 
-	dynamic.UPs.Store(uid, &UpRoutine{
-		Ctx:    ctx,
-		Cancel: cancel,
-		Name:   name,
-		Time:   t,
-	})
+	dynamic.ups.Put(uid, NewUpRoutine(ctx, cancel, StateRuning, t, name))
 	return nil
 }
 
 // NewDynamic 初始化
-func NewDynamic() *Dynamic {
+func NewDynamic(log *logrus.Entry) *Dynamic {
 	return &Dynamic{
-		UPs: sync.Map{},
+		ups: NewDefaultInfos(),
+		log: log,
 	}
 }

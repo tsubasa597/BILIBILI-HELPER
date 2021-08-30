@@ -16,10 +16,10 @@ const (
 
 // Listener 所需要监听的信息的接口
 type Listener interface {
-	Listen(int64, api.API, *logrus.Entry) []info.Infoer
+	Listen(int64) []info.Infoer
 	StopListenUP(int64) error
-	GetList() [][2]string
-	Add(context.Context, context.CancelFunc, int64, int32, api.API) error
+	GetList() []*UpRoutine
+	Add(context.Context, context.CancelFunc, int64, int32) error
 }
 
 // Listen 管理监听状态
@@ -29,14 +29,6 @@ type Listen struct {
 	cancel   context.CancelFunc
 	api      *api.API
 	log      *logrus.Entry
-}
-
-// UpRoutine 监听信息
-type UpRoutine struct {
-	Name   string
-	Cancel context.CancelFunc
-	Ctx    context.Context
-	Time   int32
 }
 
 // listen 以固定时间间隔进行监听
@@ -49,7 +41,7 @@ func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker
 			ticker.Stop()
 			return
 		case <-ticker.C:
-			ch <- listen.listener.Listen(uid, *listen.api, listen.log)
+			ch <- listen.listener.Listen(uid)
 		}
 	}
 }
@@ -65,14 +57,14 @@ func (listen *Listen) Stop() {
 }
 
 // GetList 返回监听状态
-func (listen *Listen) GetList() [][2]string {
+func (listen *Listen) GetList() []*UpRoutine {
 	return listen.listener.GetList()
 }
 
 // Add 添加 uid 进行监听
 func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.Context, chan []info.Infoer, error) {
 	ctx, cl := context.WithCancel(listen.ctx)
-	if err := listen.listener.Add(ctx, cl, uid, t, *listen.api); err != nil {
+	if err := listen.listener.Add(ctx, cl, uid, t); err != nil {
 		return nil, nil, err
 	}
 	ch := make(chan []info.Infoer, 1)
