@@ -1,3 +1,4 @@
+// Package info 监听返回的消息内容
 package info
 
 // Infoer 监听信息的接口

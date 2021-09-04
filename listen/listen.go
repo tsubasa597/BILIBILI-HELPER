@@ -1,3 +1,4 @@
+// Package listen 固定时间间隔监听 bilibili 用户的动态或直播情况
 package listen
 
 import (

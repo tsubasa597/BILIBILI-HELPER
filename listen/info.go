@@ -11,15 +11,13 @@ import (
 type Infoer interface {
 	Get(int64) (*UpRoutine, error)
 	Put(int64, *UpRoutine) error
-	StopOne(int64) error
 	GetAll() []*UpRoutine
-	Pause(int64)
-	Start(int64)
+	StopOne(uid int64) error
 }
 
 var _ Infoer = (*DefaultInfos)(nil)
 
-// DefaultInfos 默认监听对象集合
+// DefaultInfos 监听对象集合
 type DefaultInfos struct {
 	infos map[int64]*UpRoutine
 	mutex *sync.RWMutex
@@ -59,69 +57,55 @@ func (d *DefaultInfos) Put(uid int64, up *UpRoutine) error {
 	return nil
 }
 
-// StopOne 停止监听已监听用户
-func (d *DefaultInfos) StopOne(uid int64) error {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-
-	up, ok := d.infos[uid]
-	if !ok {
-		return fmt.Errorf(errNotListen)
-	}
-
-	up.Stop()
-	delete(d.infos, uid)
-
-	return nil
-}
-
-// GetAll 获取所有正在监听的信息
+// GetAll 获取所有监听的信息
 func (d *DefaultInfos) GetAll() (ups []*UpRoutine) {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 
 	for _, info := range d.infos {
-		if info.GetState() != StateRuning {
-			continue
-		}
-
 		ups = append(ups, info)
 	}
 
 	return
 }
 
-// Start 从暂停状态恢复
-func (d DefaultInfos) Start(uid int64) {
-	d.mutex.RLock()
-	defer d.mutex.RUnlock()
+// StopOne 停止监听
+func (d *DefaultInfos) StopOne(uid int64) error {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
-	if up, ok := d.infos[uid]; ok {
-		up.Start()
+	info, ok := d.infos[uid]
+	if !ok {
+		return fmt.Errorf(errNotListen)
 	}
+	info.Stop()
+	delete(d.infos, uid)
+	return nil
 }
 
-// Pause 暂停监听
-func (d DefaultInfos) Pause(uid int64) {
-	d.mutex.RLock()
-	defer d.mutex.RUnlock()
+// State 运行状态
+type State int32
 
-	if up, ok := d.infos[uid]; ok {
-		up.Pause()
-	}
-}
+const (
+	// StatueStoped 停止状态
+	StatueStoped State = iota
+	// StatePause 暂停状态
+	StatePause
+	// StateRuning 正在运行状态
+	StateRuning
+)
 
-// UpRoutine 监听信息
+// UpRoutine 监听信息  非线程安全
 type UpRoutine struct {
 	Name   string // Name 用户姓名
 	Ctx    context.Context
 	Time   int32
-	state  *int32
+	state  *State
 	cancel context.CancelFunc
 }
 
 // NewUpRoutine 初始化
-func NewUpRoutine(ctx context.Context, cancel context.CancelFunc, state int32, t int32, name string) *UpRoutine {
+func NewUpRoutine(ctx context.Context, cancel context.CancelFunc, state State, t int32, name string) *UpRoutine {
 	return &UpRoutine{
 		Ctx:    ctx,
 		Name:   name,
@@ -132,28 +116,42 @@ func NewUpRoutine(ctx context.Context, cancel context.CancelFunc, state int32, t
 }
 
 // GetState 获取当前状态
-func (up UpRoutine) GetState() int32 {
-	return atomic.LoadInt32(up.state)
+func (up UpRoutine) GetState() State {
+	return State(atomic.LoadInt32((*int32)(up.state)))
 }
 
-// Pause 暂停
-func (up UpRoutine) Pause() {
-	atomic.SwapInt32(up.state, StatePause)
+// Pause 从运行状态暂停
+func (up UpRoutine) Pause() bool {
+	switch *up.state {
+	case StatePause:
+		return true
+	case StateRuning:
+		return atomic.CompareAndSwapInt32((*int32)(up.state), int32(StateRuning), int32(StatePause))
+	default:
+		return false
+	}
 }
 
-// Start 开始
-func (up UpRoutine) Start() {
-	atomic.SwapInt32(up.state, StateRuning)
+// Start 从暂停状态开始
+func (up UpRoutine) Start() bool {
+	switch *up.state {
+	case StatePause:
+		return atomic.CompareAndSwapInt32((*int32)(up.state), int32(StatePause), int32(StateRuning))
+	case StateRuning:
+		return true
+	default:
+		return false
+	}
 }
 
 // Stop 停止
-func (up UpRoutine) Stop() {
-	up.cancel()
+func (up UpRoutine) Stop() bool {
+	switch *up.state {
+	case StatueStoped:
+		return false
+	default:
+		up.cancel()
+		atomic.StoreInt32((*int32)(up.state), int32(StatueStoped))
+		return true
+	}
 }
-
-const (
-	// StatePause 暂停状态
-	StatePause int32 = iota
-	// StateRuning 正在运行状态
-	StateRuning
-)

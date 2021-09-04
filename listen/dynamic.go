@@ -91,7 +91,7 @@ func (dynamic *Dynamic) StopListenUP(uid int64) error {
 	return dynamic.ups.StopOne(uid)
 }
 
-// GetList 获取正在监听的状态。
+// GetList 获取监听的信息
 func (dynamic *Dynamic) GetList() []*UpRoutine {
 	return dynamic.ups.GetAll()
 }
@@ -108,7 +108,7 @@ func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid 
 		name = s
 	}
 
-	dynamic.ups.Put(uid, NewUpRoutine(ctx, cancel, StateRuning, t, name))
+	dynamic.ups.Put(uid, NewUpRoutine(ctx, cancel, &StateRuning, t, name))
 	return nil
 }
 

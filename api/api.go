@@ -1,3 +1,4 @@
+// Package api bilibili 部分接口封装
 package api
 
 import (
