@@ -108,7 +108,7 @@ func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid 
 		name = s
 	}
 
-	dynamic.ups.Put(uid, NewUpRoutine(ctx, cancel, &StateRuning, t, name))
+	dynamic.ups.Put(uid, NewUpRoutine(ctx, cancel, StateRuning, t, name))
 	return nil
 }
 
