@@ -2,17 +2,16 @@ package info
 
 // Live 监听的直播信息
 type Live struct {
-	Name        string
-	Time        int32
+	Info
 	LiveStatus  bool
 	LiveRoomURL string
 	LiveTitle   string
 }
 
-var _ Infoer = (*Live)(nil)
+var _ Interface = (*Live)(nil)
 
-// Type 判断监听类型，转换 interface{}
-func (Live) Type() Type {
+// GetType 判断监听类型，转换 interface{}
+func (Live) GetType() Type {
 	return TLive
 }
 

@@ -8,18 +8,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
-)
-
-const (
-	//NewListen 新监听动态的时间，防止返回大量数据
-	NewListen = iota + 1
+	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
 // Listener 所需要监听的信息的接口
 type Listener interface {
-	Listen(int64) []info.Infoer
+	GetState() info.State
+	ListenInfo(int64) ([]info.Interface, error)
 	StopListenUP(int64) error
-	GetList() []*UpRoutine
+	GetList() []state.Info
 	Add(context.Context, context.CancelFunc, int64, int32) error
 }
 
@@ -33,7 +30,7 @@ type Listen struct {
 }
 
 // listen 以固定时间间隔进行监听
-func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker, ch chan<- []info.Infoer) {
+func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker, ch chan<- []info.Interface) {
 	listen.log.Debugf("Start : %T %d", listen.listener, uid)
 	for {
 		select {
@@ -42,13 +39,21 @@ func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker
 			ticker.Stop()
 			return
 		case <-ticker.C:
-			ch <- listen.listener.Listen(uid)
+			listen.log.Debugf("Get Info From : %d", uid)
+
+			infos, err := listen.listener.ListenInfo(uid)
+			if err != nil {
+				listen.log.Debug(err)
+				continue
+			}
+
+			ch <- infos
 		}
 	}
 }
 
 // StopUP 停止监听
-func (listen *Listen) StopUP(uid int64, listener Listener) error {
+func (listen *Listen) StopUP(uid int64) error {
 	return listen.listener.StopListenUP(uid)
 }
 
@@ -58,21 +63,26 @@ func (listen *Listen) Stop() {
 }
 
 // GetList 返回监听状态
-func (listen *Listen) GetList() []*UpRoutine {
+func (listen *Listen) GetList() []state.Info {
 	return listen.listener.GetList()
 }
 
 // Add 添加 uid 进行监听
-func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.Context, chan []info.Infoer, error) {
+func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.Context, chan []info.Interface, error) {
 	ctx, cl := context.WithCancel(listen.ctx)
 	if err := listen.listener.Add(ctx, cl, uid, t); err != nil {
 		return nil, nil, err
 	}
-	ch := make(chan []info.Infoer, 1)
+	ch := make(chan []info.Interface, 1)
 
 	go listen.listen(ctx, uid, time.NewTicker(duration), ch)
 
 	return ctx, ch, nil
+}
+
+// GetState 获取状态
+func (listen Listen) GetState() info.State {
+	return listen.listener.GetState()
 }
 
 // New 初始化监控
