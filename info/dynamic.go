@@ -3,6 +3,7 @@ package info
 // Dynamic 监听的动态信息
 type Dynamic struct {
 	Info
+	UID         int64
 	Content     string
 	Card        string
 	RID         int64

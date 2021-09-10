@@ -49,7 +49,7 @@ func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid 
 }
 
 // GetState 获取状态
-func (dynamic *Dynamic) GetState() info.State {
+func (dynamic *Dynamic) GetState() state.State {
 	return dynamic.ups.GetState()
 }
 

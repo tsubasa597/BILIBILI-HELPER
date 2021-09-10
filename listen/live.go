@@ -52,7 +52,7 @@ func (live *Live) GetList() []state.Info {
 }
 
 // GetState 获取状态
-func (live *Live) GetState() info.State {
+func (live *Live) GetState() state.State {
 	return live.ups.GetState()
 }
 

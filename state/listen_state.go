@@ -13,7 +13,7 @@ import (
 
 // ListenStater 监听对象集合接口
 type ListenStater interface {
-	GetState() info.State
+	GetState() State
 	Get(int64) (Listener, error)
 	Put(int64, Listener) error
 	GetAll() []Info
@@ -30,7 +30,7 @@ var _ ListenStater = (*DeListenState)(nil)
 // DeListenState 监听对象集合
 type DeListenState struct {
 	ctx   context.Context
-	state info.State
+	state State
 	infos map[int64]Listener
 	log   *logrus.Entry
 	mutex *sync.RWMutex
@@ -39,7 +39,7 @@ type DeListenState struct {
 // NewDeListenState 初始化
 func NewDeListenState(log *logrus.Entry) *DeListenState {
 	return &DeListenState{
-		state: info.StateRuning,
+		state: Runing,
 		infos: make(map[int64]Listener),
 		log:   log,
 		mutex: &sync.RWMutex{},
@@ -47,7 +47,7 @@ func NewDeListenState(log *logrus.Entry) *DeListenState {
 }
 
 // GetState 获取状态
-func (d *DeListenState) GetState() info.State {
+func (d *DeListenState) GetState() State {
 	d.mutex.RLock()
 	defer d.mutex.RUnlock()
 
@@ -113,9 +113,9 @@ func (d *DeListenState) Do(id int64, f func(int64, Listener, *logrus.Entry) []in
 	defer d.mutex.Unlock()
 
 	switch d.state {
-	case info.StatePause:
+	case Pause:
 		return nil, fmt.Errorf(e.ErrPause)
-	case info.StateStop:
+	case Stop:
 		return nil, fmt.Errorf(e.ErrorStop)
 	}
 
@@ -124,7 +124,7 @@ func (d *DeListenState) Do(id int64, f func(int64, Listener, *logrus.Entry) []in
 		return nil, fmt.Errorf(e.ErrNotListen)
 	}
 
-	if inf.GetState() == info.StatePause {
+	if inf.GetState() == Pause {
 		return nil, fmt.Errorf(e.ErrPause)
 	}
 
@@ -155,7 +155,7 @@ func (d *DeListenState) Pause(duration int) bool {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
-	d.state = info.StatePause
+	d.state = Pause
 	for _, inf := range d.infos {
 		if !inf.Pause() {
 			d.log.Error(e.ErrorStop)
@@ -169,7 +169,7 @@ func (d *DeListenState) Pause(duration int) bool {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				d.state = info.StateRuning
+				d.state = Runing
 				for _, inf := range d.infos {
 					if !inf.Start() {
 						d.log.Error(e.ErrorStop)
@@ -201,7 +201,7 @@ func (d *DeListenState) Start() bool {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
-	d.state = info.StateRuning
+	d.state = Runing
 	for _, inf := range d.infos {
 		if !inf.Start() {
 			d.log.Error(e.ErrorStop)

@@ -13,7 +13,7 @@ import (
 
 // Listener 所需要监听的信息的接口
 type Listener interface {
-	GetState() info.State
+	GetState() state.State
 	ListenInfo(int64) ([]info.Interface, error)
 	StopListenUP(int64) error
 	GetList() []state.Info
@@ -81,7 +81,7 @@ func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.C
 }
 
 // GetState 获取状态
-func (listen Listen) GetState() info.State {
+func (listen Listen) GetState() state.State {
 	return listen.listener.GetState()
 }
 

@@ -9,6 +9,7 @@ type Interface interface {
 	GetName() string
 }
 
+// Info 监听返回值的基础结构体
 type Info struct {
 	Name string
 	Time int32
@@ -16,16 +17,22 @@ type Info struct {
 
 var _ Interface = (*Info)(nil)
 
+// GetType 判断监听类型，转换 interface{}
 func (Info) GetType() Type {
 	return TBase
 }
+
+// GetInstance 将 Infoer 接口转为 interface{}
 func (i *Info) GetInstance() interface{} {
 	return i
 }
 
+// GetTime 返回时间
 func (i Info) GetTime() int32 {
 	return i.Time
 }
+
+// GetName 返回名称
 func (i Info) GetName() string {
 	return i.Name
 }
@@ -34,6 +41,7 @@ func (i Info) GetName() string {
 type Type uint8
 
 const (
+	// TBase 基础类型
 	TBase Type = iota
 	// TLive 直播
 	TLive
@@ -41,6 +49,4 @@ const (
 	TDynamic
 	// TComment 评论
 	TComment
-
-	TDynamicState
 )

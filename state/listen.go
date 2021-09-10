@@ -2,14 +2,12 @@ package state
 
 import (
 	"context"
-
-	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
 // Listener 监听信息接口
 type Listener interface {
 	GetInfo() Info
-	GetState() info.State
+	GetState() State
 	Update(interface{})
 	Pause() bool
 	Start() bool
@@ -23,7 +21,7 @@ type UpRoutine struct {
 	Name   string // Name 用户姓名
 	Ctx    context.Context
 	Time   int32
-	state  info.State
+	state  State
 	cancel context.CancelFunc
 }
 
@@ -34,7 +32,7 @@ func NewUpRoutine(ctx context.Context, cancel context.CancelFunc, t int32, name 
 		Name:   name,
 		Time:   t,
 		cancel: cancel,
-		state:  info.StateRuning,
+		state:  Runing,
 	}
 }
 
@@ -48,17 +46,17 @@ func (up UpRoutine) GetInfo() Info {
 }
 
 // GetState 获取当前状态
-func (up UpRoutine) GetState() info.State {
+func (up UpRoutine) GetState() State {
 	return up.state
 }
 
 // Pause 从运行状态暂停
 func (up UpRoutine) Pause() bool {
 	switch up.state {
-	case info.StatePause:
+	case Pause:
 		return true
-	case info.StateRuning:
-		up.state = info.StatePause
+	case Runing:
+		up.state = Pause
 		return true
 	default:
 		return false
@@ -68,10 +66,10 @@ func (up UpRoutine) Pause() bool {
 // Start 从暂停状态开始
 func (up UpRoutine) Start() bool {
 	switch up.state {
-	case info.StatePause:
-		up.state = info.StateRuning
+	case Pause:
+		up.state = Runing
 		return true
-	case info.StateRuning:
+	case Runing:
 		return true
 	default:
 		return false

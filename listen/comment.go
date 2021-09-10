@@ -49,10 +49,11 @@ func (c *Comment) ListenInfo(rid int64) (infos []info.Interface, err error) {
 					Name: inf.Member.Uname,
 					Time: int32(inf.Ctime),
 				},
-				UID:     inf.Mid,
-				Rpid:    inf.Rpid,
-				Like:    uint32(inf.Like),
-				Content: inf.Content.Message,
+				UID:       inf.Mid,
+				Rpid:      inf.Rpid,
+				Like:      uint32(inf.Like),
+				Content:   inf.Content.Message,
+				DynamicID: rid,
 			})
 		}
 
@@ -68,7 +69,7 @@ func (c *Comment) ListenInfo(rid int64) (infos []info.Interface, err error) {
 }
 
 // GetState 获取状态
-func (c *Comment) GetState() info.State {
+func (c *Comment) GetState() state.State {
 	return c.comms.GetState()
 }
 
@@ -103,7 +104,7 @@ type CommLinsten struct {
 	Time   int32
 	Pn     int
 	ps     int
-	state  info.State
+	state  state.State
 	cancel context.CancelFunc
 }
 
@@ -116,7 +117,7 @@ func NewCommLinsten(ctx context.Context, cancel context.CancelFunc, rid int64, t
 		RID:    rid,
 		Type:   typ,
 		Pn:     1,
-		state:  info.StateRuning,
+		state:  state.Runing,
 		ps:     ps,
 		cancel: cancel,
 	}
@@ -131,7 +132,7 @@ func (c CommLinsten) GetInfo() state.Info {
 }
 
 // GetState 获取当前状态
-func (c CommLinsten) GetState() info.State {
+func (c CommLinsten) GetState() state.State {
 	return c.state
 }
 
@@ -143,10 +144,10 @@ func (c CommLinsten) Update(num interface{}) {
 // Pause 从运行状态暂停
 func (c CommLinsten) Pause() bool {
 	switch c.state {
-	case info.StatePause:
+	case state.Pause:
 		return true
-	case info.StateRuning:
-		c.state = info.StatePause
+	case state.Runing:
+		c.state = state.Pause
 		return true
 	default:
 		return false
@@ -156,10 +157,10 @@ func (c CommLinsten) Pause() bool {
 // Start 从暂停状态开始
 func (c CommLinsten) Start() bool {
 	switch c.state {
-	case info.StatePause:
-		c.state = info.StateRuning
+	case state.Pause:
+		c.state = state.Runing
 		return true
-	case info.StateRuning:
+	case state.Runing:
 		return true
 	default:
 		return false
