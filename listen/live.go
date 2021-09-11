@@ -68,8 +68,8 @@ func (live *Live) Add(ctx context.Context, cancel context.CancelFunc, uid int64,
 }
 
 // NewLive 初始化
-func NewLive(log *logrus.Entry) *Live {
+func NewLive(ctx context.Context, log *logrus.Entry) *Live {
 	return &Live{
-		ups: state.NewDeListenState(log),
+		ups: state.NewDeListenState(ctx, log),
 	}
 }

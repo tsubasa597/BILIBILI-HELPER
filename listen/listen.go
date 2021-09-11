@@ -23,7 +23,7 @@ type Listener interface {
 // Listen 管理监听状态
 type Listen struct {
 	listener Listener
-	ctx      context.Context
+	Ctx      context.Context
 	cancel   context.CancelFunc
 	api      *api.API
 	log      *logrus.Entry
@@ -69,7 +69,7 @@ func (listen *Listen) GetList() []state.Info {
 
 // Add 添加 uid 进行监听
 func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.Context, chan []info.Interface, error) {
-	ctx, cl := context.WithCancel(listen.ctx)
+	ctx, cl := context.WithCancel(listen.Ctx)
 	if err := listen.listener.Add(ctx, cl, uid, t); err != nil {
 		return nil, nil, err
 	}
@@ -86,17 +86,17 @@ func (listen Listen) GetState() state.State {
 }
 
 // New 初始化监控
-func New(linster Listener, api *api.API, entry *logrus.Entry) (*Listen, context.Context) {
+func New(ctx context.Context, linster Listener, api *api.API, entry *logrus.Entry) *Listen {
 	if entry == nil {
 		entry = logrus.NewEntry(logrus.New())
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	return &Listen{
+		Ctx:      ctx,
 		listener: linster,
-		ctx:      ctx,
 		cancel:   cancel,
 		api:      api,
 		log:      entry,
-	}, ctx
+	}
 }

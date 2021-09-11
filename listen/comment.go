@@ -89,10 +89,10 @@ func (c Comment) Add(ctx context.Context, cancel context.CancelFunc, rid int64, 
 }
 
 // NewComment 初始化
-func NewComment(weight int64, log *logrus.Entry) *Comment {
+func NewComment(ctx context.Context, weight int64, log *logrus.Entry) *Comment {
 	return &Comment{
 		limit: semaphore.NewWeighted(weight),
-		comms: state.NewDeListenState(log),
+		comms: state.NewDeListenState(ctx, log),
 	}
 }
 

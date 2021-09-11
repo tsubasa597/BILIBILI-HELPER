@@ -29,7 +29,7 @@ var _ ListenStater = (*DeListenState)(nil)
 
 // DeListenState 监听对象集合
 type DeListenState struct {
-	ctx   context.Context
+	Ctx   context.Context
 	state State
 	infos map[int64]Listener
 	log   *logrus.Entry
@@ -37,8 +37,9 @@ type DeListenState struct {
 }
 
 // NewDeListenState 初始化
-func NewDeListenState(log *logrus.Entry) *DeListenState {
+func NewDeListenState(ctx context.Context, log *logrus.Entry) *DeListenState {
 	return &DeListenState{
+		Ctx:   ctx,
 		state: Runing,
 		infos: make(map[int64]Listener),
 		log:   log,
@@ -124,8 +125,12 @@ func (d *DeListenState) Do(id int64, f func(int64, Listener, *logrus.Entry) []in
 		return nil, fmt.Errorf(e.ErrNotListen)
 	}
 
-	if inf.GetState() == Pause {
+	switch inf.GetState() {
+	case Pause:
 		return nil, fmt.Errorf(e.ErrPause)
+	case Stop:
+		delete(d.infos, id)
+		return nil, fmt.Errorf(e.ErrorStop)
 	}
 
 	infos := f(id, inf, d.log)
@@ -165,7 +170,7 @@ func (d *DeListenState) Pause(duration int) bool {
 	go func(ticker *time.Ticker) {
 		for {
 			select {
-			case <-d.ctx.Done():
+			case <-d.Ctx.Done():
 				ticker.Stop()
 				return
 			case <-ticker.C:

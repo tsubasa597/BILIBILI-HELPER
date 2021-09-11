@@ -54,9 +54,9 @@ func (dynamic *Dynamic) GetState() state.State {
 }
 
 // NewDynamic 初始化
-func NewDynamic(log *logrus.Entry) *Dynamic {
+func NewDynamic(ctx context.Context, log *logrus.Entry) *Dynamic {
 	return &Dynamic{
-		ups: state.NewDeListenState(log),
+		ups: state.NewDeListenState(ctx, log),
 	}
 }
 
