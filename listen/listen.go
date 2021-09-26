@@ -36,7 +36,10 @@ func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker
 		select {
 		case <-ctx.Done():
 			listen.log.Debugf("Stop : %T %d", listen.listener, uid)
+
+			close(ch)
 			ticker.Stop()
+
 			return
 		case <-ticker.C:
 			listen.log.Debugf("Get Info From : %d", uid)
@@ -67,15 +70,15 @@ func (listen *Listen) GetList() []state.Info {
 	return listen.listener.GetList()
 }
 
-// Add 添加 uid 进行监听
-func (listen *Listen) Add(uid int64, t int32, duration time.Duration) (context.Context, chan []info.Interface, error) {
+// Add 添加 id 进行监听
+func (listen *Listen) Add(id int64, t int32, duration time.Duration) (context.Context, chan []info.Interface, error) {
 	ctx, cl := context.WithCancel(listen.Ctx)
-	if err := listen.listener.Add(ctx, cl, uid, t); err != nil {
+	if err := listen.listener.Add(ctx, cl, id, t); err != nil {
 		return nil, nil, err
 	}
 	ch := make(chan []info.Interface, 1)
 
-	go listen.listen(ctx, uid, time.NewTicker(duration), ch)
+	go listen.listen(ctx, id, time.NewTicker(duration), ch)
 
 	return ctx, ch, nil
 }

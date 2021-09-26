@@ -184,6 +184,7 @@ func (d *DeListenState) Pause(duration int) bool {
 		}
 	}(time.NewTicker(time.Minute * time.Duration(duration)))
 
+	d.log.Debug("暂停监听")
 	return true
 }
 
