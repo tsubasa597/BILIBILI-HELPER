@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
@@ -25,7 +24,6 @@ type Listen struct {
 	listener Listener
 	Ctx      context.Context
 	cancel   context.CancelFunc
-	api      *api.API
 	log      *logrus.Entry
 }
 
@@ -42,7 +40,7 @@ func (listen *Listen) listen(ctx context.Context, uid int64, ticker *time.Ticker
 
 			return
 		case <-ticker.C:
-			listen.log.Debugf("Get Info From : %d", uid)
+			listen.log.Debugf("Get Info From : %T %d", listen.listener, uid)
 
 			infos, err := listen.listener.ListenInfo(uid)
 			if err != nil {
@@ -89,7 +87,7 @@ func (listen Listen) GetState() state.State {
 }
 
 // New 初始化监控
-func New(ctx context.Context, linster Listener, api *api.API, entry *logrus.Entry) *Listen {
+func New(ctx context.Context, linster Listener, entry *logrus.Entry) *Listen {
 	if entry == nil {
 		entry = logrus.NewEntry(logrus.New())
 	}
@@ -99,7 +97,6 @@ func New(ctx context.Context, linster Listener, api *api.API, entry *logrus.Entr
 		Ctx:      ctx,
 		listener: linster,
 		cancel:   cancel,
-		api:      api,
 		log:      entry,
 	}
 }

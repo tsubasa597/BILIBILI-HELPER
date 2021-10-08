@@ -1,6 +1,10 @@
 package task
 
-import "github.com/tsubasa597/BILIBILI-HELPER/api"
+import (
+	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
+)
 
 var _ Tasker = (*Daily)(nil)
 
@@ -19,11 +23,12 @@ func NewDaily(api api.API, av string) Daily {
 }
 
 // Run 运行日常任务
-func (daily Daily) Run() (res string) {
+func (daily Daily) Run(ch chan<- interface{}) {
 	if daily.VideoAvID == "" {
 		daily.getRandomAV()
 	}
 
+	var res string
 	if err, ok := daily.userCheck(); ok {
 		res += "WatchVideo: " + daily.watchVideo() + "\n"
 		res += "ShareVideo: " + daily.shareVideo() + "\n"
@@ -32,7 +37,12 @@ func (daily Daily) Run() (res string) {
 	} else {
 		res += "UserCheck: " + err
 	}
-	return
+	ch <- res
+}
+
+// Next 下次运行时间
+func (daily Daily) Next(time time.Time) time.Time {
+	return time.AddDate(0, 0, 1)
 }
 
 func (daily Daily) userCheck() (string, bool) {
