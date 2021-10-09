@@ -397,6 +397,9 @@ message Comments {
     int32 code = 1;
     string message = 2;
     message Data {
+        message Upper {
+            int64 mid = 1;
+        }
         message Page {
             int32 count = 1;
             int32 acount = 2;
@@ -421,6 +424,7 @@ message Comments {
         }
         repeated Replies replies = 1;
         Page page = 2;
+        Upper upper = 3;
     }
     Data data = 3;
 }

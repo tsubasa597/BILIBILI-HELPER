@@ -3,6 +3,7 @@ package info
 // Comment 爬取的评论信息
 type Comment struct {
 	Info
+	UserID    int64
 	DynamicID int64
 	UID       int64
 	Rpid      int64

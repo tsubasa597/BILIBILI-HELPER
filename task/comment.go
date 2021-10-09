@@ -51,6 +51,7 @@ func (c *Comment) Run(ch chan<- interface{}) {
 				Name: inf.Member.Uname,
 				Time: int32(inf.Ctime),
 			},
+			UserID:    resp.Data.Upper.Mid,
 			UID:       inf.Mid,
 			Rpid:      inf.Rpid,
 			Like:      uint32(inf.Like),
