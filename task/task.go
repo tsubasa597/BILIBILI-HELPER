@@ -46,11 +46,11 @@ func (c Corn) Add(t Tasker) {
 	}
 
 	ti := time.Now()
-	c.tasks.Store(&Entry{
+	c.tasks.Store(t, &Entry{
 		prev: ti,
 		next: t.Next(ti),
 		Task: t,
-	}, struct{}{})
+	})
 }
 
 // Stop 停止
@@ -72,7 +72,7 @@ func (c Corn) run() {
 	for atomic.LoadInt32(&c.running) == int32(state.Runing) {
 		c.tasks.Range(func(key, value interface{}) bool {
 			t := time.Now()
-			entry := key.(*Entry)
+			entry := value.(*Entry)
 			if entry.next.Before(t) {
 				go entry.Task.Run(c.Ch)
 				entry.prev = t
