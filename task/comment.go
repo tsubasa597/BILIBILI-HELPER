@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
@@ -30,17 +31,12 @@ func (c *Comment) Run(ch chan<- interface{}) {
 
 	resp, err := api.GetComments(c.Type, 0, c.RID, c.ps, c.Pn)
 	if err != nil {
+		if err.Error() == ecode.ErrNoComment {
+			c.state = state.Stop
+			return
+		}
+
 		c.log.Error(err)
-		return
-	}
-
-	if resp.Code != 0 {
-		c.log.Error(resp.Message)
-		return
-	}
-
-	if len(resp.Data.Replies) == 0 {
-		c.state = state.Stop
 		return
 	}
 
@@ -49,7 +45,7 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		infos = append(infos, &info.Comment{
 			Info: info.Info{
 				Name: inf.Member.Uname,
-				Time: int32(inf.Ctime),
+				Time: inf.Ctime,
 			},
 			UserID:    resp.Data.Upper.Mid,
 			UID:       inf.Mid,

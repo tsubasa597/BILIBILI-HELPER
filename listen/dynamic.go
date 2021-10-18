@@ -5,7 +5,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
-	"github.com/tsubasa597/BILIBILI-HELPER/e"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
@@ -38,7 +37,7 @@ func (dynamic *Dynamic) GetList() []state.Info {
 }
 
 // Add 添加 uid 进行监听
-func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid int64, t int32) error {
+func (dynamic *Dynamic) Add(ctx context.Context, cancel context.CancelFunc, uid, t int64) error {
 	var name string
 
 	if s, err := api.GetUserName(uid); err == nil {
@@ -66,17 +65,6 @@ func getDynamicMessage(uid int64, l state.Listener, log *logrus.Entry) (dynamics
 	for {
 		dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(uid, offect)
 		if err != nil {
-			log.Errorln(err)
-			return
-		}
-
-		if dynamicSvrSpaceHistoryResponse.Code != 0 {
-			log.Errorln(e.ErrGetDynamic)
-			return
-		}
-
-		if dynamicSvrSpaceHistoryResponse.Data.HasMore != 1 {
-			log.Errorln(e.ErrNoDynamic)
 			return
 		}
 

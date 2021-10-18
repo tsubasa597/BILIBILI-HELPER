@@ -2,20 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	fmt "fmt"
+	"fmt"
 	"strconv"
 
+	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
-)
-
-const (
-	errGetDynamic    = "请求发生错误"
-	errNoDynamic     = "该用户没有动态"
-	errUnknowDynamic = "未知动态"
-	errNotListen     = "该用户未监听"
-	errRepeatListen  = "重复监听"
-	errLoad          = "解析错误"
 )
 
 const (
@@ -55,7 +47,39 @@ func GetDynamicSrvSpaceHistory(hostUID, nextOffect int64) (*DynamicSvrSpaceHisto
 	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
 		dynamicSrvSpaceHistory, hostUID, nextOffect), resp)
 
+	if len(resp.Data.Cards) == 0 {
+		return nil, fmt.Errorf(ecode.ErrNoDynamic)
+	}
+
+	if resp.Code != ecode.Sucess {
+		return nil, fmt.Errorf(resp.Message)
+	}
+
 	return resp, err
+}
+
+// GetDynamic 获取指定时间前的动态
+func GetDynamic(hostUID, t int64) (dynamics []info.Dynamic, err error) {
+	var nextOffect int64
+DynamicCards:
+	for {
+		history, err := GetDynamicSrvSpaceHistory(hostUID, nextOffect)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, card := range history.Data.Cards {
+			if int64(card.Desc.Timestamp) >= t {
+				break DynamicCards
+			}
+
+			if dynamic, err := GetOriginCard(card); err == nil {
+				dynamics = append(dynamics, dynamic)
+			}
+		}
+	}
+
+	return
 }
 
 // GetComments 获取评论
@@ -65,6 +89,14 @@ func GetComments(commentType, sort uint8, oid int64, ps, pn int) (*Comments, err
 		reply, commentType, oid, sort, ps, pn), resp)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(resp.Data.Replies) == 0 {
+		return nil, fmt.Errorf(ecode.ErrNoComment)
+	}
+
+	if resp.Code != ecode.Sucess {
+		return nil, fmt.Errorf(resp.Message)
 	}
 
 	return resp, nil
@@ -86,7 +118,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 
 	switch c.Desc.Type {
 	case DynamicDescType_Unknown:
-		return info.Dynamic{}, fmt.Errorf(errUnknowDynamic)
+		return info.Dynamic{}, fmt.Errorf(ecode.ErrUnknowDynamic)
 	case DynamicDescType_WithOrigin:
 		orig := &CardWithOrig{}
 		err = json.Unmarshal([]byte(c.Card), orig)
@@ -146,7 +178,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.CommentType = CommentDynamic
 
 	default:
-		err = fmt.Errorf(errLoad)
+		err = fmt.Errorf(ecode.ErrLoad)
 	}
 	return
 }

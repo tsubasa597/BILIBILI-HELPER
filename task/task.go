@@ -39,7 +39,7 @@ func New() Corn {
 	}
 }
 
-// Add 添加新任务
+// Add 添加新任务 指针！
 func (c Corn) Add(t Tasker) {
 	if _, ok := c.tasks.Load(t); ok {
 		return
@@ -74,12 +74,12 @@ func (c Corn) run() {
 			t := time.Now()
 			entry := value.(*Entry)
 			if entry.next.Before(t) {
-				go entry.Task.Run(c.Ch)
+				entry.Task.Run(c.Ch)
 				entry.prev = t
 				entry.next = entry.Task.Next(t)
 			}
 
-			time.Sleep(time.Second) // 防止请求太快
+			// time.Sleep(time.Second) // 防止请求太快
 			return true
 		})
 	}

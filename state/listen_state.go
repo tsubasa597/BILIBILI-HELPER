@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tsubasa597/BILIBILI-HELPER/e"
+	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
@@ -62,7 +62,7 @@ func (d *DeListenState) Get(id int64) (Listener, error) {
 
 	info, ok := d.infos[id]
 	if !ok {
-		return nil, fmt.Errorf(e.ErrNotListen)
+		return nil, fmt.Errorf(ecode.ErrNotListen)
 	}
 
 	return info, nil
@@ -74,7 +74,7 @@ func (d *DeListenState) Put(id int64, up Listener) error {
 	defer d.mutex.Unlock()
 
 	if _, ok := d.infos[id]; ok {
-		return fmt.Errorf(e.ErrRepeatListen)
+		return fmt.Errorf(ecode.ErrRepeatListen)
 	}
 
 	d.infos[id] = up
@@ -100,7 +100,7 @@ func (d *DeListenState) StopOne(id int64) error {
 
 	info, ok := d.infos[id]
 	if !ok {
-		return fmt.Errorf(e.ErrNotListen)
+		return fmt.Errorf(ecode.ErrNotListen)
 	}
 
 	info.Stop()
@@ -115,22 +115,22 @@ func (d *DeListenState) Do(id int64, f func(int64, Listener, *logrus.Entry) []in
 
 	switch d.state {
 	case Pause:
-		return nil, fmt.Errorf(e.ErrPause)
+		return nil, fmt.Errorf(ecode.ErrPause)
 	case Stop:
-		return nil, fmt.Errorf(e.ErrorStop)
+		return nil, fmt.Errorf(ecode.ErrorStop)
 	}
 
 	inf, ok := d.infos[id]
 	if !ok {
-		return nil, fmt.Errorf(e.ErrNotListen)
+		return nil, fmt.Errorf(ecode.ErrNotListen)
 	}
 
 	switch inf.GetState() {
 	case Pause:
-		return nil, fmt.Errorf(e.ErrPause)
+		return nil, fmt.Errorf(ecode.ErrPause)
 	case Stop:
 		delete(d.infos, id)
-		return nil, fmt.Errorf(e.ErrorStop)
+		return nil, fmt.Errorf(ecode.ErrorStop)
 	}
 
 	infos := f(id, inf, d.log)
@@ -148,7 +148,7 @@ func (d *DeListenState) PauseOne(id int64) bool {
 
 	inf, ok := d.infos[id]
 	if !ok {
-		d.log.Error(e.ErrNotListen)
+		d.log.Error(ecode.ErrNotListen)
 		return false
 	}
 
@@ -163,7 +163,7 @@ func (d *DeListenState) Pause(duration int) bool {
 	d.state = Pause
 	for _, inf := range d.infos {
 		if !inf.Pause() {
-			d.log.Error(e.ErrorStop)
+			d.log.Error(ecode.ErrorStop)
 		}
 	}
 
@@ -177,14 +177,14 @@ func (d *DeListenState) Pause(duration int) bool {
 				d.state = Runing
 				for _, inf := range d.infos {
 					if !inf.Start() {
-						d.log.Error(e.ErrorStop)
+						d.log.Error(ecode.ErrorStop)
 					}
 				}
 			}
 		}
 	}(time.NewTicker(time.Minute * time.Duration(duration)))
 
-	d.log.Info("暂停监听")
+	d.log.Info(ecode.ErrPause)
 	return true
 }
 
@@ -195,7 +195,7 @@ func (d *DeListenState) StartOne(id int64) bool {
 
 	inf, ok := d.infos[id]
 	if !ok {
-		d.log.Error(e.ErrNotListen)
+		d.log.Error(ecode.ErrNotListen)
 		return false
 	}
 
@@ -210,7 +210,7 @@ func (d *DeListenState) Start() bool {
 	d.state = Runing
 	for _, inf := range d.infos {
 		if !inf.Start() {
-			d.log.Error(e.ErrorStop)
+			d.log.Error(ecode.ErrorStop)
 		}
 	}
 

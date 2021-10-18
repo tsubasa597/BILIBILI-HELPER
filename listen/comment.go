@@ -29,17 +29,6 @@ func (c *Comment) ListenInfo(rid int64) (infos []info.Interface, err error) {
 
 		resp, err := api.GetComments(comm.Type, 0, comm.RID, comm.ps, comm.Pn)
 		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		if resp.Code != 0 {
-			limit = true
-			return
-		}
-
-		if len(resp.Data.Replies) == 0 {
-			comm.Stop()
 			return
 		}
 
@@ -47,7 +36,7 @@ func (c *Comment) ListenInfo(rid int64) (infos []info.Interface, err error) {
 			infos = append(infos, &info.Comment{
 				Info: info.Info{
 					Name: inf.Member.Uname,
-					Time: int32(inf.Ctime),
+					Time: inf.Ctime,
 				},
 				UserID:    resp.Data.Upper.Mid,
 				UID:       inf.Mid,
@@ -85,7 +74,7 @@ func (c Comment) GetList() []state.Info {
 }
 
 // Add 添加监听 评论区一页数量为 49
-func (c Comment) Add(ctx context.Context, cancel context.CancelFunc, rid int64, typ int32) error {
+func (c Comment) Add(ctx context.Context, cancel context.CancelFunc, rid, typ int64) error {
 	return c.comms.Put(rid, NewCommLinsten(ctx, cancel, rid, uint8(typ), 49))
 }
 
@@ -102,7 +91,7 @@ type CommLinsten struct {
 	Ctx    context.Context
 	RID    int64
 	Type   uint8
-	Time   int32
+	Time   int64
 	Pn     int
 	ps     int
 	state  state.State

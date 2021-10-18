@@ -24,7 +24,7 @@ func getLiverStatus(uid int64, state state.Listener, log *logrus.Entry) (infos [
 
 	live := info.Live{}
 	live.Name = rep.Data.Name
-	live.Time = int32(time.Now().Unix())
+	live.Time = time.Now().Unix()
 	live.LiveRoomURL = rep.Data.LiveRoom.Url
 	live.LiveTitle = rep.Data.LiveRoom.Title
 	if rep.Data.LiveRoom.RoomStatus == 1 {
@@ -57,7 +57,7 @@ func (live *Live) GetState() state.State {
 }
 
 // Add 添加监听
-func (live *Live) Add(ctx context.Context, cancel context.CancelFunc, uid int64, _ int32) error {
+func (live *Live) Add(ctx context.Context, cancel context.CancelFunc, uid, _ int64) error {
 	var name string
 
 	if s, err := api.GetUserName(uid); err == nil {

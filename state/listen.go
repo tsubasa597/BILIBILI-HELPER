@@ -20,13 +20,13 @@ var _ Listener = (*UpRoutine)(nil)
 type UpRoutine struct {
 	Name   string // Name 用户姓名
 	Ctx    context.Context
-	Time   int32
+	Time   int64
 	state  State
 	cancel context.CancelFunc
 }
 
 // NewUpRoutine 初始化
-func NewUpRoutine(ctx context.Context, cancel context.CancelFunc, t int32, name string) *UpRoutine {
+func NewUpRoutine(ctx context.Context, cancel context.CancelFunc, t int64, name string) *UpRoutine {
 	return &UpRoutine{
 		Ctx:    ctx,
 		Name:   name,
@@ -83,5 +83,5 @@ func (up UpRoutine) Stop() {
 
 // Update 更新时间
 func (up *UpRoutine) Update(t interface{}) {
-	up.Time = t.(int32)
+	up.Time = t.(int64)
 }

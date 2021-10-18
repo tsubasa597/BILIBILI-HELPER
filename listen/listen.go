@@ -16,7 +16,7 @@ type Listener interface {
 	ListenInfo(int64) ([]info.Interface, error)
 	StopListenUP(int64) error
 	GetList() []state.Info
-	Add(context.Context, context.CancelFunc, int64, int32) error
+	Add(context.Context, context.CancelFunc, int64, int64) error
 }
 
 // Listen 管理监听状态
@@ -69,7 +69,7 @@ func (listen *Listen) GetList() []state.Info {
 }
 
 // Add 添加 id 进行监听
-func (listen *Listen) Add(id int64, t int32, duration time.Duration) (context.Context, chan []info.Interface, error) {
+func (listen *Listen) Add(id, t int64, duration time.Duration) (context.Context, chan []info.Interface, error) {
 	ctx, cl := context.WithCancel(listen.Ctx)
 	if err := listen.listener.Add(ctx, cl, id, t); err != nil {
 		return nil, nil, err

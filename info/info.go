@@ -5,14 +5,14 @@ package info
 type Interface interface {
 	GetType() Type
 	GetInstance() interface{}
-	GetTime() int32
+	GetTime() int64
 	GetName() string
 }
 
 // Info 监听返回值的基础结构体
 type Info struct {
 	Name string
-	Time int32
+	Time int64
 }
 
 var _ Interface = (*Info)(nil)
@@ -28,7 +28,7 @@ func (i *Info) GetInstance() interface{} {
 }
 
 // GetTime 返回时间
-func (i Info) GetTime() int32 {
+func (i Info) GetTime() int64 {
 	return i.Time
 }
 

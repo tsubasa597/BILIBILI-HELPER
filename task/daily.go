@@ -1,12 +1,18 @@
 package task
 
 import (
+	"strings"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 )
 
-var _ Tasker = (*Daily)(nil)
+var (
+	_ Tasker = (*Daily)(nil)
+	// 银瓜子最低兑换要求
+	exchangeRate int64 = 700
+)
 
 // Daily 日常任务
 type Daily struct {
@@ -28,16 +34,18 @@ func (daily Daily) Run(ch chan<- interface{}) {
 		daily.getRandomAV()
 	}
 
-	var res string
+	res := strings.Builder{}
 	if err, ok := daily.userCheck(); ok {
-		res += "WatchVideo: " + daily.watchVideo() + "\n"
-		res += "ShareVideo: " + daily.shareVideo() + "\n"
-		res += "Sliver2Coins: " + daily.sliver2Coins() + "\n"
-		res += "LiveCheckin: " + daily.liveCheckin()
+		res.WriteString("WatchVideo: " + daily.watchVideo() + "\n")
+		res.WriteString("ShareVideo: " + daily.shareVideo() + "\n")
+		res.WriteString("Sliver2Coins: " + daily.sliver2Coins() + "\n")
+		res.WriteString("LiveCheckin: " + daily.liveCheckin())
 	} else {
-		res += "UserCheck: " + err
+		res.WriteString("UserCheck: " + err)
 	}
-	ch <- res
+
+	ch <- res.String()
+	res.Reset()
 }
 
 // Next 下次运行时间
@@ -46,91 +54,64 @@ func (daily Daily) Next(time time.Time) time.Time {
 }
 
 func (daily Daily) userCheck() (string, bool) {
-	resp, err := daily.api.UserCheck()
-	if err != nil {
+	if _, err := daily.api.UserCheck(); err != nil {
 		return err.Error(), false
 	}
 
-	if resp.Code == 0 {
-		return "登录成功", true
-	}
-
-	return resp.Message, false
+	return ecode.SucessLogin, true
 }
 
 func (daily Daily) watchVideo() string {
 	if daily.VideoAvID == "" {
-		return "Bvid 为空，跳过"
+		return ecode.ErrNoBvID
 	}
 
-	resp, err := daily.api.WatchVideo(daily.VideoAvID)
-	if err != nil && resp.Code != 0 {
+	if _, err := daily.api.WatchVideo(daily.VideoAvID); err != nil {
 		return err.Error()
 	}
 
-	if resp.Code == 0 {
-		return "播放成功"
-	}
+	return ecode.SucessPlay
 
-	return resp.Message
 }
 
 func (daily Daily) sliver2Coins() string {
-	const exchangeRate int64 = 700
 	status, err := daily.api.Sliver2CoinsStatus()
 	if err != nil {
 		return err.Error()
 	}
 
 	if status.Data.Silver < exchangeRate {
-		return "当前银瓜子余额不足700,不进行兑换"
+		return ecode.ErrExchange
 	}
 
 	resp, err := daily.api.Sliver2Coins()
-
-	if resp.Code == 0 {
-		return "兑换成功"
-	}
-
-	if resp.Code == 403 {
-		return resp.Message
-	}
-
 	if err != nil {
 		return err.Error()
 	}
 
 	return resp.Message
+
 }
 
 func (daily Daily) shareVideo() string {
 	if daily.VideoAvID == "" {
-		return "Bvid 为空，跳过"
+		return ecode.ErrNoBvID
 	}
 
-	resp, err := daily.api.ShareVideo(daily.VideoAvID)
-	if err != nil && resp.Code != 0 {
+	if _, err := daily.api.ShareVideo(daily.VideoAvID); err != nil {
 		return err.Error()
 	}
 
-	if resp.Code == 0 {
-		return "分享成功"
-	}
-
-	return resp.Message
+	return ecode.SucessShare
 }
 
 func (daily Daily) liveCheckin() string {
-	resp, err := daily.api.LiveCheckin()
-	if err != nil {
+	if _, err := daily.api.LiveCheckin(); err != nil {
 		return err.Error()
 	}
 
-	if resp.Code == 0 {
-		return "签到成功"
-	}
+	return ecode.SucessSignIn
 
-	return "重复签到"
 }
 
 func (daily *Daily) getRandomAV() {

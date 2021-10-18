@@ -17,6 +17,6 @@ const (
 // Info 获取的状态信息
 type Info struct {
 	Name string
-	Time int32
+	Time int64
 	Ctx  context.Context
 }
