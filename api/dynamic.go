@@ -41,8 +41,8 @@ const (
 	CommentDynamic
 )
 
-// GetDynamicSrvSpaceHistory 获取目的 uid 的所有动态
-func GetDynamicSrvSpaceHistory(hostUID, nextOffect int64) (*DynamicSvrSpaceHistoryResponse, error) {
+// GetDynamics 获取目的 uid 的动态
+func GetDynamics(hostUID, nextOffect int64) (*DynamicSvrSpaceHistoryResponse, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
 	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
 		dynamicSrvSpaceHistory, hostUID, nextOffect), resp)
@@ -58,36 +58,11 @@ func GetDynamicSrvSpaceHistory(hostUID, nextOffect int64) (*DynamicSvrSpaceHisto
 	return resp, err
 }
 
-// GetDynamic 获取指定时间前的动态
-func GetDynamic(hostUID, t int64) (dynamics []info.Dynamic, err error) {
-	var nextOffect int64
-DynamicCards:
-	for {
-		history, err := GetDynamicSrvSpaceHistory(hostUID, nextOffect)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, card := range history.Data.Cards {
-			if int64(card.Desc.Timestamp) >= t {
-				break DynamicCards
-			}
-
-			if dynamic, err := GetOriginCard(card); err == nil {
-				dynamics = append(dynamics, dynamic)
-			}
-		}
-	}
-
-	return
-}
-
 // GetComments 获取评论
 func GetComments(commentType, sort uint8, oid int64, ps, pn int) (*Comments, error) {
 	resp := &Comments{}
-	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&sort=%d&ps=%d&pn=%d",
-		reply, commentType, oid, sort, ps, pn), resp)
-	if err != nil {
+	if err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&sort=%d&ps=%d&pn=%d",
+		reply, commentType, oid, sort, ps, pn), resp); err != nil {
 		return nil, err
 	}
 
@@ -109,12 +84,11 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 	dynamic.Name = c.Desc.UserProfile.Info.Uname
 	dynamic.Card = c.Card
 
-	i, err := strconv.Atoi(c.Desc.DynamicIdStr)
+	rid, err := strconv.Atoi(c.Desc.DynamicIdStr)
 	if err != nil {
-		return
+		return dynamic, err
 	}
-	dynamic.RID = int64(i)
-	dynamic.DynamicID = int64(i)
+	dynamic.RID = int64(rid)
 
 	switch c.Desc.Type {
 	case DynamicDescType_Unknown:

@@ -63,7 +63,7 @@ func NewDynamic(ctx context.Context, log *logrus.Entry) *Dynamic {
 func getDynamicMessage(uid int64, l state.Listener, log *logrus.Entry) (dynamics []info.Interface) {
 	var offect int64
 	for {
-		dynamicSvrSpaceHistoryResponse, err := api.GetDynamicSrvSpaceHistory(uid, offect)
+		dynamicSvrSpaceHistoryResponse, err := api.GetDynamics(uid, offect)
 		if err != nil {
 			return
 		}
@@ -85,7 +85,7 @@ func getDynamicMessage(uid int64, l state.Listener, log *logrus.Entry) (dynamics
 					log.Errorln(err)
 					continue
 				}
-				offect = info.DynamicID
+				offect = info.RID
 				dynamics = append(dynamics, &info)
 			} else {
 				return
