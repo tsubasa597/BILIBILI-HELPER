@@ -63,13 +63,13 @@ func NewDynamic(ctx context.Context, log *logrus.Entry) *Dynamic {
 func getDynamicMessage(uid int64, l state.Listener, log *logrus.Entry) (dynamics []info.Interface) {
 	var offect int64
 	for {
-		dynamicSvrSpaceHistoryResponse, err := api.GetDynamics(uid, offect)
+		cards, err := api.GetDynamics(uid, offect)
 		if err != nil {
 			return
 		}
 
 		if l.GetInfo().Time == NewListen {
-			info, err := api.GetOriginCard(dynamicSvrSpaceHistoryResponse.Data.Cards[0])
+			info, err := api.GetOriginCard(cards[0])
 			if err != nil {
 				log.Errorln(err)
 				return
@@ -78,7 +78,7 @@ func getDynamicMessage(uid int64, l state.Listener, log *logrus.Entry) (dynamics
 			return append(dynamics, &info)
 		}
 
-		for _, card := range dynamicSvrSpaceHistoryResponse.Data.Cards {
+		for _, card := range cards {
 			if card.Desc.Timestamp > l.GetInfo().Time {
 				info, err := api.GetOriginCard(card)
 				if err != nil {

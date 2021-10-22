@@ -29,7 +29,7 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		return
 	}
 
-	resp, err := api.GetComments(c.Type, 0, c.RID, c.ps, c.Pn)
+	data, err := api.GetComments(c.Type, 0, c.RID, c.ps, c.Pn)
 	if err != nil {
 		if err.Error() == ecode.ErrNoComment {
 			c.state = state.Stop
@@ -40,14 +40,14 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		return
 	}
 
-	infos := make([]*info.Comment, 0, len(resp.Data.Replies))
-	for _, inf := range resp.Data.Replies {
+	infos := make([]*info.Comment, 0, len(data.Replies))
+	for _, inf := range data.Replies {
 		infos = append(infos, &info.Comment{
 			Info: info.Info{
 				Name: inf.Member.Uname,
 				Time: inf.Ctime,
 			},
-			UserID:    resp.Data.Upper.Mid,
+			UserID:    data.Upper.Mid,
 			UID:       inf.Mid,
 			Rpid:      inf.Rpid,
 			Like:      uint32(inf.Like),

@@ -41,8 +41,8 @@ const (
 	CommentDynamic
 )
 
-// GetDynamics 获取目的 uid 的动态
-func GetDynamics(hostUID, nextOffect int64) (*DynamicSvrSpaceHistoryResponse, error) {
+// GetDynamics 获取目的 uid 的一页动态
+func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
 	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
 		dynamicSrvSpaceHistory, hostUID, nextOffect), resp)
@@ -55,26 +55,32 @@ func GetDynamics(hostUID, nextOffect int64) (*DynamicSvrSpaceHistoryResponse, er
 		return nil, fmt.Errorf(resp.Message)
 	}
 
-	return resp, err
+	return resp.Data.Cards, err
 }
 
-// GetComments 获取评论
-func GetComments(commentType, sort uint8, oid int64, ps, pn int) (*Comments, error) {
-	resp := &Comments{}
-	if err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&sort=%d&ps=%d&pn=%d",
-		reply, commentType, oid, sort, ps, pn), resp); err != nil {
-		return nil, err
-	}
+// GetAllDynamics 获取指定时间为止的所有动态
+func GetAllDynamics(hostUID, t int64) (dynamics []*info.Dynamic) {
+	var offect int64
+	for {
+		cards, err := GetDynamics(hostUID, offect)
+		if err != nil {
+			return
+		}
 
-	if len(resp.Data.Replies) == 0 {
-		return nil, fmt.Errorf(ecode.ErrNoComment)
-	}
+		for _, card := range cards {
+			if card.Desc.Timestamp <= t {
+				return
+			}
 
-	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
-	}
+			dy, err := GetOriginCard(card)
+			if err != nil {
+				continue
+			}
 
-	return resp, nil
+			offect = dy.Offect
+			dynamics = append(dynamics, &dy)
+		}
+	}
 }
 
 // GetOriginCard 获取 Card 的源动态
@@ -84,11 +90,12 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 	dynamic.Name = c.Desc.UserProfile.Info.Uname
 	dynamic.Card = c.Card
 
-	rid, err := strconv.Atoi(c.Desc.DynamicIdStr)
+	offect, err := strconv.Atoi(c.Desc.DynamicIdStr)
 	if err != nil {
 		return dynamic, err
 	}
-	dynamic.RID = int64(rid)
+	dynamic.RID = int64(offect)
+	dynamic.Offect = int64(offect)
 
 	switch c.Desc.Type {
 	case DynamicDescType_Unknown:
@@ -115,11 +122,11 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 			return dy, err
 		}
 
-		dynamic.CommentType = CommentDynamic
+		dynamic.Type = CommentDynamic
 		dynamic.Content = orig.Item.Content
 
 	case DynamicDescType_WithImage:
-		dynamic.CommentType = CommentDynamicImage
+		dynamic.Type = CommentDynamicImage
 
 		item := &CardWithImage{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
@@ -129,7 +136,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.Content = item.Item.Description
 
 	case DynamicDescType_TextOnly:
-		dynamic.CommentType = CommentDynamic
+		dynamic.Type = CommentDynamic
 
 		item := &CardTextOnly{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
@@ -138,18 +145,18 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.Content = item.Item.Content
 
 	case DynamicDescType_WithVideo:
-		dynamic.CommentType = CommentViedo
+		dynamic.Type = CommentViedo
 		dynamic.RID = c.Desc.Rid
 
 	case DynamicDescType_WithPost:
-		dynamic.CommentType = CommentColumn
+		dynamic.Type = CommentColumn
 		dynamic.RID = c.Desc.Rid
 
 	case DynamicDescType_WithMusic:
-		dynamic.CommentType = CommentAudio
+		dynamic.Type = CommentAudio
 
 	case DynamicDescType_WithMiss:
-		dynamic.CommentType = CommentDynamic
+		dynamic.Type = CommentDynamic
 
 	default:
 		err = fmt.Errorf(ecode.ErrLoad)

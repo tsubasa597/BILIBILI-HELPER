@@ -3,11 +3,12 @@ package info
 // Dynamic 监听的动态信息
 type Dynamic struct {
 	Info
-	UID         int64
-	Content     string
-	Card        string
-	RID         int64
-	CommentType uint8
+	UID     int64
+	Content string
+	Card    string
+	RID     int64
+	Offect  int64
+	Type    uint8
 }
 
 var _ Interface = (*Dynamic)(nil)

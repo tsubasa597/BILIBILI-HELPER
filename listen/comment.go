@@ -27,18 +27,18 @@ func (c *Comment) ListenInfo(rid int64) (infos []info.Interface, err error) {
 		c.limit.Acquire(comm.Ctx, 1)
 		defer c.limit.Release(1)
 
-		resp, err := api.GetComments(comm.Type, 0, comm.RID, comm.ps, comm.Pn)
+		data, err := api.GetComments(comm.Type, 0, comm.RID, comm.ps, comm.Pn)
 		if err != nil {
 			return
 		}
 
-		for _, inf := range resp.Data.Replies {
+		for _, inf := range data.Replies {
 			infos = append(infos, &info.Comment{
 				Info: info.Info{
 					Name: inf.Member.Uname,
 					Time: inf.Ctime,
 				},
-				UserID:    resp.Data.Upper.Mid,
+				UserID:    data.Upper.Mid,
 				UID:       inf.Mid,
 				Rpid:      inf.Rpid,
 				Like:      uint32(inf.Like),
