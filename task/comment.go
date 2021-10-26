@@ -13,7 +13,7 @@ import (
 // Comment 评论区参数
 type Comment struct {
 	RID   int64
-	Type  uint8
+	Type  info.Type
 	Time  int32
 	Pn    int
 	ps    int
@@ -47,12 +47,12 @@ func (c *Comment) Run(ch chan<- interface{}) {
 				Name: inf.Member.Uname,
 				Time: inf.Ctime,
 			},
-			UserID:    data.Upper.Mid,
-			UID:       inf.Mid,
-			Rpid:      inf.Rpid,
-			Like:      uint32(inf.Like),
-			Content:   inf.Content.Message,
-			DynamicID: c.RID,
+			UserID:  data.Upper.Mid,
+			UID:     inf.Mid,
+			Rpid:    inf.Rpid,
+			Like:    uint32(inf.Like),
+			Content: inf.Content.Message,
+			RID:     c.RID,
 		})
 	}
 
@@ -66,7 +66,7 @@ func (c Comment) Next(t time.Time) time.Time {
 }
 
 // NewComment 初始化
-func NewComment(rid int64, typ uint8, ps int, log *logrus.Entry) *Comment {
+func NewComment(rid int64, typ info.Type, ps int, log *logrus.Entry) *Comment {
 	if log == nil {
 		log = logrus.NewEntry(logrus.New())
 	}

@@ -10,37 +10,6 @@ import (
 	"github.com/tsubasa597/requests"
 )
 
-const (
-	// CommentViedo 视频
-	CommentViedo = iota + 1
-	// CommentTopic 话题
-	CommentTopic
-	_
-	// CommentActivity 活动
-	CommentActivity
-	_
-	_
-	// CommentNotice 公告
-	CommentNotice
-	// CommentLiveActivity 直播活动
-	CommentLiveActivity
-	// CommentActivityViedo 活动稿件
-	CommentActivityViedo
-	// CommentLiveNotice 直播公告
-	CommentLiveNotice
-	// CommentDynamicImage 相簿（图片动态）
-	CommentDynamicImage
-	// CommentColumn 专栏
-	CommentColumn
-	_
-	// CommentAudio 音频
-	CommentAudio
-	_
-	_
-	// CommentDynamic 动态（纯文字动态&分享）
-	CommentDynamic
-)
-
 // GetDynamics 获取目的 uid 的一页动态
 func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
@@ -122,11 +91,11 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 			return dy, err
 		}
 
-		dynamic.Type = CommentDynamic
+		dynamic.Type = info.CommentDynamic
 		dynamic.Content = orig.Item.Content
 
 	case DynamicDescType_WithImage:
-		dynamic.Type = CommentDynamicImage
+		dynamic.Type = info.CommentDynamicImage
 
 		item := &CardWithImage{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
@@ -136,7 +105,7 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.Content = item.Item.Description
 
 	case DynamicDescType_TextOnly:
-		dynamic.Type = CommentDynamic
+		dynamic.Type = info.CommentDynamic
 
 		item := &CardTextOnly{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
@@ -145,18 +114,18 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.Content = item.Item.Content
 
 	case DynamicDescType_WithVideo:
-		dynamic.Type = CommentViedo
+		dynamic.Type = info.CommentViedo
 		dynamic.RID = c.Desc.Rid
 
 	case DynamicDescType_WithPost:
-		dynamic.Type = CommentColumn
+		dynamic.Type = info.CommentColumn
 		dynamic.RID = c.Desc.Rid
 
 	case DynamicDescType_WithMusic:
-		dynamic.Type = CommentAudio
+		dynamic.Type = info.CommentAudio
 
 	case DynamicDescType_WithMiss:
-		dynamic.Type = CommentDynamic
+		dynamic.Type = info.CommentDynamic
 
 	default:
 		err = fmt.Errorf(ecode.ErrLoad)

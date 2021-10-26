@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package grpc;
+
+option go_package = "../service";
+
+message BaseDynamicRequest {
+    int64 UID = 1;
+}
+
+message DynamicRequest {
+    BaseDynamicRequest baseCommentRequest = 1;
+    int64 Offect = 2;
+}
+
+message AllDynamicRequest {
+    BaseDynamicRequest baseCommentRequest = 1;
+    int64 Time = 2;
+}
+
+message DynamicResponse {
+    int64 UID = 1;
+	string Content = 2;
+	string Card = 3; 
+	int64 RID = 4;
+	int64 Offect = 5;
+	int32 Type = 6;
+    string Name = 7;
+    int64 Time = 8;
+}
+
+service Dynamic {
+    rpc Get(DynamicRequest) returns (stream DynamicResponse) {}
+    rpc GetAll(AllDynamicRequest) returns (stream DynamicResponse) {}
+}

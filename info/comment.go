@@ -3,12 +3,12 @@ package info
 // Comment 爬取的评论信息
 type Comment struct {
 	Info
-	UserID    int64
-	DynamicID int64
-	UID       int64
-	Rpid      int64
-	Like      uint32
-	Content   string
+	UserID  int64
+	RID     int64
+	UID     int64
+	Rpid    int64
+	Like    uint32
+	Content string
 }
 
 var _ Interface = (*Comment)(nil)
@@ -18,7 +18,17 @@ func (c *Comment) GetInstance() interface{} {
 	return c
 }
 
-// GetType 判断监听类型，转换 interface{}
-func (Comment) GetType() Type {
-	return TComment
-}
+// Sort 排序
+type Sort uint8
+
+const (
+	// SortDesc 评论区按时间倒序排序
+	SortDesc Sort = iota
+	// SortAsc 评论区按时间正序排序
+	SortAsc
+
+	// MaxPs 一页评论的最大数量
+	MaxPs int = 49
+	// MinPs 一页评论的最小数量
+	MinPs int = 20
+)

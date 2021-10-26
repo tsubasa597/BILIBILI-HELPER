@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package grpc;
+
+option go_package = "../service";
+
+message BaseCommentRequest {
+    int32 Type = 1;
+    int64 RID = 2;
+}
+
+message CommentRequest {
+    BaseCommentRequest baseCommentRequest = 1;
+    int32 PageSum = 2;
+    int32 PageNum = 3;
+    int32 Sort = 4;
+}
+
+message AllCommentRequest {
+    BaseCommentRequest baseCommentRequest = 1;
+    int64 Time = 2;
+}
+
+
+message CommentResponse {
+    int64 UserID = 1;
+	int64 RID = 2; 
+	int64 UID = 3; 
+	int64 Rpid = 4; 
+	int32 like = 5;
+	string Content = 6;
+    int64 Time = 7;
+}
+
+service Comment {
+    rpc GetAll(AllCommentRequest) returns (stream CommentResponse) {}
+    rpc Get(CommentRequest) returns (stream CommentResponse) {}
+}
