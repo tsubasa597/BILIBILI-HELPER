@@ -11,15 +11,18 @@ type cookie struct {
 	BiliJct  string
 }
 
-func newCookie(path string) cookie {
+func newCookie(path string) (*cookie, error) {
 	vip := viper.New()
 	vip.SetConfigFile(path)
-	vip.ReadInConfig()
 
-	c := cookie{
+	if err := vip.ReadInConfig(); err != nil {
+		return nil, err
+	}
+
+	c := &cookie{
 		BiliJct:  vip.GetString("Bili.biliJct"),
 		SessData: vip.GetString("Bili.sessData"),
 		UserID:   vip.GetString("Bili.userId"),
 	}
-	return c
+	return c, nil
 }

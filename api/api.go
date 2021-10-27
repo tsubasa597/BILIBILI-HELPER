@@ -10,15 +10,18 @@ import (
 
 // API 发起请求所需的数据
 type API struct {
-	cookie cookie
+	cookie *cookie
 	Req    *requests.Requests
 }
 
 // New 初始化
-func New(path string, enrty *logrus.Entry) API {
-	c := newCookie(path)
+func New(path string, enrty *logrus.Entry) (*API, error) {
+	c, err := newCookie(path)
+	if err != nil {
+		return nil, err
+	}
 
-	return API{
+	return &API{
 		cookie: c,
 		Req: &requests.Requests{
 			Client: &http.Client{},
@@ -33,5 +36,5 @@ func New(path string, enrty *logrus.Entry) API {
 				"bili_jct":   c.BiliJct,
 			},
 		},
-	}
+	}, nil
 }

@@ -17,11 +17,11 @@ var (
 // Daily 日常任务
 type Daily struct {
 	VideoAvID string
-	api       api.API
+	api       *api.API
 }
 
 // NewDaily 初始化
-func NewDaily(api api.API, av string) Daily {
+func NewDaily(api *api.API, av string) Daily {
 	return Daily{
 		api:       api,
 		VideoAvID: av,

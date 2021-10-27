@@ -1,7 +1,5 @@
 package state
 
-import "context"
-
 // State 运行状态
 type State int32
 
@@ -13,10 +11,3 @@ const (
 	// Runing 正在运行状态
 	Runing
 )
-
-// Info 获取的状态信息
-type Info struct {
-	Name string
-	Time int64
-	Ctx  context.Context
-}

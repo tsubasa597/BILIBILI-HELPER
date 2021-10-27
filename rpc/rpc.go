@@ -1,16 +1,21 @@
-package grpc
+package rpc
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/rpc/service"
 )
 
 // Comment rpc 服务
-type Comment struct{}
+type Comment struct {
+	Log *logrus.Entry
+}
 
 // Dynamic rpc 服务
-type Dynamic struct{}
+type Dynamic struct {
+	Log *logrus.Entry
+}
 
 var (
 	_ service.CommentServer = (*Comment)(nil)
@@ -18,11 +23,11 @@ var (
 )
 
 // GetAll 获取评论区所有内容
-func (Comment) GetAll(req *service.AllCommentRequest, server service.Comment_GetAllServer) error {
+func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_GetAllServer) error {
 	comms := api.GetAllComments(info.Type(req.BaseCommentRequest.Type),
 		req.BaseCommentRequest.RID, req.Time)
 	for _, comm := range comms {
-		server.Send(&service.CommentResponse{
+		err := server.Send(&service.CommentResponse{
 			UserID:  comm.UserID,
 			UID:     comm.UID,
 			RID:     comm.RID,
@@ -31,13 +36,16 @@ func (Comment) GetAll(req *service.AllCommentRequest, server service.Comment_Get
 			Time:    comm.Time,
 			Rpid:    comm.Rpid,
 		})
+		if err != nil {
+			c.Log.Error(err)
+		}
 	}
 
 	return nil
 }
 
 // Get 获取评论区指定页数的内容
-func (Comment) Get(req *service.CommentRequest, server service.Comment_GetServer) error {
+func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServer) error {
 	comms, err := api.GetComments(info.Type(req.BaseCommentRequest.Type),
 		info.Sort(req.Sort), req.BaseCommentRequest.RID, int(req.PageSum), int(req.PageNum))
 	if err != nil {
@@ -45,7 +53,7 @@ func (Comment) Get(req *service.CommentRequest, server service.Comment_GetServer
 	}
 
 	for _, reply := range comms.Replies {
-		server.Send(&service.CommentResponse{
+		err := server.Send(&service.CommentResponse{
 			Time:    reply.Ctime,
 			UserID:  comms.Upper.Mid,
 			UID:     reply.Mid,
@@ -54,13 +62,16 @@ func (Comment) Get(req *service.CommentRequest, server service.Comment_GetServer
 			Content: reply.Content.Message,
 			RID:     req.BaseCommentRequest.RID,
 		})
+		if err != nil {
+			c.Log.Error(err)
+		}
 	}
 
 	return nil
 }
 
 // Get 获取指定动态之后的一页动态
-func (Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetServer) error {
+func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetServer) error {
 	cards, err := api.GetDynamics(req.BaseCommentRequest.UID, req.Offect)
 	if err != nil {
 		return err
@@ -68,7 +79,7 @@ func (Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetServer
 
 	for _, card := range cards {
 		if d, err := api.GetOriginCard(card); err == nil {
-			server.Send(&service.DynamicResponse{
+			err := server.Send(&service.DynamicResponse{
 				UID:     d.UID,
 				Content: d.Content,
 				Card:    d.Card,
@@ -78,6 +89,9 @@ func (Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetServer
 				Name:    d.Name,
 				Time:    d.Time,
 			})
+			if err != nil {
+				dy.Log.Error(err)
+			}
 		}
 	}
 
@@ -85,10 +99,10 @@ func (Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetServer
 }
 
 // GetAll 获取指定时间之后的所有动态
-func (Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_GetAllServer) error {
+func (dy Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_GetAllServer) error {
 	dynamics := api.GetAllDynamics(req.BaseCommentRequest.UID, req.Time)
 	for _, dynamic := range dynamics {
-		server.Send(&service.DynamicResponse{
+		err := server.Send(&service.DynamicResponse{
 			UID:     dynamic.UID,
 			Content: dynamic.Content,
 			Card:    dynamic.Card,
@@ -98,6 +112,9 @@ func (Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_Get
 			Name:    dynamic.Name,
 			Time:    dynamic.Time,
 		})
+		if err != nil {
+			dy.Log.Error(err)
+		}
 	}
 
 	return nil
