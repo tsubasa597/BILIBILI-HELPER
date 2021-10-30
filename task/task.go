@@ -2,11 +2,9 @@
 package task
 
 import (
+	"context"
 	"sync"
-	"sync/atomic"
 	"time"
-
-	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
 // Tasker 任务接口
@@ -24,18 +22,22 @@ type Entry struct {
 
 // Corn 管理所有任务，由 chan 传递数据
 type Corn struct {
-	tasks   *sync.Map
-	running int32
-	once    *sync.Once
-	Ch      chan interface{}
+	Ctx    context.Context
+	cancel context.CancelFunc
+	tasks  *sync.Map
+	once   *sync.Once
+	Ch     chan interface{}
 }
 
 // New 初始化
-func New() Corn {
+func New(ctx context.Context) Corn {
+	ctx, cancel := context.WithCancel(ctx)
 	return Corn{
-		tasks: &sync.Map{},
-		once:  &sync.Once{},
-		Ch:    make(chan interface{}),
+		Ctx:    ctx,
+		cancel: cancel,
+		tasks:  &sync.Map{},
+		once:   &sync.Once{},
+		Ch:     make(chan interface{}),
 	}
 }
 
@@ -48,39 +50,42 @@ func (c Corn) Add(t Tasker) {
 	ti := time.Now()
 	c.tasks.Store(t, &Entry{
 		prev: ti,
-		next: t.Next(ti),
+		next: ti,
 		Task: t,
 	})
 }
 
 // Stop 停止
 func (c Corn) Stop() {
-	atomic.SwapInt32(&c.running, int32(state.Stop))
+	c.cancel()
 	close(c.Ch)
 }
 
 // Start 开始运行
 func (c Corn) Start() {
-	atomic.SwapInt32(&c.running, int32(state.Runing))
-
 	c.once.Do(func() {
 		go c.run()
 	})
 }
 
 func (c Corn) run() {
-	for atomic.LoadInt32(&c.running) == int32(state.Runing) {
-		c.tasks.Range(func(key, value interface{}) bool {
-			t := time.Now()
-			entry := value.(*Entry)
-			if entry.next.Before(t) {
-				entry.Task.Run(c.Ch)
-				entry.prev = t
-				entry.next = entry.Task.Next(t)
-			}
+	for {
+		select {
+		case <-c.Ctx.Done():
+			return
+		default:
+			c.tasks.Range(func(key, value interface{}) bool {
+				t := time.Now()
+				entry := value.(*Entry)
+				if entry.next.Before(t) {
+					entry.Task.Run(c.Ch)
+					entry.prev = t
+					entry.next = entry.Task.Next(t)
+				}
 
-			// time.Sleep(time.Second) // 防止请求太快
-			return true
-		})
+				// time.Sleep(time.Second) // 防止请求太快
+				return true
+			})
+		}
 	}
 }
