@@ -6,6 +6,7 @@ import (
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
+	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
 var (
@@ -18,6 +19,7 @@ var (
 type Daily struct {
 	VideoAvID string
 	api       *api.API
+	state     state.State
 }
 
 // NewDaily 初始化
@@ -28,8 +30,17 @@ func NewDaily(api *api.API, av string) Daily {
 	}
 }
 
+// State 获取运行状态
+func (d Daily) State() state.State {
+	return d.state
+}
+
 // Run 运行日常任务
 func (daily Daily) Run(ch chan<- interface{}) {
+	if daily.state != state.Runing {
+		return
+	}
+
 	if daily.VideoAvID == "" {
 		daily.getRandomAV()
 	}
@@ -42,6 +53,7 @@ func (daily Daily) Run(ch chan<- interface{}) {
 		res.WriteString("LiveCheckin: " + daily.liveCheckin())
 	} else {
 		res.WriteString("UserCheck: " + err)
+		daily.state = state.Stop
 	}
 
 	ch <- res.String()

@@ -60,6 +60,11 @@ func (c *Comment) Run(ch chan<- interface{}) {
 	ch <- infos
 }
 
+// State 获取运行状态
+func (c Comment) State() state.State {
+	return c.state
+}
+
 // Next 下次运行时间
 func (c Comment) Next(t time.Time) time.Time {
 	return t.Add(time.Second * 2)

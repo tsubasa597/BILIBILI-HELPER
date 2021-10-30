@@ -5,12 +5,15 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
 // Tasker 任务接口
 type Tasker interface {
 	Run(chan<- interface{})
 	Next(time.Time) time.Time
+	State() state.State
 }
 
 // Entry 保存下一次和这次的运行时间
@@ -75,6 +78,10 @@ func (c Corn) run() {
 			return
 		default:
 			c.tasks.Range(func(key, value interface{}) bool {
+				if key.(Tasker).State() == state.Stop {
+					c.tasks.Delete(key)
+				}
+
 				t := time.Now()
 				entry := value.(*Entry)
 				if entry.next.Before(t) {
