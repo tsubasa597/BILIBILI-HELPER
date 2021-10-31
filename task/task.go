@@ -9,6 +9,10 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
+var (
+	PauseDuration time.Duration = time.Minute * 30
+)
+
 // Tasker 任务接口
 type Tasker interface {
 	Run(chan<- interface{})
@@ -45,13 +49,15 @@ func New(ctx context.Context) Corn {
 }
 
 // Add 添加新任务 指针！
-func (c Corn) Add(t Tasker) {
-	if _, ok := c.tasks.Load(t); ok {
+func (c Corn) Add(id int64, t Tasker) {
+	if task, ok := c.tasks.Load(id); ok && task.(Tasker).State() == state.Runing {
 		return
 	}
 
+	c.tasks.Delete(id)
+
 	ti := time.Now()
-	c.tasks.Store(t, &Entry{
+	c.tasks.Store(id, &Entry{
 		prev: ti,
 		next: ti,
 		Task: t,
@@ -61,7 +67,6 @@ func (c Corn) Add(t Tasker) {
 // Stop 停止
 func (c Corn) Stop() {
 	c.cancel()
-	close(c.Ch)
 }
 
 // Start 开始运行
@@ -72,13 +77,15 @@ func (c Corn) Start() {
 }
 
 func (c Corn) run() {
+	defer close(c.Ch)
+
 	for {
 		select {
 		case <-c.Ctx.Done():
 			return
 		default:
 			c.tasks.Range(func(key, value interface{}) bool {
-				if key.(Tasker).State() == state.Stop {
+				if value.(*Entry).Task.State() == state.Stop {
 					c.tasks.Delete(key)
 				}
 

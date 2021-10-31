@@ -13,15 +13,23 @@ func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) (
 	resp := &Comments{}
 	if err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&sort=%d&ps=%d&pn=%d",
 		reply, commentType, rid, sort, ps, pn), resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if len(resp.Data.Replies) == 0 {
-		return nil, fmt.Errorf(ecode.ErrNoComment)
+		return nil, ecode.APIErr{
+			E: ecode.ErrNoComment,
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp.Data, nil

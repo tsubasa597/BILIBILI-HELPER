@@ -13,18 +13,29 @@ import (
 // GetDynamics 获取目的 uid 的一页动态
 func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
-	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
-		dynamicSrvSpaceHistory, hostUID, nextOffect), resp)
+	if err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
+		dynamicSrvSpaceHistory, hostUID, nextOffect), resp); err != nil {
+
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
+	}
 
 	if len(resp.Data.Cards) == 0 {
-		return nil, fmt.Errorf(ecode.ErrNoDynamic)
+		return nil, ecode.APIErr{
+			E: ecode.ErrNoDynamic,
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
-	return resp.Data.Cards, err
+	return resp.Data.Cards, nil
 }
 
 // GetAllDynamics 获取指定时间为止的所有动态
@@ -61,19 +72,27 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 
 	offect, err := strconv.Atoi(c.Desc.DynamicIdStr)
 	if err != nil {
-		return dynamic, err
+		return dynamic, ecode.APIErr{
+			E:   ecode.ErrLoad,
+			Msg: err.Error(),
+		}
 	}
 	dynamic.RID = int64(offect)
 	dynamic.Offect = int64(offect)
 
 	switch c.Desc.Type {
 	case DynamicDescType_Unknown:
-		return info.Dynamic{}, fmt.Errorf(ecode.ErrUnknowDynamic)
+		return info.Dynamic{}, ecode.APIErr{
+			E: ecode.ErrUnknowDynamic,
+		}
 	case DynamicDescType_WithOrigin:
 		orig := &CardWithOrig{}
 		err = json.Unmarshal([]byte(c.Card), orig)
 		if err != nil {
-			return
+			return dynamic, ecode.APIErr{
+				E:   ecode.ErrLoad,
+				Msg: err.Error(),
+			}
 		}
 
 		var dy info.Dynamic
@@ -99,7 +118,10 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 
 		item := &CardWithImage{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
-			return
+			return dynamic, ecode.APIErr{
+				E:   ecode.ErrLoad,
+				Msg: err.Error(),
+			}
 		}
 		dynamic.RID = item.Item.Id
 		dynamic.Content = item.Item.Description
@@ -109,7 +131,10 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 
 		item := &CardTextOnly{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
-			return
+			return dynamic, ecode.APIErr{
+				E:   ecode.ErrLoad,
+				Msg: err.Error(),
+			}
 		}
 		dynamic.Content = item.Item.Content
 
@@ -128,7 +153,10 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 		dynamic.Type = info.CommentDynamic
 
 	default:
-		err = fmt.Errorf(ecode.ErrLoad)
+		return dynamic, ecode.APIErr{
+			E: ecode.ErrLoad,
+		}
 	}
-	return
+
+	return dynamic, nil
 }

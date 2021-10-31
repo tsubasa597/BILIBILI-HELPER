@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"math/rand"
 	"net/url"
 	"strconv"
@@ -19,11 +18,17 @@ func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
 
 	resp := &BaseResponse{}
 	if err := api.Req.Posts(videoHeartbeat, data, resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp, nil
@@ -38,11 +43,17 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 
 	resp := &BaseResponse{}
 	if err := api.Req.Posts(avShare, data, resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp, nil
@@ -53,11 +64,17 @@ func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 	resp := &Sliver2CoinsStatusResponse{}
 
 	if err := api.Req.Gets(sliver2CoinsStatus, resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp, nil
@@ -67,11 +84,17 @@ func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 func (api API) Sliver2Coins() (*BaseResponse, error) {
 	resp := &BaseResponse{}
 	if err := api.Req.Gets(sliver2Coins, resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp, nil
@@ -81,11 +104,17 @@ func (api API) Sliver2Coins() (*BaseResponse, error) {
 func (api API) GetRandomAV() (string, error) {
 	resp := &RandomAvResponse{}
 	if err := api.Req.Gets(randomAV, resp); err != nil {
-		return "", err
+		return "", ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return "", fmt.Errorf(resp.Message)
+		return "", ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	parms := strings.Split(resp.Data.Url, "/")

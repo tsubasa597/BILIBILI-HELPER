@@ -12,13 +12,14 @@ import (
 
 // Comment 评论区参数
 type Comment struct {
-	RID   int64
-	Type  info.Type
-	Time  int32
-	Pn    int
-	ps    int
-	state state.State
-	log   *logrus.Entry
+	RID      int64
+	Type     info.Type
+	Time     int32
+	Pn       int
+	ps       int
+	timeCell time.Duration
+	state    state.State
+	log      *logrus.Entry
 }
 
 var _ Tasker = (*Comment)(nil)
@@ -36,6 +37,7 @@ func (c *Comment) Run(ch chan<- interface{}) {
 			return
 		}
 
+		c.state = state.Pause
 		c.log.Error(err)
 		return
 	}
@@ -57,6 +59,10 @@ func (c *Comment) Run(ch chan<- interface{}) {
 	}
 
 	c.Pn++
+	if c.state == state.Pause {
+		c.state = state.Runing
+	}
+
 	ch <- infos
 }
 
@@ -67,21 +73,26 @@ func (c Comment) State() state.State {
 
 // Next 下次运行时间
 func (c Comment) Next(t time.Time) time.Time {
-	return t.Add(time.Second * 2)
+	if c.state == state.Pause {
+		return t.Add(PauseDuration)
+	}
+
+	return t.Add(time.Second * c.timeCell)
 }
 
 // NewComment 初始化
-func NewComment(rid int64, typ info.Type, ps int, log *logrus.Entry) *Comment {
+func NewComment(rid int64, timeCell time.Duration, typ info.Type, ps int, log *logrus.Entry) *Comment {
 	if log == nil {
 		log = logrus.NewEntry(logrus.New())
 	}
 
 	return &Comment{
-		RID:   rid,
-		Type:  typ,
-		Pn:    1,
-		state: state.Runing,
-		ps:    ps,
-		log:   log,
+		RID:      rid,
+		Type:     typ,
+		Pn:       1,
+		state:    state.Runing,
+		ps:       ps,
+		timeCell: timeCell,
+		log:      log,
 	}
 }

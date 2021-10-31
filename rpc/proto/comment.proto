@@ -30,6 +30,7 @@ message CommentResponse {
 	int32 like = 5;
 	string Content = 6;
     int64 Time = 7;
+    string Name = 8;
 }
 
 service Comment {

@@ -27,6 +27,7 @@ func NewDaily(api *api.API, av string) Daily {
 	return Daily{
 		api:       api,
 		VideoAvID: av,
+		state:     state.Runing,
 	}
 }
 
@@ -61,8 +62,8 @@ func (daily Daily) Run(ch chan<- interface{}) {
 }
 
 // Next 下次运行时间
-func (daily Daily) Next(time time.Time) time.Time {
-	return time.AddDate(0, 0, 1)
+func (daily Daily) Next(t time.Time) time.Time {
+	return t.AddDate(0, 0, 1)
 }
 
 func (daily Daily) userCheck() (string, bool) {

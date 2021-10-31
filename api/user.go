@@ -11,11 +11,17 @@ import (
 func GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 	resp := &XSpaceAccInfoResponse{}
 	if err := requests.Gets(fmt.Sprintf("%s?mid=%d", spaceAccInfo, uid), resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp, nil
@@ -25,11 +31,17 @@ func GetUserInfo(uid int64) (*XSpaceAccInfoResponse, error) {
 func (api API) UserCheck() (*BaseResponse, error) {
 	resp := &BaseResponse{}
 	if err := api.Req.Gets(userLogin, resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp, nil
@@ -39,7 +51,10 @@ func (api API) UserCheck() (*BaseResponse, error) {
 func GetUserName(uid int64) (string, error) {
 	info, err := GetUserInfo(uid)
 	if err != nil {
-		return "", err
+		return "", ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	return info.Data.Name, nil

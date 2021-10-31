@@ -35,6 +35,7 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 			Content: comm.Content,
 			Time:    comm.Time,
 			Rpid:    comm.Rpid,
+			Name:    comm.Name,
 		})
 		if err != nil {
 			c.Log.Error(err)
@@ -61,6 +62,7 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 			Like:    reply.Like,
 			Content: reply.Content.Message,
 			RID:     req.BaseCommentRequest.RID,
+			Name:    reply.Member.Uname,
 		})
 		if err != nil {
 			c.Log.Error(err)

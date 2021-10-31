@@ -10,11 +10,17 @@ import (
 func (api API) LiveCheckin() (*BaseResponse, error) {
 	resp := &BaseResponse{}
 	if err := api.Req.Gets(liveCheckin, resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Msg)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
 
 	return resp, nil
@@ -24,11 +30,18 @@ func (api API) LiveCheckin() (*BaseResponse, error) {
 func (api API) LiverStatus(uid int64) (*GetRoomInfoOldResponse, error) {
 	resp := &GetRoomInfoOldResponse{}
 	if err := api.Req.Gets(fmt.Sprintf("%s?mid=%d", getRoomInfoOld, uid), resp); err != nil {
-		return nil, err
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, fmt.Errorf(resp.Message)
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
 	}
+
 	return resp, nil
 }
