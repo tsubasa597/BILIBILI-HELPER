@@ -31,7 +31,7 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 			UserID:  comm.UserID,
 			UID:     comm.UID,
 			RID:     comm.RID,
-			Like:    int32(comm.Like),
+			Like:    int32(comm.LikeNum),
 			Content: comm.Content,
 			Time:    comm.Time,
 			Rpid:    comm.Rpid,

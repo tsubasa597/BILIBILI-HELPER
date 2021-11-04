@@ -14,7 +14,6 @@ import (
 type Comment struct {
 	RID      int64
 	Type     info.Type
-	Time     int32
 	Pn       int
 	ps       int
 	timeCell time.Duration
@@ -26,7 +25,7 @@ var _ Tasker = (*Comment)(nil)
 
 // Run 开始运行
 func (c *Comment) Run(ch chan<- interface{}) {
-	if c.state != state.Runing {
+	if c.state == state.Stop {
 		return
 	}
 
@@ -52,7 +51,7 @@ func (c *Comment) Run(ch chan<- interface{}) {
 			UserID:  data.Upper.Mid,
 			UID:     inf.Mid,
 			Rpid:    inf.Rpid,
-			Like:    uint32(inf.Like),
+			LikeNum: uint32(inf.Like),
 			Content: inf.Content.Message,
 			RID:     c.RID,
 		})

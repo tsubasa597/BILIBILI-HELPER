@@ -7,7 +7,7 @@ type Comment struct {
 	RID     int64
 	UID     int64
 	Rpid    int64
-	Like    uint32
+	LikeNum uint32
 	Content string
 }
 

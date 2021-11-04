@@ -20,7 +20,7 @@ var (
 
 // Run 获取动态
 func (d *Dynamic) Run(ch chan<- interface{}) {
-	if d.state != state.Runing {
+	if d.state == state.Stop {
 		return
 	}
 

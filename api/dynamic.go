@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
@@ -39,7 +40,7 @@ func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
 }
 
 // GetAllDynamics 获取指定时间为止的所有动态
-func GetAllDynamics(hostUID, t int64) (dynamics []*info.Dynamic) {
+func GetAllDynamics(hostUID, t int64) (dynamics []info.Dynamic) {
 	var offect int64
 	for {
 		cards, err := GetDynamics(hostUID, offect)
@@ -58,13 +59,16 @@ func GetAllDynamics(hostUID, t int64) (dynamics []*info.Dynamic) {
 			}
 
 			offect = dy.Offect
-			dynamics = append(dynamics, &dy)
+			dynamics = append(dynamics, dy)
 		}
 	}
 }
 
 // GetOriginCard 获取 Card 的源动态
-func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
+func GetOriginCard(c *Card) (info.Dynamic, error) {
+	dynamic := *dynamicPool.Get().(*info.Dynamic)
+	defer dynamicPool.Put(&dynamic)
+
 	dynamic.UID = c.Desc.Uid
 	dynamic.Time = c.Desc.Timestamp
 	dynamic.Name = c.Desc.UserProfile.Info.Uname
@@ -160,3 +164,11 @@ func GetOriginCard(c *Card) (dynamic info.Dynamic, err error) {
 
 	return dynamic, nil
 }
+
+var (
+	dynamicPool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			return &info.Dynamic{}
+		},
+	}
+)

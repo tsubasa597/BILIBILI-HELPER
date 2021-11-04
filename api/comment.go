@@ -2,6 +2,7 @@ package api
 
 import (
 	fmt "fmt"
+	"sync"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
@@ -36,7 +37,7 @@ func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) (
 }
 
 // GetAllComments 获取指定时间为止的所有评论
-func GetAllComments(commentType info.Type, rid, t int64) (comments []*info.Comment) {
+func GetAllComments(commentType info.Type, rid, t int64) (comments []info.Comment) {
 	for pn := 1; ; pn++ {
 		data, err := GetComments(commentType, info.SortDesc, rid, info.MaxPs, pn)
 		if err != nil {
@@ -48,18 +49,25 @@ func GetAllComments(commentType info.Type, rid, t int64) (comments []*info.Comme
 				return
 			}
 
-			comments = append(comments, &info.Comment{
-				Info: info.Info{
-					Name: reply.Member.Uname,
-					Time: reply.Ctime,
-				},
-				UserID:  data.Upper.Mid,
-				UID:     reply.Mid,
-				Rpid:    reply.Rpid,
-				Like:    uint32(reply.Like),
-				Content: reply.Content.Message,
-				RID:     rid,
-			})
+			comment := commentPool.Get().(*info.Comment)
+			comment.Name = reply.Member.Uname
+			comment.UserID = data.Upper.Mid
+			comment.UID = reply.Mid
+			comment.Rpid = reply.Rpid
+			comment.LikeNum = uint32(reply.Like)
+			comment.Content = reply.Content.Message
+			comment.RID = rid
+
+			comments = append(comments, *comment)
+			commentPool.Put(comment)
 		}
 	}
 }
+
+var (
+	commentPool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			return &info.Comment{}
+		},
+	}
+)
