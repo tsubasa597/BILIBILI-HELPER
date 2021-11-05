@@ -9,6 +9,14 @@ import (
 	"github.com/tsubasa597/requests"
 )
 
+var (
+	commentPool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			return &info.Comment{}
+		},
+	}
+)
+
 // GetComments 根据评论区类型、排序类型(正序、逆序)、评论区 id、页码 获取评论
 func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) (*Comments_Data, error) {
 	resp := &Comments{}
@@ -63,11 +71,3 @@ func GetAllComments(commentType info.Type, rid, t int64) (comments []info.Commen
 		}
 	}
 }
-
-var (
-	commentPool *sync.Pool = &sync.Pool{
-		New: func() interface{} {
-			return &info.Comment{}
-		},
-	}
-)

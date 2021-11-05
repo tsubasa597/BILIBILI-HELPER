@@ -11,6 +11,14 @@ import (
 	"github.com/tsubasa597/requests"
 )
 
+var (
+	dynamicPool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			return &info.Dynamic{}
+		},
+	}
+)
+
 // GetDynamics 获取目的 uid 的一页动态
 func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
 	resp := &DynamicSvrSpaceHistoryResponse{}
@@ -164,11 +172,3 @@ func GetOriginCard(c *Card) (info.Dynamic, error) {
 
 	return dynamic, nil
 }
-
-var (
-	dynamicPool *sync.Pool = &sync.Pool{
-		New: func() interface{} {
-			return &info.Dynamic{}
-		},
-	}
-)

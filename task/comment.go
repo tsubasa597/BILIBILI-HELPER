@@ -1,6 +1,7 @@
 package task
 
 import (
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -21,7 +22,14 @@ type Comment struct {
 	log      *logrus.Entry
 }
 
-var _ Tasker = (*Comment)(nil)
+var (
+	_           Tasker     = (*Comment)(nil)
+	commentPool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			return &info.Comment{}
+		},
+	}
+)
 
 // Run 开始运行
 func (c *Comment) Run(ch chan<- interface{}) {
@@ -41,20 +49,20 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		return
 	}
 
-	infos := make([]*info.Comment, 0, len(data.Replies))
+	infos := make([]info.Comment, 0, len(data.Replies))
 	for _, inf := range data.Replies {
-		infos = append(infos, &info.Comment{
-			Info: info.Info{
-				Name: inf.Member.Uname,
-				Time: inf.Ctime,
-			},
-			UserID:  data.Upper.Mid,
-			UID:     inf.Mid,
-			Rpid:    inf.Rpid,
-			LikeNum: uint32(inf.Like),
-			Content: inf.Content.Message,
-			RID:     c.RID,
-		})
+		comm := commentPool.Get().(*info.Comment)
+		comm.Name = inf.Member.Uname
+		comm.Time = inf.Ctime
+		comm.UserID = data.Upper.Mid
+		comm.UID = inf.Mid
+		comm.Rpid = inf.Rpid
+		comm.LikeNum = uint32(inf.Like)
+		comm.Content = inf.Content.Message
+		comm.RID = c.RID
+
+		infos = append(infos, *comm)
+		commentPool.Put(comm)
 	}
 
 	c.Pn++

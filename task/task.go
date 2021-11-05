@@ -50,7 +50,7 @@ func New(ctx context.Context) Corn {
 
 // Add 添加新任务 指针！
 func (c Corn) Add(id int64, t Tasker) {
-	if task, ok := c.tasks.Load(id); ok && task.(Tasker).State() == state.Runing {
+	if task, ok := c.tasks.Load(id); ok && task.(*Entry).Task.State() == state.Runing {
 		return
 	}
 
