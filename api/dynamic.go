@@ -31,16 +31,16 @@ func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
 		}
 	}
 
-	if len(resp.Data.Cards) == 0 {
-		return nil, ecode.APIErr{
-			E: ecode.ErrNoDynamic,
-		}
-	}
-
 	if resp.Code != ecode.Sucess {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: resp.Message,
+		}
+	}
+
+	if len(resp.Data.Cards) == 0 {
+		return nil, ecode.APIErr{
+			E: ecode.ErrNoDynamic,
 		}
 	}
 

@@ -28,16 +28,16 @@ func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) (
 		}
 	}
 
-	if len(resp.Data.Replies) == 0 {
-		return nil, ecode.APIErr{
-			E: ecode.ErrNoComment,
-		}
-	}
-
 	if resp.Code != ecode.Sucess {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: resp.Message,
+		}
+	}
+
+	if len(resp.Data.Replies) == 0 {
+		return nil, ecode.APIErr{
+			E: ecode.ErrNoComment,
 		}
 	}
 

@@ -1,6 +1,8 @@
 package rpc
 
 import (
+	"sync"
+
 	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
@@ -18,8 +20,18 @@ type Dynamic struct {
 }
 
 var (
-	_ service.CommentServer = (*Comment)(nil)
-	_ service.DynamicServer = (*Dynamic)(nil)
+	_           service.CommentServer = (*Comment)(nil)
+	_           service.DynamicServer = (*Dynamic)(nil)
+	commentPool *sync.Pool            = &sync.Pool{
+		New: func() interface{} {
+			return &service.CommentResponse{}
+		},
+	}
+	dynamicPool *sync.Pool = &sync.Pool{
+		New: func() interface{} {
+			return &service.DynamicResponse{}
+		},
+	}
 )
 
 // GetAll 获取评论区所有内容
@@ -27,19 +39,22 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 	comms := api.GetAllComments(info.Type(req.BaseCommentRequest.Type),
 		req.BaseCommentRequest.RID, req.Time)
 	for _, comm := range comms {
-		err := server.Send(&service.CommentResponse{
-			UserID:  comm.UserID,
-			UID:     comm.UID,
-			RID:     comm.RID,
-			Like:    int32(comm.LikeNum),
-			Content: comm.Content,
-			Time:    comm.Time,
-			Rpid:    comm.Rpid,
-			Name:    comm.Name,
-		})
+		resp := commentPool.Get().(*service.CommentResponse)
+		resp.UserID = comm.UserID
+		resp.UID = comm.UID
+		resp.RID = comm.RID
+		resp.Like = int32(comm.LikeNum)
+		resp.Content = comm.Content
+		resp.Time = comm.Time
+		resp.Rpid = comm.Rpid
+		resp.Name = comm.Name
+
+		err := server.Send(resp)
 		if err != nil {
 			c.Log.Error(err)
 		}
+
+		commentPool.Put(resp)
 	}
 
 	return nil
@@ -54,19 +69,22 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 	}
 
 	for _, reply := range comms.Replies {
-		err := server.Send(&service.CommentResponse{
-			Time:    reply.Ctime,
-			UserID:  comms.Upper.Mid,
-			UID:     reply.Mid,
-			Rpid:    reply.Rpid,
-			Like:    reply.Like,
-			Content: reply.Content.Message,
-			RID:     req.BaseCommentRequest.RID,
-			Name:    reply.Member.Uname,
-		})
+		resp := commentPool.Get().(*service.CommentResponse)
+		resp.Time = reply.Ctime
+		resp.UserID = comms.Upper.Mid
+		resp.UID = reply.Mid
+		resp.Rpid = reply.Rpid
+		resp.Like = reply.Like
+		resp.Content = reply.Content.Message
+		resp.RID = req.BaseCommentRequest.RID
+		resp.Name = reply.Member.Uname
+
+		err := server.Send(resp)
 		if err != nil {
 			c.Log.Error(err)
 		}
+
+		commentPool.Put(resp)
 	}
 
 	return nil
@@ -81,19 +99,22 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 
 	for _, card := range cards {
 		if d, err := api.GetOriginCard(card); err == nil {
-			err := server.Send(&service.DynamicResponse{
-				UID:     d.UID,
-				Content: d.Content,
-				Card:    d.Card,
-				RID:     d.RID,
-				Offect:  d.Offect,
-				Type:    int32(d.Type),
-				Name:    d.Name,
-				Time:    d.Time,
-			})
+			resp := dynamicPool.Get().(*service.DynamicResponse)
+			resp.UID = d.UID
+			resp.Content = d.Content
+			resp.Card = d.Card
+			resp.RID = d.RID
+			resp.Offect = d.Offect
+			resp.Type = int32(d.Type)
+			resp.Name = d.Name
+			resp.Time = d.Time
+
+			err := server.Send(resp)
 			if err != nil {
 				dy.Log.Error(err)
 			}
+
+			dynamicPool.Put(resp)
 		}
 	}
 
@@ -103,20 +124,23 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 // GetAll 获取指定时间之后的所有动态
 func (dy Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_GetAllServer) error {
 	dynamics := api.GetAllDynamics(req.BaseCommentRequest.UID, req.Time)
-	for _, dynamic := range dynamics {
-		err := server.Send(&service.DynamicResponse{
-			UID:     dynamic.UID,
-			Content: dynamic.Content,
-			Card:    dynamic.Card,
-			RID:     dynamic.RID,
-			Offect:  dynamic.Offect,
-			Type:    int32(dynamic.Type),
-			Name:    dynamic.Name,
-			Time:    dynamic.Time,
-		})
+	for _, d := range dynamics {
+		resp := dynamicPool.Get().(*service.DynamicResponse)
+		resp.UID = d.UID
+		resp.Content = d.Content
+		resp.Card = d.Card
+		resp.RID = d.RID
+		resp.Offect = d.Offect
+		resp.Type = int32(d.Type)
+		resp.Name = d.Name
+		resp.Time = d.Time
+
+		err := server.Send(resp)
 		if err != nil {
 			dy.Log.Error(err)
 		}
+
+		dynamicPool.Put(resp)
 	}
 
 	return nil
