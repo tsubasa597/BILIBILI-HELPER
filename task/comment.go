@@ -54,7 +54,7 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		comm := commentPool.Get().(*info.Comment)
 		comm.Name = inf.Member.Uname
 		comm.Time = inf.Ctime
-		comm.UserID = data.Upper.Mid
+		comm.DynamicUID = data.Upper.Mid
 		comm.UID = inf.Mid
 		comm.Rpid = inf.Rpid
 		comm.LikeNum = uint32(inf.Like)

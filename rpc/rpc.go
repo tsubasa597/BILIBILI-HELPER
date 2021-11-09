@@ -40,10 +40,10 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 		req.BaseCommentRequest.RID, req.Time)
 	for _, comm := range comms {
 		resp := commentPool.Get().(*service.CommentResponse)
-		resp.UserID = comm.UserID
+		resp.DynamicUID = comm.DynamicUID
 		resp.UID = comm.UID
 		resp.RID = comm.RID
-		resp.Like = int32(comm.LikeNum)
+		resp.LikeNum = int32(comm.LikeNum)
 		resp.Content = comm.Content
 		resp.Time = comm.Time
 		resp.Rpid = comm.Rpid
@@ -71,10 +71,10 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 	for _, reply := range comms.Replies {
 		resp := commentPool.Get().(*service.CommentResponse)
 		resp.Time = reply.Ctime
-		resp.UserID = comms.Upper.Mid
+		resp.DynamicUID = comms.Upper.Mid
 		resp.UID = reply.Mid
 		resp.Rpid = reply.Rpid
-		resp.Like = reply.Like
+		resp.LikeNum = reply.Like
 		resp.Content = reply.Content.Message
 		resp.RID = req.BaseCommentRequest.RID
 		resp.Name = reply.Member.Uname

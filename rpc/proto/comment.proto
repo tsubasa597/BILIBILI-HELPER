@@ -23,11 +23,11 @@ message AllCommentRequest {
 
 
 message CommentResponse {
-    int64 UserID = 1;
+    int64 DynamicUID = 1;
 	int64 RID = 2; 
 	int64 UID = 3; 
 	int64 Rpid = 4; 
-	int32 like = 5;
+	int32 LikeNum = 5;
 	string Content = 6;
     int64 Time = 7;
     string Name = 8;

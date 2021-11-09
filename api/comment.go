@@ -59,7 +59,8 @@ func GetAllComments(commentType info.Type, rid, t int64) (comments []info.Commen
 
 			comment := commentPool.Get().(*info.Comment)
 			comment.Name = reply.Member.Uname
-			comment.UserID = data.Upper.Mid
+			comment.Time = reply.Ctime
+			comment.DynamicUID = data.Upper.Mid
 			comment.UID = reply.Mid
 			comment.Rpid = reply.Rpid
 			comment.LikeNum = uint32(reply.Like)

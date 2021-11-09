@@ -3,12 +3,12 @@ package info
 // Comment 爬取的评论信息
 type Comment struct {
 	Info
-	UserID  int64
-	RID     int64
-	UID     int64
-	Rpid    int64
-	LikeNum uint32
-	Content string
+	DynamicUID int64
+	RID        int64
+	UID        int64
+	Rpid       int64
+	LikeNum    uint32
+	Content    string
 }
 
 var _ Interface = (*Comment)(nil)
