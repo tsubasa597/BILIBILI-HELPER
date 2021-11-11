@@ -1,28 +1,28 @@
-// Package api bilibili 部分接口封装
 package api
 
 import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
 )
 
 // API 发起请求所需的数据
 type API struct {
-	cookie *cookie
+	Cookie *info.Cookie
 	Req    *requests.Requests
 }
 
 // New 初始化
-func New(path string, enrty *logrus.Entry) (*API, error) {
-	c, err := newCookie(path)
+func New(path string, enrty *logrus.Entry) (API, error) {
+	c, err := info.NewCookie(path)
 	if err != nil {
-		return nil, err
+		return API{}, err
 	}
 
-	return &API{
-		cookie: c,
+	return API{
+		Cookie: c,
 		Req: &requests.Requests{
 			Client: &http.Client{},
 			Headers: map[string]string{

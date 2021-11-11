@@ -4,7 +4,8 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/dynamic"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/rpc/service"
 )
@@ -36,8 +37,7 @@ var (
 
 // GetAll 获取评论区所有内容
 func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_GetAllServer) error {
-	comms := api.GetAllComments(info.Type(req.BaseCommentRequest.Type),
-		req.BaseCommentRequest.RID, req.Time)
+	comms := comment.GetAllComments(info.Type(req.BaseCommentRequest.Type), req.BaseCommentRequest.RID, req.Time)
 	for _, comm := range comms {
 		resp := commentPool.Get().(*service.CommentResponse)
 		resp.DynamicUID = comm.DynamicUID
@@ -62,22 +62,22 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 
 // Get 获取评论区指定页数的内容
 func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServer) error {
-	comms, err := api.GetComments(info.Type(req.BaseCommentRequest.Type),
+	comms, err := comment.GetComments(info.Type(req.BaseCommentRequest.Type),
 		info.Sort(req.Sort), req.BaseCommentRequest.RID, int(req.PageSum), int(req.PageNum))
 	if err != nil {
 		return err
 	}
 
-	for _, reply := range comms.Replies {
+	for _, comm := range comms {
 		resp := commentPool.Get().(*service.CommentResponse)
-		resp.Time = reply.Ctime
-		resp.DynamicUID = comms.Upper.Mid
-		resp.UID = reply.Mid
-		resp.Rpid = reply.Rpid
-		resp.LikeNum = reply.Like
-		resp.Content = reply.Content.Message
-		resp.RID = req.BaseCommentRequest.RID
-		resp.Name = reply.Member.Uname
+		resp.DynamicUID = comm.DynamicUID
+		resp.UID = comm.UID
+		resp.RID = comm.RID
+		resp.LikeNum = int32(comm.LikeNum)
+		resp.Content = comm.Content
+		resp.Time = comm.Time
+		resp.Rpid = comm.Rpid
+		resp.Name = comm.Name
 
 		err := server.Send(resp)
 		if err != nil {
@@ -92,30 +92,29 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 
 // Get 获取指定动态之后的一页动态
 func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetServer) error {
-	cards, err := api.GetDynamics(req.BaseCommentRequest.UID, req.Offect)
+	dynamics, err := dynamic.GetDynamics(req.BaseCommentRequest.UID, req.Offect)
 	if err != nil {
 		return err
 	}
 
-	for _, card := range cards {
-		if d, err := api.GetOriginCard(card); err == nil {
-			resp := dynamicPool.Get().(*service.DynamicResponse)
-			resp.UID = d.UID
-			resp.Content = d.Content
-			resp.Card = d.Card
-			resp.RID = d.RID
-			resp.Offect = d.Offect
-			resp.Type = int32(d.Type)
-			resp.Name = d.Name
-			resp.Time = d.Time
+	for _, d := range dynamics {
+		resp := dynamicPool.Get().(*service.DynamicResponse)
+		resp.UID = d.UID
+		resp.Content = d.Content
+		resp.Card = d.Card
+		resp.RID = d.RID
+		resp.Offect = d.Offect
+		resp.Type = int32(d.Type)
+		resp.Name = d.Name
+		resp.Time = d.Time
 
-			err := server.Send(resp)
-			if err != nil {
-				dy.Log.Error(err)
-			}
-
-			dynamicPool.Put(resp)
+		err := server.Send(resp)
+		if err != nil {
+			dy.Log.Error(err)
 		}
+
+		dynamicPool.Put(resp)
+
 	}
 
 	return nil
@@ -123,7 +122,7 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 
 // GetAll 获取指定时间之后的所有动态
 func (dy Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_GetAllServer) error {
-	dynamics := api.GetAllDynamics(req.BaseCommentRequest.UID, req.Time)
+	dynamics := dynamic.GetAllDynamics(req.BaseCommentRequest.UID, req.Time)
 	for _, d := range dynamics {
 		resp := dynamicPool.Get().(*service.DynamicResponse)
 		resp.UID = d.UID

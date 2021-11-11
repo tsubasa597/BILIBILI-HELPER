@@ -1,17 +1,17 @@
-package api
+package info
 
 import (
 	"github.com/spf13/viper"
 )
 
 // Cookie 用于登录的必要参数
-type cookie struct {
+type Cookie struct {
 	UserID   string
 	SessData string
 	BiliJct  string
 }
 
-func newCookie(path string) (*cookie, error) {
+func NewCookie(path string) (*Cookie, error) {
 	vip := viper.New()
 	vip.SetConfigFile(path)
 
@@ -19,7 +19,7 @@ func newCookie(path string) (*cookie, error) {
 		return nil, err
 	}
 
-	c := &cookie{
+	c := &Cookie{
 		BiliJct:  vip.GetString("Bili.biliJct"),
 		SessData: vip.GetString("Bili.sessData"),
 		UserID:   vip.GetString("Bili.userId"),

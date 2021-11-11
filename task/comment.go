@@ -1,11 +1,10 @@
 package task
 
 import (
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
@@ -15,20 +14,16 @@ import (
 type Comment struct {
 	RID      int64
 	Type     info.Type
-	Pn       int
-	ps       int
+	Time     int64
+	pn       int
 	timeCell time.Duration
 	state    state.State
 	log      *logrus.Entry
 }
 
 var (
-	_           Tasker     = (*Comment)(nil)
-	commentPool *sync.Pool = &sync.Pool{
-		New: func() interface{} {
-			return &info.Comment{}
-		},
-	}
+	_             Tasker        = (*Comment)(nil)
+	Pause, TwoDay time.Duration = time.Minute * 30, time.Hour * 24 * 2
 )
 
 // Run 开始运行
@@ -37,10 +32,11 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		return
 	}
 
-	data, err := api.GetComments(c.Type, 0, c.RID, c.ps, c.Pn)
+	infos, err := comment.GetComments(c.Type, 0, c.RID, info.MaxPs, c.pn)
 	if err != nil {
+		// 爬取完成,在间隔之间之后继续更新
 		if err.Error() == ecode.ErrNoComment {
-			c.state = state.Stop
+			c.pn = 1
 			return
 		}
 
@@ -49,23 +45,8 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		return
 	}
 
-	infos := make([]info.Comment, 0, len(data.Replies))
-	for _, inf := range data.Replies {
-		comm := commentPool.Get().(*info.Comment)
-		comm.Name = inf.Member.Uname
-		comm.Time = inf.Ctime
-		comm.DynamicUID = data.Upper.Mid
-		comm.UID = inf.Mid
-		comm.Rpid = inf.Rpid
-		comm.LikeNum = uint32(inf.Like)
-		comm.Content = inf.Content.Message
-		comm.RID = c.RID
+	c.pn++
 
-		infos = append(infos, *comm)
-		commentPool.Put(comm)
-	}
-
-	c.Pn++
 	if c.state == state.Pause {
 		c.state = state.Runing
 	}
@@ -80,15 +61,19 @@ func (c Comment) State() state.State {
 
 // Next 下次运行时间
 func (c Comment) Next(t time.Time) time.Time {
+	if time.Now().AddDate(0, 0, -7).Unix() < c.Time {
+		return t.Add(TwoDay)
+	}
+
 	if c.state == state.Pause {
-		return t.Add(PauseDuration)
+		return t.Add(Pause)
 	}
 
 	return t.Add(time.Second * c.timeCell)
 }
 
 // NewComment 初始化
-func NewComment(rid int64, timeCell time.Duration, typ info.Type, ps int, log *logrus.Entry) *Comment {
+func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *logrus.Entry) *Comment {
 	if log == nil {
 		log = logrus.NewEntry(logrus.New())
 	}
@@ -96,9 +81,9 @@ func NewComment(rid int64, timeCell time.Duration, typ info.Type, ps int, log *l
 	return &Comment{
 		RID:      rid,
 		Type:     typ,
-		Pn:       1,
+		Time:     t,
+		pn:       1,
 		state:    state.Runing,
-		ps:       ps,
 		timeCell: timeCell,
 		log:      log,
 	}

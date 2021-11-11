@@ -1,10 +1,11 @@
 package task
 
 import (
-	"strings"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/daily"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/user"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
@@ -18,12 +19,12 @@ var (
 // Daily 日常任务
 type Daily struct {
 	VideoAvID string
-	api       *api.API
+	api       api.API
 	state     state.State
 }
 
 // NewDaily 初始化
-func NewDaily(api *api.API, av string) Daily {
+func NewDaily(api api.API, av string) Daily {
 	return Daily{
 		api:       api,
 		VideoAvID: av,
@@ -46,19 +47,18 @@ func (daily Daily) Run(ch chan<- interface{}) {
 		daily.getRandomAV()
 	}
 
-	res := strings.Builder{}
+	var res string
 	if err, ok := daily.userCheck(); ok {
-		res.WriteString("WatchVideo: " + daily.watchVideo() + "\n")
-		res.WriteString("ShareVideo: " + daily.shareVideo() + "\n")
-		res.WriteString("Sliver2Coins: " + daily.sliver2Coins() + "\n")
-		res.WriteString("LiveCheckin: " + daily.liveCheckin())
+		res += "WatchVideo: " + daily.watchVideo() + "\n"
+		res += "ShareVideo: " + daily.shareVideo() + "\n"
+		res += "Sliver2Coins: " + daily.sliver2Coins() + "\n"
+		res += "LiveCheckin: " + daily.liveCheckin()
 	} else {
-		res.WriteString("UserCheck: " + err)
+		res += "UserCheck: " + err
 		daily.state = state.Stop
 	}
 
-	ch <- res.String()
-	res.Reset()
+	ch <- res
 }
 
 // Next 下次运行时间
@@ -66,20 +66,20 @@ func (daily Daily) Next(t time.Time) time.Time {
 	return t.AddDate(0, 0, 1)
 }
 
-func (daily Daily) userCheck() (string, bool) {
-	if _, err := daily.api.UserCheck(); err != nil {
+func (d Daily) userCheck() (string, bool) {
+	if _, err := user.UserCheck(d.api); err != nil {
 		return err.Error(), false
 	}
 
 	return ecode.SucessLogin, true
 }
 
-func (daily Daily) watchVideo() string {
-	if daily.VideoAvID == "" {
+func (d Daily) watchVideo() string {
+	if d.VideoAvID == "" {
 		return ecode.ErrNoBvID
 	}
 
-	if _, err := daily.api.WatchVideo(daily.VideoAvID); err != nil {
+	if _, err := daily.WatchVideo(d.api, d.VideoAvID); err != nil {
 		return err.Error()
 	}
 
@@ -87,8 +87,8 @@ func (daily Daily) watchVideo() string {
 
 }
 
-func (daily Daily) sliver2Coins() string {
-	status, err := daily.api.Sliver2CoinsStatus()
+func (d Daily) sliver2Coins() string {
+	status, err := daily.Sliver2CoinsStatus(d.api)
 	if err != nil {
 		return err.Error()
 	}
@@ -97,7 +97,7 @@ func (daily Daily) sliver2Coins() string {
 		return ecode.ErrExchange
 	}
 
-	resp, err := daily.api.Sliver2Coins()
+	resp, err := daily.Sliver2Coins(d.api)
 	if err != nil {
 		return err.Error()
 	}
@@ -106,20 +106,20 @@ func (daily Daily) sliver2Coins() string {
 
 }
 
-func (daily Daily) shareVideo() string {
-	if daily.VideoAvID == "" {
+func (d Daily) shareVideo() string {
+	if d.VideoAvID == "" {
 		return ecode.ErrNoBvID
 	}
 
-	if _, err := daily.api.ShareVideo(daily.VideoAvID); err != nil {
+	if _, err := daily.ShareVideo(d.api, d.VideoAvID); err != nil {
 		return err.Error()
 	}
 
 	return ecode.SucessShare
 }
 
-func (daily Daily) liveCheckin() string {
-	if _, err := daily.api.LiveCheckin(); err != nil {
+func (d Daily) liveCheckin() string {
+	if _, err := daily.LiveCheckin(d.api); err != nil {
 		return err.Error()
 	}
 
@@ -127,10 +127,11 @@ func (daily Daily) liveCheckin() string {
 
 }
 
-func (daily *Daily) getRandomAV() {
-	s, err := daily.api.GetRandomAV()
+func (d *Daily) getRandomAV() {
+	s, err := daily.GetRandomAV(d.api)
 	if err != nil || s == "" {
-		daily.VideoAvID = ""
+		d.VideoAvID = ""
 	}
-	daily.VideoAvID = s
+
+	d.VideoAvID = s
 }

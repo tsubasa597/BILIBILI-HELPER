@@ -9,10 +9,6 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
-var (
-	PauseDuration time.Duration = time.Minute * 30
-)
-
 // Tasker 任务接口
 type Tasker interface {
 	Run(chan<- interface{})

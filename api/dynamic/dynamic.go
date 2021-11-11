@@ -1,4 +1,4 @@
-package api
+package dynamic
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/tsubasa597/BILIBILI-HELPER/api/proto"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
@@ -20,11 +21,11 @@ var (
 )
 
 // GetDynamics 获取目的 uid 的一页动态
-func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
-	resp := &DynamicSvrSpaceHistoryResponse{}
-	if err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
-		dynamicSrvSpaceHistory, hostUID, nextOffect), resp); err != nil {
-
+func GetDynamics(hostUID, nextOffect int64) ([]info.Dynamic, error) {
+	resp := &proto.DynamicSvrSpaceHistoryResponse{}
+	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
+		info.DynamicSrvSpaceHistory, hostUID, nextOffect), resp)
+	if err != nil {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
@@ -44,36 +45,41 @@ func GetDynamics(hostUID, nextOffect int64) ([]*Card, error) {
 		}
 	}
 
-	return resp.Data.Cards, nil
+	dynamics := make([]info.Dynamic, 0, len(resp.Data.Cards))
+	for _, card := range resp.Data.Cards {
+		dynamic, err := GetOriginCard(card)
+		if err != nil {
+			continue
+		}
+
+		dynamics = append(dynamics, dynamic)
+	}
+
+	return dynamics, nil
 }
 
 // GetAllDynamics 获取指定时间为止的所有动态
 func GetAllDynamics(hostUID, t int64) (dynamics []info.Dynamic) {
 	var offect int64
 	for {
-		cards, err := GetDynamics(hostUID, offect)
+		infos, err := GetDynamics(hostUID, offect)
 		if err != nil {
 			return
 		}
 
-		for _, card := range cards {
-			if card.Desc.Timestamp <= t {
+		for _, inf := range infos {
+			if inf.Time <= t {
 				return
 			}
 
-			dy, err := GetOriginCard(card)
-			if err != nil {
-				continue
-			}
-
-			offect = dy.Offect
-			dynamics = append(dynamics, dy)
+			offect = inf.Offect
+			dynamics = append(dynamics, inf)
 		}
 	}
 }
 
 // GetOriginCard 获取 Card 的源动态
-func GetOriginCard(c *Card) (info.Dynamic, error) {
+func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
 	dynamic := *dynamicPool.Get().(*info.Dynamic)
 	defer dynamicPool.Put(&dynamic)
 
@@ -93,12 +99,12 @@ func GetOriginCard(c *Card) (info.Dynamic, error) {
 	dynamic.Offect = int64(offect)
 
 	switch c.Desc.Type {
-	case DynamicDescType_Unknown:
+	case proto.DynamicDescType_Unknown:
 		return info.Dynamic{}, ecode.APIErr{
 			E: ecode.ErrUnknowDynamic,
 		}
-	case DynamicDescType_WithOrigin:
-		orig := &CardWithOrig{}
+	case proto.DynamicDescType_WithOrigin:
+		orig := &proto.CardWithOrig{}
 		err = json.Unmarshal([]byte(c.Card), orig)
 		if err != nil {
 			return dynamic, ecode.APIErr{
@@ -108,8 +114,8 @@ func GetOriginCard(c *Card) (info.Dynamic, error) {
 		}
 
 		var dy info.Dynamic
-		dy, err = GetOriginCard(&Card{
-			Desc: &Card_Desc{
+		dy, err = GetOriginCard(&proto.Card{
+			Desc: &proto.Card_Desc{
 				Uid:          c.Desc.Uid,
 				Type:         orig.Item.OrigType,
 				Timestamp:    c.Desc.Timestamp,
@@ -125,10 +131,10 @@ func GetOriginCard(c *Card) (info.Dynamic, error) {
 		dynamic.Type = info.CommentDynamic
 		dynamic.Content = orig.Item.Content
 
-	case DynamicDescType_WithImage:
+	case proto.DynamicDescType_WithImage:
 		dynamic.Type = info.CommentDynamicImage
 
-		item := &CardWithImage{}
+		item := &proto.CardWithImage{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
 			return dynamic, ecode.APIErr{
 				E:   ecode.ErrLoad,
@@ -138,10 +144,10 @@ func GetOriginCard(c *Card) (info.Dynamic, error) {
 		dynamic.RID = item.Item.Id
 		dynamic.Content = item.Item.Description
 
-	case DynamicDescType_TextOnly:
+	case proto.DynamicDescType_TextOnly:
 		dynamic.Type = info.CommentDynamic
 
-		item := &CardTextOnly{}
+		item := &proto.CardTextOnly{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
 			return dynamic, ecode.APIErr{
 				E:   ecode.ErrLoad,
@@ -150,18 +156,18 @@ func GetOriginCard(c *Card) (info.Dynamic, error) {
 		}
 		dynamic.Content = item.Item.Content
 
-	case DynamicDescType_WithVideo:
+	case proto.DynamicDescType_WithVideo:
 		dynamic.Type = info.CommentViedo
 		dynamic.RID = c.Desc.Rid
 
-	case DynamicDescType_WithPost:
+	case proto.DynamicDescType_WithPost:
 		dynamic.Type = info.CommentColumn
 		dynamic.RID = c.Desc.Rid
 
-	case DynamicDescType_WithMusic:
+	case proto.DynamicDescType_WithMusic:
 		dynamic.Type = info.CommentAudio
 
-	case DynamicDescType_WithMiss:
+	case proto.DynamicDescType_WithMiss:
 		dynamic.Type = info.CommentDynamic
 
 	default:

@@ -3,7 +3,7 @@ package task
 import (
 	"time"
 
-	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/dynamic"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
@@ -24,7 +24,7 @@ func (d *Dynamic) Run(ch chan<- interface{}) {
 		return
 	}
 
-	dynamics := api.GetAllDynamics(d.UID, d.Time)
+	dynamics := dynamic.GetAllDynamics(d.UID, d.Time)
 	if len(dynamics) > 0 {
 		d.Time = dynamics[0].Time
 	}

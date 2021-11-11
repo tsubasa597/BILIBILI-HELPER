@@ -1,4 +1,4 @@
-package api
+package daily
 
 import (
 	"math/rand"
@@ -6,18 +6,21 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/proto"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
+	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
 // WatchVideo 视频模拟观看，观看时间在 [0, 90) 之间
-func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
+func WatchVideo(api api.API, bvid string) (*proto.BaseResponse, error) {
 	data := url.Values{
 		"bvid":        []string{bvid},
 		"played_time": []string{strconv.Itoa(rand.Intn(90))},
 	}
 
-	resp := &BaseResponse{}
-	if err := api.Req.Posts(videoHeartbeat, data, resp); err != nil {
+	resp := &proto.BaseResponse{}
+	if err := api.Req.Posts(info.VideoHeartbeat, data, resp); err != nil {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
@@ -35,14 +38,14 @@ func (api API) WatchVideo(bvid string) (*BaseResponse, error) {
 }
 
 // ShareVideo 分享视频
-func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
+func ShareVideo(api api.API, bvid string) (*proto.BaseResponse, error) {
 	data := url.Values{
 		"bvid": []string{bvid},
-		"csrf": []string{api.cookie.BiliJct},
+		"csrf": []string{api.Cookie.BiliJct},
 	}
 
-	resp := &BaseResponse{}
-	if err := api.Req.Posts(avShare, data, resp); err != nil {
+	resp := &proto.BaseResponse{}
+	if err := api.Req.Posts(info.AvShare, data, resp); err != nil {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
@@ -60,10 +63,10 @@ func (api API) ShareVideo(bvid string) (*BaseResponse, error) {
 }
 
 // Sliver2CoinsStatus 获取银瓜子和硬币的数量
-func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
-	resp := &Sliver2CoinsStatusResponse{}
+func Sliver2CoinsStatus(api api.API) (*proto.Sliver2CoinsStatusResponse, error) {
+	resp := &proto.Sliver2CoinsStatusResponse{}
 
-	if err := api.Req.Gets(sliver2CoinsStatus, resp); err != nil {
+	if err := api.Req.Gets(info.Sliver2CoinsStatus, resp); err != nil {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
@@ -81,9 +84,13 @@ func (api API) Sliver2CoinsStatus() (*Sliver2CoinsStatusResponse, error) {
 }
 
 // Sliver2Coins 将银瓜子兑换为硬币
-func (api API) Sliver2Coins() (*BaseResponse, error) {
-	resp := &BaseResponse{}
-	if err := api.Req.Gets(sliver2Coins, resp); err != nil {
+func Sliver2Coins(api api.API) (*proto.BaseResponse, error) {
+	data := url.Values{
+		"csrf": []string{api.Cookie.BiliJct},
+	}
+
+	resp := &proto.BaseResponse{}
+	if err := api.Req.Posts(info.Sliver2Coins, data, resp); err != nil {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
@@ -101,9 +108,9 @@ func (api API) Sliver2Coins() (*BaseResponse, error) {
 }
 
 // GetRandomAV 随机获取一个视频的 av 号
-func (api API) GetRandomAV() (string, error) {
-	resp := &RandomAvResponse{}
-	if err := api.Req.Gets(randomAV, resp); err != nil {
+func GetRandomAV(api api.API) (string, error) {
+	resp := &proto.RandomAvResponse{}
+	if err := api.Req.Gets(info.RandomAV, resp); err != nil {
 		return "", ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
@@ -123,4 +130,24 @@ func (api API) GetRandomAV() (string, error) {
 	}
 
 	return "", nil
+}
+
+// LiveCheckin 直播签到
+func LiveCheckin(api api.API) (*proto.BaseResponse, error) {
+	resp := &proto.BaseResponse{}
+	if err := api.Req.Gets(info.LiveCheckin, resp); err != nil {
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: err.Error(),
+		}
+	}
+
+	if resp.Code != ecode.Sucess {
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: resp.Message,
+		}
+	}
+
+	return resp, nil
 }
