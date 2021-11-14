@@ -28,6 +28,9 @@ var (
 
 // Run 开始运行
 func (c *Comment) Run(ch chan<- interface{}) {
+	// 防止请求过快
+	defer time.Sleep(time.Second)
+
 	if c.state == state.Stop {
 		return
 	}

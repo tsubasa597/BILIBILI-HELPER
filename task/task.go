@@ -93,7 +93,6 @@ func (c Corn) run() {
 					entry.next = entry.Task.Next(t)
 				}
 
-				// time.Sleep(time.Second) // 防止请求太快
 				return true
 			})
 		}
