@@ -18,7 +18,7 @@ type Comment struct {
 	pn       int
 	timeCell time.Duration
 	state    state.State
-	log      *logrus.Entry
+	log      *logrus.Logger
 }
 
 var (
@@ -29,7 +29,7 @@ var (
 // Run 开始运行
 func (c *Comment) Run(ch chan<- interface{}) {
 	// 防止请求过快
-	defer time.Sleep(time.Second)
+	defer time.Sleep(time.Second * 1)
 
 	if c.state == state.Stop {
 		return
@@ -37,13 +37,14 @@ func (c *Comment) Run(ch chan<- interface{}) {
 
 	infos, err := comment.GetComments(c.Type, 0, c.RID, info.MaxPs, c.pn)
 	if err != nil {
+		c.state = state.Pause
+
 		// 爬取完成,在间隔之间之后继续更新
 		if err.Error() == ecode.ErrNoComment {
 			c.pn = 1
 			return
 		}
 
-		c.state = state.Pause
 		c.log.Error(err)
 		return
 	}
@@ -64,11 +65,11 @@ func (c Comment) State() state.State {
 
 // Next 下次运行时间
 func (c Comment) Next(t time.Time) time.Time {
-	if time.Now().AddDate(0, 0, -7).Unix() < c.Time {
-		return t.Add(TwoDay)
-	}
-
 	if c.state == state.Pause {
+		if time.Now().AddDate(0, 0, -7).Unix() < c.Time {
+			return t.Add(TwoDay)
+		}
+
 		return t.Add(Pause)
 	}
 
@@ -76,9 +77,10 @@ func (c Comment) Next(t time.Time) time.Time {
 }
 
 // NewComment 初始化
-func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *logrus.Entry) *Comment {
+// timeCell 间隔秒数
+func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *logrus.Logger) *Comment {
 	if log == nil {
-		log = logrus.NewEntry(logrus.New())
+		log = logrus.New()
 	}
 
 	return &Comment{

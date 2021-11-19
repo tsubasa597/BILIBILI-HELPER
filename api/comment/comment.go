@@ -3,6 +3,7 @@ package comment
 import (
 	fmt "fmt"
 	"sync"
+	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api/proto"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
@@ -77,5 +78,7 @@ func GetAllComments(commentType info.Type, rid, t int64) (comments []info.Commen
 
 			comments = append(comments, inf)
 		}
+
+		time.Sleep(time.Second)
 	}
 }

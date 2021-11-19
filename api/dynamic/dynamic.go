@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api/proto"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
@@ -75,6 +76,8 @@ func GetAllDynamics(hostUID, t int64) (dynamics []info.Dynamic) {
 			offect = inf.Offect
 			dynamics = append(dynamics, inf)
 		}
+
+		time.Sleep(time.Second)
 	}
 }
 

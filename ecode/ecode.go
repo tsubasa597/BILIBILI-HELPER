@@ -21,14 +21,14 @@ const (
 	ErrNoBvID        = "Bvid 为空，跳过"
 )
 
-var (
-	_ error = (*APIErr)(nil)
-)
-
 type APIErr struct {
 	E   string
 	Msg string
 }
+
+var (
+	_ error = (*APIErr)(nil)
+)
 
 func (err APIErr) Error() string {
 	if err.Msg != "" {

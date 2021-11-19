@@ -25,26 +25,26 @@ type Entry struct {
 
 // Corn 管理所有任务，由 chan 传递数据
 type Corn struct {
+	Ch     chan interface{}
 	Ctx    context.Context
 	cancel context.CancelFunc
 	tasks  *sync.Map
 	once   *sync.Once
-	Ch     chan interface{}
 }
 
 // New 初始化
 func New(ctx context.Context) Corn {
 	ctx, cancel := context.WithCancel(ctx)
 	return Corn{
+		Ch:     make(chan interface{}),
 		Ctx:    ctx,
 		cancel: cancel,
 		tasks:  &sync.Map{},
 		once:   &sync.Once{},
-		Ch:     make(chan interface{}),
 	}
 }
 
-// Add 添加新任务 指针！
+// Add 添加新任务
 func (c Corn) Add(id int64, t Tasker) {
 	if task, ok := c.tasks.Load(id); ok && task.(*Entry).Task.State() == state.Runing {
 		return
@@ -72,7 +72,7 @@ func (c Corn) Start() {
 	})
 }
 
-func (c Corn) run() {
+func (c *Corn) run() {
 	defer close(c.Ch)
 
 	for {
