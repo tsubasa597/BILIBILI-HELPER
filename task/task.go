@@ -30,6 +30,7 @@ type Corn struct {
 	cancel context.CancelFunc
 	tasks  *sync.Map
 	once   *sync.Once
+	state  state.State
 }
 
 // New 初始化
@@ -41,16 +42,15 @@ func New(ctx context.Context) Corn {
 		cancel: cancel,
 		tasks:  &sync.Map{},
 		once:   &sync.Once{},
+		state:  state.Runing,
 	}
 }
 
 // Add 添加新任务
 func (c Corn) Add(id int64, t Tasker) {
-	if task, ok := c.tasks.Load(id); ok && task.(*Entry).Task.State() == state.Runing {
+	if task, ok := c.tasks.Load(id); ok && task.(*Entry).Task.State() != state.Stop {
 		return
 	}
-
-	c.tasks.Delete(id)
 
 	ti := time.Now()
 	c.tasks.Store(id, &Entry{
@@ -75,26 +75,41 @@ func (c Corn) Start() {
 func (c *Corn) run() {
 	defer close(c.Ch)
 
+	var (
+		nextTime time.Time = time.Now().Local()
+		now      time.Time
+	)
+
 	for {
-		select {
-		case <-c.Ctx.Done():
+		if state.Stop == c.state {
 			return
-		default:
-			c.tasks.Range(func(key, value interface{}) bool {
+		}
+
+		c.tasks.Range(func(key, value interface{}) bool {
+			select {
+			case <-c.Ctx.Done():
+				c.state = state.Stop
+				return false
+			case now = <-time.After(time.Until(nextTime)):
 				if value.(*Entry).Task.State() == state.Stop {
 					c.tasks.Delete(key)
+					return true
 				}
 
-				t := time.Now()
 				entry := value.(*Entry)
-				if entry.next.Before(t) {
+				if entry.next.Before(now) {
 					entry.Task.Run(c.Ch)
-					entry.prev = t
-					entry.next = entry.Task.Next(t)
-				}
 
+					next := entry.Task.Next(now)
+					if next.Before(nextTime) {
+						nextTime = next
+					}
+
+					entry.next = next
+					entry.prev = now
+				}
 				return true
-			})
-		}
+			}
+		})
 	}
 }

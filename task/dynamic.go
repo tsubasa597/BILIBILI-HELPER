@@ -10,6 +10,7 @@ import (
 type Dynamic struct {
 	UID      int64
 	Time     int64
+	offect   int64
 	timeCell time.Duration
 	state    state.State
 }
@@ -24,9 +25,10 @@ func (d *Dynamic) Run(ch chan<- interface{}) {
 		return
 	}
 
-	dynamics := dynamic.GetAllDynamics(d.UID, d.Time)
+	dynamics, _ := dynamic.GetDynamics(d.UID, d.offect)
 	if len(dynamics) > 0 {
 		d.Time = dynamics[0].Time
+		d.offect = dynamics[len(dynamics)-1].Offect
 	}
 
 	ch <- dynamics
