@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	commentPool *sync.Pool = &sync.Pool{
+	_commentPool *sync.Pool = &sync.Pool{
 		New: func() interface{} {
 			return &info.Comment{}
 		},
@@ -46,7 +46,7 @@ func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) (
 
 	comments := make([]info.Comment, 0, len(resp.Data.Replies))
 	for _, reply := range resp.Data.Replies {
-		comment := commentPool.Get().(*info.Comment)
+		comment := _commentPool.Get().(*info.Comment)
 		comment.Name = reply.Member.Uname
 		comment.Time = reply.Ctime
 		comment.DynamicUID = resp.Data.Upper.Mid
@@ -57,7 +57,7 @@ func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) (
 		comment.RID = rid
 
 		comments = append(comments, *comment)
-		commentPool.Put(comment)
+		_commentPool.Put(comment)
 	}
 
 	return comments, nil

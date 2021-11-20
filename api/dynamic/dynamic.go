@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	dynamicPool *sync.Pool = &sync.Pool{
+	_dynamicPool *sync.Pool = &sync.Pool{
 		New: func() interface{} {
 			return &info.Dynamic{}
 		},
@@ -83,8 +83,8 @@ func GetAllDynamics(hostUID, t int64) (dynamics []info.Dynamic) {
 
 // GetOriginCard 获取 Card 的源动态
 func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
-	dynamic := *dynamicPool.Get().(*info.Dynamic)
-	defer dynamicPool.Put(&dynamic)
+	dynamic := *_dynamicPool.Get().(*info.Dynamic)
+	defer _dynamicPool.Put(&dynamic)
 
 	dynamic.UID = c.Desc.Uid
 	dynamic.Time = c.Desc.Timestamp
