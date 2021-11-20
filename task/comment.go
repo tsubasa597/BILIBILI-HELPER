@@ -22,9 +22,25 @@ type Comment struct {
 }
 
 var (
-	_             Tasker        = (*Comment)(nil)
-	Pause, TwoDay time.Duration = time.Minute * 30, time.Hour * 24 * 2
+	_ Tasker = (*Comment)(nil)
 )
+
+// NewComment 初始化
+func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *logrus.Logger) *Comment {
+	if log == nil {
+		log = logrus.New()
+	}
+
+	return &Comment{
+		RID:      rid,
+		Type:     typ,
+		Time:     t,
+		pn:       1, /** 开始爬取页数的初始值 */
+		state:    state.Runing,
+		timeCell: timeCell, /** 爬取时间间隔 */
+		log:      log,
+	}
+}
 
 // Run 开始运行
 func (c *Comment) Run(ch chan<- interface{}) {
@@ -35,7 +51,7 @@ func (c *Comment) Run(ch chan<- interface{}) {
 		return
 	}
 
-	infos, err := comment.GetComments(c.Type, 0, c.RID, info.MaxPs, c.pn)
+	infos, err := comment.GetComments(c.Type, info.SortDesc, c.RID, info.MaxPs, c.pn)
 	if err != nil {
 		c.state = state.Pause
 
@@ -67,29 +83,11 @@ func (c Comment) State() state.State {
 func (c Comment) Next(t time.Time) time.Time {
 	if c.state == state.Pause {
 		if time.Now().AddDate(0, 0, -7).Unix() < c.Time {
-			return t.Add(TwoDay)
+			return t.Add(info.TwoDay)
 		}
 
-		return t.Add(Pause)
+		return t.Add(info.Pause)
 	}
 
 	return t.Add(time.Second * c.timeCell)
-}
-
-// NewComment 初始化
-// timeCell 间隔秒数
-func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *logrus.Logger) *Comment {
-	if log == nil {
-		log = logrus.New()
-	}
-
-	return &Comment{
-		RID:      rid,
-		Type:     typ,
-		Time:     t,
-		pn:       1,
-		state:    state.Runing,
-		timeCell: timeCell,
-		log:      log,
-	}
 }

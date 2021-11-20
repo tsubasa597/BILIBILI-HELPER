@@ -19,6 +19,16 @@ var (
 	_ Tasker = (*Dynamic)(nil)
 )
 
+// NewDynamic 初始化
+func NewDynamic(uid, ti int64, t time.Duration) *Dynamic {
+	return &Dynamic{
+		UID:      uid,
+		Time:     ti,
+		timeCell: t,
+		state:    state.Runing,
+	}
+}
+
 // Run 获取动态
 func (d *Dynamic) Run(ch chan<- interface{}) {
 	if d.state == state.Stop {
@@ -42,14 +52,4 @@ func (d Dynamic) State() state.State {
 // Next 下次运行时间
 func (d Dynamic) Next(t time.Time) time.Time {
 	return t.Add(time.Minute * d.timeCell)
-}
-
-// NewDynamic 初始化
-func NewDynamic(uid, ti int64, t time.Duration) *Dynamic {
-	return &Dynamic{
-		UID:      uid,
-		Time:     ti,
-		timeCell: t,
-		state:    state.Runing,
-	}
 }

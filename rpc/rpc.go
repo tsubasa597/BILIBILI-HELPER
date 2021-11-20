@@ -21,14 +21,14 @@ type Dynamic struct {
 }
 
 var (
-	_           service.CommentServer = (*Comment)(nil)
-	_           service.DynamicServer = (*Dynamic)(nil)
-	commentPool *sync.Pool            = &sync.Pool{
+	_            service.CommentServer = (*Comment)(nil)
+	_            service.DynamicServer = (*Dynamic)(nil)
+	_commentPool *sync.Pool            = &sync.Pool{
 		New: func() interface{} {
 			return &service.CommentResponse{}
 		},
 	}
-	dynamicPool *sync.Pool = &sync.Pool{
+	_dynamicPool *sync.Pool = &sync.Pool{
 		New: func() interface{} {
 			return &service.DynamicResponse{}
 		},
@@ -39,7 +39,7 @@ var (
 func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_GetAllServer) error {
 	comms := comment.GetAllComments(info.Type(req.BaseCommentRequest.Type), req.BaseCommentRequest.RID, req.Time)
 	for _, comm := range comms {
-		resp := commentPool.Get().(*service.CommentResponse)
+		resp := _commentPool.Get().(*service.CommentResponse)
 		resp.DynamicUID = comm.DynamicUID
 		resp.UID = comm.UID
 		resp.RID = comm.RID
@@ -54,7 +54,7 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 			c.Log.Error(err)
 		}
 
-		commentPool.Put(resp)
+		_commentPool.Put(resp)
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 	}
 
 	for _, comm := range comms {
-		resp := commentPool.Get().(*service.CommentResponse)
+		resp := _commentPool.Get().(*service.CommentResponse)
 		resp.DynamicUID = comm.DynamicUID
 		resp.UID = comm.UID
 		resp.RID = comm.RID
@@ -84,7 +84,7 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 			c.Log.Error(err)
 		}
 
-		commentPool.Put(resp)
+		_commentPool.Put(resp)
 	}
 
 	return nil
@@ -98,7 +98,7 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 	}
 
 	for _, d := range dynamics {
-		resp := dynamicPool.Get().(*service.DynamicResponse)
+		resp := _dynamicPool.Get().(*service.DynamicResponse)
 		resp.UID = d.UID
 		resp.Content = d.Content
 		resp.Card = d.Card
@@ -113,7 +113,7 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 			dy.Log.Error(err)
 		}
 
-		dynamicPool.Put(resp)
+		_dynamicPool.Put(resp)
 
 	}
 
@@ -124,7 +124,7 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 func (dy Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_GetAllServer) error {
 	dynamics := dynamic.GetAllDynamics(req.BaseCommentRequest.UID, req.Time)
 	for _, d := range dynamics {
-		resp := dynamicPool.Get().(*service.DynamicResponse)
+		resp := _dynamicPool.Get().(*service.DynamicResponse)
 		resp.UID = d.UID
 		resp.Content = d.Content
 		resp.Card = d.Card
@@ -139,7 +139,7 @@ func (dy Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_
 			dy.Log.Error(err)
 		}
 
-		dynamicPool.Put(resp)
+		_dynamicPool.Put(resp)
 	}
 
 	return nil

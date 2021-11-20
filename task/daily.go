@@ -10,18 +10,18 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
 )
 
-var (
-	_ Tasker = (*Daily)(nil)
-	// 银瓜子最低兑换要求
-	exchangeRate int64 = 700
-)
-
 // Daily 日常任务
 type Daily struct {
 	VideoAvID string
 	api       api.API
 	state     state.State
 }
+
+var (
+	_ Tasker = (*Daily)(nil)
+	// 银瓜子最低兑换要求
+	_exchangeRate int64 = 700
+)
 
 // NewDaily 初始化
 func NewDaily(api api.API, av string) Daily {
@@ -93,7 +93,7 @@ func (d Daily) sliver2Coins() string {
 		return err.Error()
 	}
 
-	if status.Data.Silver < exchangeRate {
+	if status.Data.Silver < _exchangeRate {
 		return ecode.ErrExchange
 	}
 
