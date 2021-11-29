@@ -1,6 +1,8 @@
 package task
 
 import (
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
@@ -28,20 +30,24 @@ func NewDaily(api api.API, av string) Daily {
 	return Daily{
 		api:       api,
 		VideoAvID: av,
-		state:     state.Runing,
+		state:     state.Stop,
 	}
-}
-
-// State 获取运行状态
-func (d Daily) State() state.State {
-	return d.state
 }
 
 // Run 运行日常任务
-func (daily Daily) Run(ch chan<- interface{}) {
-	if daily.state != state.Runing {
+func (daily Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
+	defer func() {
+		wg.Done()
+	}()
+
+	if atomic.LoadInt32((*int32)(&daily.state)) != int32(state.Stop) {
 		return
 	}
+
+	atomic.SwapInt32((*int32)(&daily.state), int32(state.Runing))
+	defer func() {
+		atomic.SwapInt32((*int32)(&daily.state), int32(state.Stop))
+	}()
 
 	if daily.VideoAvID == "" {
 		daily.getRandomAV()

@@ -1,6 +1,8 @@
 package task
 
 import (
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api/dynamic"
@@ -25,15 +27,24 @@ func NewDynamic(uid, ti int64, t time.Duration) *Dynamic {
 		UID:      uid,
 		Time:     ti,
 		timeCell: t,
-		state:    state.Runing,
+		state:    state.Stop,
 	}
 }
 
 // Run 获取动态
-func (d *Dynamic) Run(ch chan<- interface{}) {
-	if d.state == state.Stop {
+func (d *Dynamic) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
+	defer func() {
+		wg.Done()
+	}()
+
+	if atomic.LoadInt32((*int32)(&d.state)) != int32(state.Stop) {
 		return
 	}
+
+	atomic.SwapInt32((*int32)(&d.state), int32(state.Runing))
+	defer func() {
+		atomic.SwapInt32((*int32)(&d.state), int32(state.Stop))
+	}()
 
 	dynamics, _ := dynamic.GetDynamics(d.UID, d.offect)
 	if len(dynamics) > 0 {
@@ -42,11 +53,6 @@ func (d *Dynamic) Run(ch chan<- interface{}) {
 	}
 
 	ch <- dynamics
-}
-
-// State 获取运行状态
-func (d Dynamic) State() state.State {
-	return d.state
 }
 
 // Next 下次运行时间

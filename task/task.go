@@ -3,7 +3,9 @@ package task
 
 import (
 	"context"
+	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
@@ -11,105 +13,106 @@ import (
 
 // Tasker 任务接口
 type Tasker interface {
-	Run(chan<- interface{})
+	Run(chan<- interface{}, *sync.WaitGroup)
 	Next(time.Time) time.Time
-	State() state.State
-}
-
-// Entry 保存下一次和这次的运行时间
-type Entry struct {
-	Task Tasker
-	prev time.Time
-	next time.Time
 }
 
 // Corn 管理所有任务，由 chan 传递数据
 type Corn struct {
-	Ch     chan interface{}
-	Ctx    context.Context
-	cancel context.CancelFunc
-	tasks  *sync.Map
-	once   *sync.Once
-	state  state.State
+	Ch    chan interface{}
+	wg    *sync.WaitGroup
+	tasks Enties
+	ids   map[int64]struct{}
+	state state.State
+	add   chan *Entry
+	stop  chan struct{}
 }
 
 // New 初始化
 func New(ctx context.Context) Corn {
-	ctx, cancel := context.WithCancel(ctx)
 	return Corn{
-		Ch:     make(chan interface{}),
-		Ctx:    ctx,
-		cancel: cancel,
-		tasks:  &sync.Map{},
-		once:   &sync.Once{},
-		state:  state.Runing,
+		Ch:    make(chan interface{}, 1),
+		wg:    &sync.WaitGroup{},
+		tasks: make(Enties, 0),
+		ids:   make(map[int64]struct{}),
+		state: state.Stop,
+		add:   make(chan *Entry, 1),
+		stop:  make(chan struct{}),
 	}
 }
 
 // Add 添加新任务
-func (c Corn) Add(id int64, t Tasker) {
-	if task, ok := c.tasks.Load(id); ok && task.(*Entry).Task.State() != state.Stop {
-		return
-	}
-
+func (c *Corn) Add(id int64, t Tasker) {
 	ti := time.Now()
-	c.tasks.Store(id, &Entry{
+	entry := &Entry{
 		prev: ti,
 		next: ti,
 		Task: t,
-	})
+	}
+
+	if _, ok := c.ids[id]; ok {
+		return
+	}
+
+	c.ids[id] = struct{}{}
+
+	if c.state == state.Runing {
+		c.add <- entry
+		return
+	}
+
+	c.tasks = append(c.tasks, entry)
 }
 
 // Stop 停止
 func (c Corn) Stop() {
-	c.cancel()
+	atomic.SwapInt32((*int32)(&c.state), int32(state.Stop))
+	c.stop <- struct{}{}
 }
 
 // Start 开始运行
 func (c Corn) Start() {
-	c.once.Do(func() {
+	ok := atomic.CompareAndSwapInt32((*int32)(&c.state), int32(state.Stop), int32(state.Runing))
+	if ok {
 		go c.run()
-	})
+	}
 }
 
 func (c *Corn) run() {
-	defer close(c.Ch)
-
 	var (
-		nextTime time.Time = time.Now().Local()
-		now      time.Time
+		effective time.Time
+		now       = time.Now().Local()
 	)
 
 	for {
-		if state.Stop == c.state {
-			return
+		sort.Sort(c.tasks)
+		if len(c.tasks) > 0 {
+			effective = c.tasks[0].next
+		} else {
+			effective = now.AddDate(15, 0, 0) // 等待添加任务
 		}
 
-		c.tasks.Range(func(key, value interface{}) bool {
-			select {
-			case <-c.Ctx.Done():
-				c.state = state.Stop
-				return false
-			case now = <-time.After(time.Until(nextTime)):
-				if value.(*Entry).Task.State() == state.Stop {
-					c.tasks.Delete(key)
-					return true
+		select {
+		case <-c.stop:
+			c.wg.Wait()
+
+			close(c.Ch)
+			return
+		case now = <-time.After(time.Until(effective)):
+			for _, entry := range c.tasks {
+				if entry.next != effective {
+					break
 				}
 
-				entry := value.(*Entry)
-				if entry.next.Before(now) {
-					entry.Task.Run(c.Ch)
+				entry.prev = now
+				entry.next = entry.Task.Next(now)
 
-					next := entry.Task.Next(now)
-					if next.Before(nextTime) {
-						nextTime = next
-					}
-
-					entry.next = next
-					entry.prev = now
-				}
-				return true
+				c.wg.Add(1 /** 确保协程退出 */)
+				go entry.Task.Run(c.Ch, c.wg)
 			}
-		})
+		case task := <-c.add:
+			task.next = task.Task.Next(now)
+			c.tasks = append(c.tasks, task)
+		}
 	}
 }
