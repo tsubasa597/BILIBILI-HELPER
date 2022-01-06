@@ -9,15 +9,15 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/api/daily"
 	"github.com/tsubasa597/BILIBILI-HELPER/api/user"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
-	"github.com/tsubasa597/BILIBILI-HELPER/state"
-	"go.uber.org/atomic"
+	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
 // Daily 日常任务
 type Daily struct {
 	VideoAvID string
 	api       api.API
-	state     *atomic.Int32
+	timeCell  time.Duration
+	rwMutex   *sync.RWMutex
 }
 
 var (
@@ -27,12 +27,13 @@ var (
 )
 
 // NewDaily 初始化
-// 默认时间间隔为 1 天
+// 默认时间间隔为 24 小时
 func NewDaily(api api.API, av string) Daily {
 	return Daily{
 		api:       api,
 		VideoAvID: av,
-		state:     atomic.NewInt32(state.Stop),
+		timeCell:  time.Hour * 24, /** 24 小时 */
+		rwMutex:   &sync.RWMutex{},
 	}
 }
 
@@ -42,14 +43,8 @@ func (daily Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 		wg.Done()
 	}()
 
-	if daily.state.Load() != state.Stop {
-		return
-	}
-
-	daily.state.Swap(state.Running)
-	defer func() {
-		daily.state.Swap(state.Stop)
-	}()
+	daily.rwMutex.Lock()
+	defer daily.rwMutex.Unlock()
 
 	if daily.VideoAvID == "" {
 		daily.getRandomAV()
@@ -61,8 +56,8 @@ func (daily Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 			`WatchVideo: %s
 			ShareVideo: %s 
 			Sliver2Coins: %s
-			LiveCheckin: %s
-			`, daily.watchVideo(), daily.shareVideo(), daily.sliver2Coins(), daily.liveCheckin())
+			LiveCheckin: %s`,
+			daily.watchVideo(), daily.shareVideo(), daily.sliver2Coins(), daily.liveCheckin())
 	} else {
 		res = fmt.Sprintf("UserCheck: %s", err)
 	}
@@ -72,7 +67,20 @@ func (daily Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 
 // Next 下次运行时间
 func (daily Daily) Next(t time.Time) time.Time {
-	return t.AddDate(0, 0, 1)
+	daily.rwMutex.Lock()
+	defer daily.rwMutex.Unlock()
+
+	return t.Add(daily.timeCell)
+}
+
+// Info 返回任务的信息
+func (daily Daily) Info() info.Task {
+	daily.rwMutex.RLock()
+	defer daily.rwMutex.RUnlock()
+
+	return info.Task{
+		TimeCell: daily.timeCell,
+	}
 }
 
 func (d Daily) userCheck() (string, bool) {

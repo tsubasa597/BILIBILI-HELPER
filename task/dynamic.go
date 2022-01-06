@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api/dynamic"
-	"github.com/tsubasa597/BILIBILI-HELPER/state"
-	"go.uber.org/atomic"
+	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
 type Dynamic struct {
@@ -14,7 +13,7 @@ type Dynamic struct {
 	Time     int64 // 最新动态的更新时间
 	offect   int64 // 翻页参数
 	timeCell time.Duration
-	state    *atomic.Int32
+	rwMutex  *sync.RWMutex
 }
 
 var (
@@ -27,8 +26,8 @@ func NewDynamic(uid, ti int64, timeCell time.Duration) *Dynamic {
 	return &Dynamic{
 		UID:      uid,
 		Time:     ti,
-		timeCell: timeCell,
-		state:    atomic.NewInt32(state.Stop),
+		timeCell: timeCell * time.Minute,
+		rwMutex:  &sync.RWMutex{},
 	}
 }
 
@@ -38,14 +37,8 @@ func (d *Dynamic) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 		wg.Done()
 	}()
 
-	if d.state.Load() != state.Stop {
-		return
-	}
-
-	d.state.Swap(state.Running)
-	defer func() {
-		d.state.Swap(state.Stop)
-	}()
+	d.rwMutex.Lock()
+	defer d.rwMutex.Unlock()
 
 	dynamics, _ := dynamic.GetDynamics(d.UID, d.offect)
 	if len(dynamics) > 0 {
@@ -58,5 +51,20 @@ func (d *Dynamic) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 
 // Next 下次运行时间
 func (d Dynamic) Next(t time.Time) time.Time {
-	return t.Add(time.Minute * d.timeCell)
+	d.rwMutex.Lock()
+	defer d.rwMutex.Unlock()
+
+	return t.Add(d.timeCell)
+}
+
+// Info 返回任务的信息
+func (d Dynamic) Info() info.Task {
+	d.rwMutex.RLock()
+	defer d.rwMutex.RUnlock()
+
+	return info.Task{
+		ID:       d.UID,
+		Time:     d.Time,
+		TimeCell: d.timeCell,
+	}
 }

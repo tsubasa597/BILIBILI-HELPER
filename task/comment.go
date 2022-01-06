@@ -8,8 +8,6 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
-	"github.com/tsubasa597/BILIBILI-HELPER/state"
-	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -21,8 +19,8 @@ type Comment struct {
 	Time     int64
 	pn       int
 	timeCell time.Duration
-	state    *atomic.Int32
 	log      *zap.Logger
+	rwMutex  *sync.RWMutex
 }
 
 var (
@@ -41,9 +39,9 @@ func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *zap.Lo
 		Type:     typ,
 		Time:     t,
 		pn:       1, // 开始爬取页数的初始值
-		state:    atomic.NewInt32(state.Stop),
-		timeCell: timeCell, // 爬取时间间隔
+		timeCell: timeCell * time.Second,
 		log:      log,
+		rwMutex:  &sync.RWMutex{},
 	}
 }
 
@@ -55,14 +53,8 @@ func (c *Comment) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 		wg.Done()
 	}()
 
-	if c.state.Load() != state.Stop {
-		return
-	}
-
-	c.state.Swap(state.Running)
-	defer func() {
-		c.state.Swap(state.Stop)
-	}()
+	c.rwMutex.Lock()
+	defer c.rwMutex.Unlock()
 
 	infos, err := comment.GetComments(c.Type, info.SortDesc, c.RID, info.MaxPs, c.pn)
 	if err != nil {
@@ -87,9 +79,25 @@ func (c *Comment) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 
 // Next 下次运行时间
 func (c Comment) Next(t time.Time) time.Time {
+	c.rwMutex.Lock()
+	defer c.rwMutex.Unlock()
+
 	if t.AddDate(0, 0, -7).Unix() > c.Time {
 		return t.Add(info.TwoDay)
 	}
 
-	return t.Add(time.Second * c.timeCell)
+	return t.Add(c.timeCell)
+}
+
+// Info 返回任务的信息
+func (c Comment) Info() info.Task {
+	c.rwMutex.RLock()
+	defer c.rwMutex.RUnlock()
+
+	return info.Task{
+		ID:       c.RID,
+		Type:     c.Type,
+		TimeCell: c.timeCell,
+		Time:     c.Time,
+	}
 }
