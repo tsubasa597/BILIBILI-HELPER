@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
 )
@@ -15,7 +14,7 @@ type API struct {
 }
 
 // New 初始化
-func New(path string, enrty *logrus.Entry) (API, error) {
+func New(path string) (API, error) {
 	c, err := info.NewCookie(path)
 	if err != nil {
 		return API{}, err
