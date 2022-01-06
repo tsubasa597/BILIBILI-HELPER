@@ -3,21 +3,21 @@ package rpc
 import (
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
 	"github.com/tsubasa597/BILIBILI-HELPER/api/dynamic"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/rpc/service"
+	"go.uber.org/zap"
 )
 
 // Comment rpc 服务
 type Comment struct {
-	Log *logrus.Entry
+	Log *zap.Logger
 }
 
 // Dynamic rpc 服务
 type Dynamic struct {
-	Log *logrus.Entry
+	Log *zap.Logger
 }
 
 var (
@@ -51,7 +51,7 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 
 		err := server.Send(resp)
 		if err != nil {
-			c.Log.Error(err)
+			c.Log.Error(err.Error())
 		}
 
 		_commentPool.Put(resp)
@@ -81,7 +81,7 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 
 		err := server.Send(resp)
 		if err != nil {
-			c.Log.Error(err)
+			c.Log.Error(err.Error())
 		}
 
 		_commentPool.Put(resp)
@@ -110,7 +110,7 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 
 		err := server.Send(resp)
 		if err != nil {
-			dy.Log.Error(err)
+			dy.Log.Error(err.Error())
 		}
 
 		_dynamicPool.Put(resp)
@@ -136,7 +136,7 @@ func (dy Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_
 
 		err := server.Send(resp)
 		if err != nil {
-			dy.Log.Error(err)
+			dy.Log.Error(err.Error())
 		}
 
 		_dynamicPool.Put(resp)
