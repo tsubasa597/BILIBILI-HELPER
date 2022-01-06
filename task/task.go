@@ -5,10 +5,11 @@ import (
 	"context"
 	"sort"
 	"sync"
-	"sync/atomic"
+
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
+	"go.uber.org/atomic"
 )
 
 // Tasker 任务接口
@@ -23,7 +24,7 @@ type Corn struct {
 	wg    *sync.WaitGroup
 	tasks Enties
 	ids   map[int64]struct{}
-	state state.State
+	state *atomic.Int32
 	add   chan *Entry
 	stop  chan struct{}
 }
@@ -35,7 +36,7 @@ func New(ctx context.Context) Corn {
 		wg:    &sync.WaitGroup{},
 		tasks: make(Enties, 0),
 		ids:   make(map[int64]struct{}),
-		state: state.Stop,
+		state: atomic.NewInt32(state.Stop),
 		add:   make(chan *Entry, 1),
 		stop:  make(chan struct{}),
 	}
@@ -56,7 +57,7 @@ func (c *Corn) Add(id int64, t Tasker) {
 
 	c.ids[id] = struct{}{}
 
-	if c.state == state.Runing {
+	if c.state.Load() != state.Running {
 		c.add <- entry
 		return
 	}
@@ -64,16 +65,16 @@ func (c *Corn) Add(id int64, t Tasker) {
 	c.tasks = append(c.tasks, entry)
 }
 
-// Stop 停止
+// Stop 停止监听
+// channle 中所有信息被读取之后返回
 func (c Corn) Stop() {
-	atomic.SwapInt32((*int32)(&c.state), int32(state.Stop))
+	c.state.Swap(state.Stop)
 	c.stop <- struct{}{}
 }
 
 // Start 开始运行
 func (c Corn) Start() {
-	ok := atomic.CompareAndSwapInt32((*int32)(&c.state), int32(state.Stop), int32(state.Runing))
-	if ok {
+	if c.state.CAS(state.Stop, state.Running) {
 		go c.run()
 	}
 }

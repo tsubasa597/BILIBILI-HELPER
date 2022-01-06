@@ -1,15 +1,17 @@
 package task
 
 import (
+	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
+	"go.uber.org/atomic"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Comment 评论区参数
@@ -19,8 +21,8 @@ type Comment struct {
 	Time     int64
 	pn       int
 	timeCell time.Duration
-	state    state.State
-	log      *logrus.Logger
+	state    *atomic.Int32
+	log      *zap.Logger
 }
 
 var (
@@ -28,9 +30,10 @@ var (
 )
 
 // NewComment 初始化
-func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *logrus.Logger) *Comment {
+// 时间间隔 timeCell 的单位为 **秒**
+func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *zap.Logger) *Comment {
 	if log == nil {
-		log = logrus.New()
+		log = zap.NewExample()
 	}
 
 	return &Comment{
@@ -38,7 +41,7 @@ func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *logrus
 		Type:     typ,
 		Time:     t,
 		pn:       1, // 开始爬取页数的初始值
-		state:    state.Stop,
+		state:    atomic.NewInt32(state.Stop),
 		timeCell: timeCell, // 爬取时间间隔
 		log:      log,
 	}
@@ -52,13 +55,13 @@ func (c *Comment) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 		wg.Done()
 	}()
 
-	if atomic.LoadInt32((*int32)(&c.state)) != int32(state.Stop) {
+	if c.state.Load() != state.Stop {
 		return
 	}
 
-	atomic.SwapInt32((*int32)(&c.state), int32(state.Runing))
+	c.state.Swap(state.Running)
 	defer func() {
-		atomic.SwapInt32((*int32)(&c.state), int32(state.Stop))
+		c.state.Swap(state.Stop)
 	}()
 
 	infos, err := comment.GetComments(c.Type, info.SortDesc, c.RID, info.MaxPs, c.pn)
@@ -69,7 +72,11 @@ func (c *Comment) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 			return
 		}
 
-		c.log.Error(err)
+		c.log.Error(err.Error(), zapcore.Field{
+			Key:    "评论区参数",
+			Type:   zapcore.StringType,
+			String: fmt.Sprintf("RID: %d, Type: %d", c.RID, c.Type),
+		})
 		return
 	}
 

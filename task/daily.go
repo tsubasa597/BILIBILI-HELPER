@@ -1,8 +1,8 @@
 package task
 
 import (
+	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
@@ -10,13 +10,14 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/api/user"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
 	"github.com/tsubasa597/BILIBILI-HELPER/state"
+	"go.uber.org/atomic"
 )
 
 // Daily 日常任务
 type Daily struct {
 	VideoAvID string
 	api       api.API
-	state     state.State
+	state     *atomic.Int32
 }
 
 var (
@@ -26,11 +27,12 @@ var (
 )
 
 // NewDaily 初始化
+// 默认时间间隔为 1 天
 func NewDaily(api api.API, av string) Daily {
 	return Daily{
 		api:       api,
 		VideoAvID: av,
-		state:     state.Stop,
+		state:     atomic.NewInt32(state.Stop),
 	}
 }
 
@@ -40,13 +42,13 @@ func (daily Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 		wg.Done()
 	}()
 
-	if atomic.LoadInt32((*int32)(&daily.state)) != int32(state.Stop) {
+	if daily.state.Load() != state.Stop {
 		return
 	}
 
-	atomic.SwapInt32((*int32)(&daily.state), int32(state.Runing))
+	daily.state.Swap(state.Running)
 	defer func() {
-		atomic.SwapInt32((*int32)(&daily.state), int32(state.Stop))
+		daily.state.Swap(state.Stop)
 	}()
 
 	if daily.VideoAvID == "" {
@@ -55,13 +57,14 @@ func (daily Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 
 	var res string
 	if err, ok := daily.userCheck(); ok {
-		res += "WatchVideo: " + daily.watchVideo() + "\n"
-		res += "ShareVideo: " + daily.shareVideo() + "\n"
-		res += "Sliver2Coins: " + daily.sliver2Coins() + "\n"
-		res += "LiveCheckin: " + daily.liveCheckin()
+		res = fmt.Sprintf(
+			`WatchVideo: %s
+			ShareVideo: %s 
+			Sliver2Coins: %s
+			LiveCheckin: %s
+			`, daily.watchVideo(), daily.shareVideo(), daily.sliver2Coins(), daily.liveCheckin())
 	} else {
-		res += "UserCheck: " + err
-		daily.state = state.Stop
+		res = fmt.Sprintf("UserCheck: %s", err)
 	}
 
 	ch <- res
