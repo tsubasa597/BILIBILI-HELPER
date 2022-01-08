@@ -48,7 +48,7 @@ func GetDynamics(hostUID, nextOffect int64) ([]info.Dynamic, error) {
 
 	dynamics := make([]info.Dynamic, 0, len(resp.Data.Cards))
 	for _, card := range resp.Data.Cards {
-		dynamic, err := GetOriginCard(card)
+		dynamic, err := getOriginCard(card)
 		if err != nil {
 			continue
 		}
@@ -81,8 +81,8 @@ func GetAllDynamics(hostUID, t int64) (dynamics []info.Dynamic) {
 	}
 }
 
-// GetOriginCard 获取 Card 的源动态
-func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
+// getOriginCard 解析 Card 的动态内容
+func getOriginCard(c *proto.Card) (info.Dynamic, error) {
 	dynamic := *_dynamicPool.Get().(*info.Dynamic)
 	defer _dynamicPool.Put(&dynamic)
 
@@ -117,7 +117,7 @@ func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
 		}
 
 		var dy info.Dynamic
-		dy, err = GetOriginCard(&proto.Card{
+		dy, err = getOriginCard(&proto.Card{
 			Desc: &proto.Card_Desc{
 				Uid:          c.Desc.Uid,
 				Type:         orig.Item.OrigType,

@@ -27,6 +27,7 @@ const (
 	ErrUnknowDynamic = "未知动态"
 	ErrExchange      = "当前银瓜子余额不足700,不进行兑换"
 	ErrNoBvID        = "Bvid 为空，跳过"
+	ErrNoCookie      = "cookie 文件缺少参数"
 )
 
 var (
