@@ -20,7 +20,7 @@ var (
 )
 
 // GetComments 根据评论区类型、排序类型(正序、逆序)、评论区 id、页码 获取评论
-func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) ([]info.Comment, error) {
+func GetComments(commentType info.DynamicType, sort info.Sort, rid int64, ps, pn int) ([]info.Comment, error) {
 	resp := &proto.Comments{}
 	err := requests.Gets(fmt.Sprintf("%s?type=%d&oid=%d&sort=%d&ps=%d&pn=%d",
 		info.Reply, commentType, rid, sort, ps, pn), resp)
@@ -64,7 +64,7 @@ func GetComments(commentType info.Type, sort info.Sort, rid int64, ps, pn int) (
 }
 
 // GetAllComments 获取指定时间为止的所有评论
-func GetAllComments(commentType info.Type, rid, t int64) (comments []info.Comment) {
+func GetAllComments(commentType info.DynamicType, rid, t int64) (comments []info.Comment) {
 	for pn := 1; ; pn++ {
 		infos, err := GetComments(commentType, info.SortDesc, rid, info.MaxPs, pn)
 		if err != nil {

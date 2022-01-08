@@ -12,6 +12,11 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/info"
 )
 
+const (
+	// 银瓜子最低兑换要求
+	_exchangeRate int64 = 700
+)
+
 // WatchVideo 视频模拟观看，观看时间在 [0, 90) 之间
 func WatchVideo(api api.API, bvid string) (*proto.BaseResponse, error) {
 	data := url.Values{
@@ -85,6 +90,18 @@ func Sliver2CoinsStatus(api api.API) (*proto.Sliver2CoinsStatusResponse, error) 
 
 // Sliver2Coins 将银瓜子兑换为硬币
 func Sliver2Coins(api api.API) (*proto.BaseResponse, error) {
+	status, err := Sliver2CoinsStatus(api)
+	if err != nil {
+		return nil, err
+	}
+
+	if status.Data.Silver < _exchangeRate {
+		return nil, ecode.APIErr{
+			E:   ecode.ErrGetInfo,
+			Msg: ecode.ErrExchange,
+		}
+	}
+
 	data := url.Values{
 		"csrf": []string{api.Cookie.BiliJct},
 	}

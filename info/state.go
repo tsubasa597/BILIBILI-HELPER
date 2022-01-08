@@ -1,4 +1,4 @@
-package state
+package info
 
 const (
 	// Stop 停止状态

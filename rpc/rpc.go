@@ -37,7 +37,11 @@ var (
 
 // GetAll 获取评论区所有内容
 func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_GetAllServer) error {
-	comms := comment.GetAllComments(info.Type(req.BaseCommentRequest.Type), req.BaseCommentRequest.RID, req.Time)
+	comms := comment.GetAllComments(
+		info.DynamicType(req.BaseCommentRequest.Type),
+		req.BaseCommentRequest.RID,
+		req.Time,
+	)
 	for _, comm := range comms {
 		resp := _commentPool.Get().(*service.CommentResponse)
 		resp.DynamicUID = comm.DynamicUID
@@ -62,8 +66,13 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 
 // Get 获取评论区指定页数的内容
 func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServer) error {
-	comms, err := comment.GetComments(info.Type(req.BaseCommentRequest.Type),
-		info.Sort(req.Sort), req.BaseCommentRequest.RID, int(req.PageSum), int(req.PageNum))
+	comms, err := comment.GetComments(
+		info.DynamicType(req.BaseCommentRequest.Type),
+		info.Sort(req.Sort),
+		req.BaseCommentRequest.RID,
+		int(req.PageSum),
+		int(req.PageNum),
+	)
 	if err != nil {
 		return err
 	}

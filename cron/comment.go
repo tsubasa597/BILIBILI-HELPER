@@ -1,4 +1,4 @@
-package task
+package cron
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 // Comment 评论区参数
 type Comment struct {
 	RID      int64
-	Type     info.Type
+	Type     info.DynamicType
 	Time     int64
 	pn       int
 	timeCell time.Duration
@@ -29,7 +29,7 @@ var (
 
 // NewComment 初始化
 // 时间间隔 timeCell 的单位为 **秒**
-func NewComment(rid, t int64, timeCell time.Duration, typ info.Type, log *zap.Logger) *Comment {
+func NewComment(rid, t int64, timeCell time.Duration, typ info.DynamicType, log *zap.Logger) *Comment {
 	if log == nil {
 		log = zap.NewExample()
 	}

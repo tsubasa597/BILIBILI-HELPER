@@ -1,4 +1,4 @@
-package task
+package cron
 
 import (
 	"fmt"
@@ -22,8 +22,6 @@ type Daily struct {
 
 var (
 	_ Tasker = (*Daily)(nil)
-	// 银瓜子最低兑换要求
-	_exchangeRate int64 = 700
 )
 
 // NewDaily 初始化
@@ -105,15 +103,6 @@ func (d Daily) watchVideo() string {
 }
 
 func (d Daily) sliver2Coins() string {
-	status, err := daily.Sliver2CoinsStatus(d.api)
-	if err != nil {
-		return err.Error()
-	}
-
-	if status.Data.Silver < _exchangeRate {
-		return ecode.ErrExchange
-	}
-
 	resp, err := daily.Sliver2Coins(d.api)
 	if err != nil {
 		return err.Error()

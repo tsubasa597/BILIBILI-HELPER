@@ -1,7 +1,7 @@
 package info
 
 // Type 动态类型
-type Type uint8
+type DynamicType uint8
 
 // Dynamic 监听的动态信息
 type Dynamic struct {
@@ -11,12 +11,12 @@ type Dynamic struct {
 	Card    string
 	RID     int64
 	Offect  int64
-	Type    Type
+	Type    DynamicType
 }
 
 const (
 	// CommentViedo 视频
-	CommentViedo Type = iota + 1
+	CommentViedo DynamicType = iota + 1
 	// CommentTopic 话题
 	CommentTopic
 	_

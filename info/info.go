@@ -10,5 +10,5 @@ type Info struct {
 }
 
 const (
-	Pause, TwoDay time.Duration = time.Minute * 30, time.Hour * 24 * 2
+	PauseDuration, TwoDay time.Duration = time.Minute * 30, time.Hour * 24 * 2
 )
