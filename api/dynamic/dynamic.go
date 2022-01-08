@@ -7,25 +7,38 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
 	"github.com/tsubasa597/BILIBILI-HELPER/api/proto"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
-	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
 )
+
+// Dynamic 监听的动态信息
+type Info struct {
+	Name    string
+	Time    int64
+	UID     int64
+	Content string
+	Card    string
+	RID     int64
+	Offect  int64
+	Type    comment.Type
+}
 
 var (
 	_dynamicPool *sync.Pool = &sync.Pool{
 		New: func() interface{} {
-			return &info.Dynamic{}
+			return &Info{}
 		},
 	}
 )
 
-// GetDynamics 获取目的 uid 的一页动态
-func GetDynamics(hostUID, nextOffect int64) ([]info.Dynamic, error) {
+// Get 获取目的 uid 的一页动态
+func Get(hostUID, nextOffect int64) ([]Info, error) {
 	resp := &proto.DynamicSvrSpaceHistoryResponse{}
 	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
-		info.DynamicSrvSpaceHistory, hostUID, nextOffect), resp)
+		api.DynamicSrvSpaceHistory, hostUID, nextOffect), resp)
 	if err != nil {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
@@ -46,9 +59,9 @@ func GetDynamics(hostUID, nextOffect int64) ([]info.Dynamic, error) {
 		}
 	}
 
-	dynamics := make([]info.Dynamic, 0, len(resp.Data.Cards))
+	dynamics := make([]Info, 0, len(resp.Data.Cards))
 	for _, card := range resp.Data.Cards {
-		dynamic, err := GetOriginCard(card)
+		dynamic, err := getOriginCard(card)
 		if err != nil {
 			continue
 		}
@@ -59,13 +72,16 @@ func GetDynamics(hostUID, nextOffect int64) ([]info.Dynamic, error) {
 	return dynamics, nil
 }
 
-// GetAllDynamics 获取指定时间为止的所有动态
-func GetAllDynamics(hostUID, t int64) (dynamics []info.Dynamic) {
+// GetAll 获取指定时间为止的所有动态
+func GetAll(hostUID, t int64) (dynamics []Info, errs []error) {
 	var offect int64
 	for {
-		infos, err := GetDynamics(hostUID, offect)
+		infos, err := Get(hostUID, offect)
 		if err != nil {
-			return
+			errs = append(errs, ecode.APIErr{
+				E:   ecode.ErrGetInfo,
+				Msg: err.Error(),
+			})
 		}
 
 		for _, inf := range infos {
@@ -81,9 +97,9 @@ func GetAllDynamics(hostUID, t int64) (dynamics []info.Dynamic) {
 	}
 }
 
-// GetOriginCard 获取 Card 的源动态
-func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
-	dynamic := *_dynamicPool.Get().(*info.Dynamic)
+// getOriginCard 解析 Card 的动态内容
+func getOriginCard(c *proto.Card) (Info, error) {
+	dynamic := *_dynamicPool.Get().(*Info)
 	defer _dynamicPool.Put(&dynamic)
 
 	dynamic.UID = c.Desc.Uid
@@ -103,8 +119,9 @@ func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
 
 	switch c.Desc.Type {
 	case proto.DynamicDescType_Unknown:
-		return info.Dynamic{}, ecode.APIErr{
-			E: ecode.ErrUnknowDynamic,
+		return Info{}, ecode.APIErr{
+			E:   ecode.ErrLoad,
+			Msg: ecode.MsgUnknowDynamic,
 		}
 	case proto.DynamicDescType_WithOrigin:
 		orig := &proto.CardWithOrig{}
@@ -116,8 +133,8 @@ func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
 			}
 		}
 
-		var dy info.Dynamic
-		dy, err = GetOriginCard(&proto.Card{
+		var dy Info
+		dy, err = getOriginCard(&proto.Card{
 			Desc: &proto.Card_Desc{
 				Uid:          c.Desc.Uid,
 				Type:         orig.Item.OrigType,
@@ -131,11 +148,11 @@ func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
 			return dy, err
 		}
 
-		dynamic.Type = info.CommentDynamic
+		dynamic.Type = comment.Dynamic
 		dynamic.Content = orig.Item.Content
 
 	case proto.DynamicDescType_WithImage:
-		dynamic.Type = info.CommentDynamicImage
+		dynamic.Type = comment.DynamicImage
 
 		item := &proto.CardWithImage{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
@@ -148,7 +165,7 @@ func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
 		dynamic.Content = item.Item.Description
 
 	case proto.DynamicDescType_TextOnly:
-		dynamic.Type = info.CommentDynamic
+		dynamic.Type = comment.Dynamic
 
 		item := &proto.CardTextOnly{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
@@ -160,18 +177,18 @@ func GetOriginCard(c *proto.Card) (info.Dynamic, error) {
 		dynamic.Content = item.Item.Content
 
 	case proto.DynamicDescType_WithVideo:
-		dynamic.Type = info.CommentViedo
+		dynamic.Type = comment.Viedo
 		dynamic.RID = c.Desc.Rid
 
 	case proto.DynamicDescType_WithPost:
-		dynamic.Type = info.CommentColumn
+		dynamic.Type = comment.Column
 		dynamic.RID = c.Desc.Rid
 
 	case proto.DynamicDescType_WithMusic:
-		dynamic.Type = info.CommentAudio
+		dynamic.Type = comment.Audio
 
 	case proto.DynamicDescType_WithMiss:
-		dynamic.Type = info.CommentDynamic
+		dynamic.Type = comment.Dynamic
 
 	default:
 		return dynamic, ecode.APIErr{

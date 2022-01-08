@@ -6,14 +6,13 @@ import (
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/api/proto"
 	"github.com/tsubasa597/BILIBILI-HELPER/ecode"
-	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
 )
 
 // GetUserInfo 用户详情
 func GetUserInfo(uid int64) (*proto.XSpaceAccInfoResponse, error) {
 	resp := &proto.XSpaceAccInfoResponse{}
-	if err := requests.Gets(fmt.Sprintf("%s?mid=%d", info.SpaceAccInfo, uid), resp); err != nil {
+	if err := requests.Gets(fmt.Sprintf("%s?mid=%d", api.SpaceAccInfo, uid), resp); err != nil {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
@@ -31,23 +30,23 @@ func GetUserInfo(uid int64) (*proto.XSpaceAccInfoResponse, error) {
 }
 
 // UserCheck 用户登录验证
-func UserCheck(api api.API) (*proto.BaseResponse, error) {
+func UserCheck(ap api.API) error {
 	resp := &proto.BaseResponse{}
-	if err := api.Req.Gets(info.UserLogin, resp); err != nil {
-		return nil, ecode.APIErr{
+	if err := ap.Req.Gets(api.UserLogin, resp); err != nil {
+		return ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: err.Error(),
 		}
 	}
 
 	if resp.Code != ecode.Sucess {
-		return nil, ecode.APIErr{
+		return ecode.APIErr{
 			E:   ecode.ErrGetInfo,
 			Msg: resp.Message,
 		}
 	}
 
-	return resp, nil
+	return nil
 }
 
 // GetUserName 获取用户姓名

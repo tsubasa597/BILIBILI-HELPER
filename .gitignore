@@ -1,3 +1,1 @@
-config.yaml
-/test/
-*_test.go
+/test/api/*.yaml
