@@ -65,7 +65,7 @@ func TestComment(t *testing.T) {
 	for {
 		_, err := stream.Recv()
 		if err != nil {
-			t.Error(err)
+			break
 		}
 	}
 }
@@ -86,7 +86,7 @@ func TestDynamic(t *testing.T) {
 	for {
 		_, err := stream.Recv()
 		if err != nil {
-			t.Error(err)
+			break
 		}
 	}
 }
