@@ -1,4 +1,4 @@
-package info
+package api
 
 import (
 	"github.com/spf13/viper"
@@ -18,6 +18,7 @@ const (
 	_userid = "Bili.userId"
 )
 
+// NewCookie 读取指定文件中的 cookie 值
 func NewCookie(path string) (*Cookie, error) {
 	vip := viper.New()
 	vip.SetConfigFile(path)
@@ -32,7 +33,7 @@ func NewCookie(path string) (*Cookie, error) {
 	if vip.GetString(_jct) == "" || vip.GetString(_sess) == "" || vip.GetString(_userid) == "" {
 		return nil, ecode.APIErr{
 			E:   ecode.ErrLoad,
-			Msg: ecode.ErrNoCookie,
+			Msg: ecode.MsgNoCookie,
 		}
 	}
 

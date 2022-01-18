@@ -1,13 +1,14 @@
 package rpc
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
 	"github.com/tsubasa597/BILIBILI-HELPER/api/dynamic"
-	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/BILIBILI-HELPER/rpc/service"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // Comment rpc 服务
@@ -37,8 +38,8 @@ var (
 
 // GetAll 获取评论区所有内容
 func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_GetAllServer) error {
-	comms := comment.GetAllComments(
-		info.DynamicType(req.BaseCommentRequest.Type),
+	comms := comment.GetAll(
+		comment.Type(req.BaseCommentRequest.Type),
 		req.BaseCommentRequest.RID,
 		req.Time,
 	)
@@ -66,9 +67,9 @@ func (c Comment) GetAll(req *service.AllCommentRequest, server service.Comment_G
 
 // Get 获取评论区指定页数的内容
 func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServer) error {
-	comms, err := comment.GetComments(
-		info.DynamicType(req.BaseCommentRequest.Type),
-		info.Sort(req.Sort),
+	comms, err := comment.Get(
+		comment.Type(req.BaseCommentRequest.Type),
+		comment.Sort(req.Sort),
 		req.BaseCommentRequest.RID,
 		int(req.PageSum),
 		int(req.PageNum),
@@ -101,7 +102,7 @@ func (c Comment) Get(req *service.CommentRequest, server service.Comment_GetServ
 
 // Get 获取指定动态之后的一页动态
 func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetServer) error {
-	dynamics, err := dynamic.GetDynamics(req.BaseCommentRequest.UID, req.Offect)
+	dynamics, err := dynamic.Get(req.BaseCommentRequest.UID, req.Offect)
 	if err != nil {
 		return err
 	}
@@ -131,7 +132,15 @@ func (dy Dynamic) Get(req *service.DynamicRequest, server service.Dynamic_GetSer
 
 // GetAll 获取指定时间之后的所有动态
 func (dy Dynamic) GetAll(req *service.AllDynamicRequest, server service.Dynamic_GetAllServer) error {
-	dynamics := dynamic.GetAllDynamics(req.BaseCommentRequest.UID, req.Time)
+	dynamics, errs := dynamic.GetAll(req.BaseCommentRequest.UID, req.Time)
+	for _, err := range errs {
+		dy.Log.Error(err.Error(), zapcore.Field{
+			Key:    "UID 信息",
+			Type:   zapcore.StringType,
+			String: fmt.Sprintf("UID: %d", req.BaseCommentRequest.UID),
+		})
+	}
+
 	for _, d := range dynamics {
 		resp := _dynamicPool.Get().(*service.DynamicResponse)
 		resp.UID = d.UID

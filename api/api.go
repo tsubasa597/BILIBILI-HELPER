@@ -3,19 +3,18 @@ package api
 import (
 	"net/http"
 
-	"github.com/tsubasa597/BILIBILI-HELPER/info"
 	"github.com/tsubasa597/requests"
 )
 
 // API 发起请求所需的数据
 type API struct {
-	Cookie *info.Cookie
+	Cookie *Cookie
 	Req    *requests.Requests
 }
 
 // New 初始化
 func New(path string) (API, error) {
-	c, err := info.NewCookie(path)
+	c, err := NewCookie(path)
 	if err != nil {
 		return API{}, err
 	}

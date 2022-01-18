@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/golang/protobuf v1.5.2
 	github.com/spf13/viper v1.7.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tsubasa597/requests v0.0.0-20210709085108-7bd0f25b47c7
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.20.0

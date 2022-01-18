@@ -96,7 +96,7 @@ message XSpaceAccInfoResponse {
     int32 level = 7;
     message LiveRoom {
       int32 roomStatus = 1;
-      int32 liveStatus = 2;
+      LiveStatus liveStatus = 2;
       string url = 3;
       string title = 4;
       string cover = 5;
@@ -104,24 +104,6 @@ message XSpaceAccInfoResponse {
       int32 roundStatus = 7;
     }
     LiveRoom live_room = 17;
-  }
-  Data data = 3;
-}
-
-message GetRoomInfoOldResponse {
-  int32 code = 1;
-  string message = 2;
-  message Data {
-    RoomStatus roomStatus = 1;
-    RoundStatus roundStatus = 2;
-    LiveStatus liveStatus = 3;
-    string url = 4;
-    string title = 5;
-    string cover = 6;
-    int64 online = 7;
-    int64 roomid = 8;
-    int32 broadcast_type = 9;
-    int32 online_hidden = 10;
   }
   Data data = 3;
 }

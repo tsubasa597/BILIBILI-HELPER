@@ -8,7 +8,10 @@ import (
 
 func TestGetUserInfo(t *testing.T) {
 	for _, up := range _ups {
-		t.Log(user.GetUserInfo(up))
+		if _, err := user.GetUserInfo(up); err != nil {
+			t.Error(err)
+		}
+
 	}
 }
 
@@ -17,11 +20,16 @@ func TestUserCheck(t *testing.T) {
 		t.SkipNow()
 	}
 
-	t.Log(user.UserCheck(_api))
+	if err := user.UserCheck(_api); err != nil {
+		t.Error(err)
+	}
+
 }
 
 func TestGetUserName(t *testing.T) {
 	for _, up := range _ups {
-		t.Log(user.GetUserName(up))
+		if _, err := user.GetUserName(up); err != nil {
+			t.Error(err)
+		}
 	}
 }

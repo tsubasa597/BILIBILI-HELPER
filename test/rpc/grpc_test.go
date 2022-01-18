@@ -6,7 +6,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/tsubasa597/BILIBILI-HELPER/info"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
 	g "github.com/tsubasa597/BILIBILI-HELPER/rpc"
 	"github.com/tsubasa597/BILIBILI-HELPER/rpc/service"
 	"go.uber.org/zap"
@@ -14,16 +14,16 @@ import (
 )
 
 var (
-	ctx     context.Context = context.Background()
-	server  *grpc.Server    = grpc.NewServer()
-	connent *grpc.ClientConn
+	_ctx     = context.Background()
+	_server  = grpc.NewServer()
+	_connent *grpc.ClientConn
 )
 
-func init() {
-	service.RegisterCommentServer(server, &g.Comment{
+func TestMain(t *testing.T) {
+	service.RegisterCommentServer(_server, &g.Comment{
 		Log: zap.NewExample(),
 	})
-	service.RegisterDynamicServer(server, &g.Dynamic{
+	service.RegisterDynamicServer(_server, &g.Dynamic{
 		Log: zap.NewExample(),
 	})
 
@@ -33,68 +33,65 @@ func init() {
 	}
 
 	go func() {
-		if err := server.Serve(lis); err != nil {
-			log.Fatal(err)
+		if err := _server.Serve(lis); err != nil {
+			t.Error(err)
 		}
 	}()
 
-	connent, err = grpc.Dial("127.0.0.1:8080", grpc.WithInsecure())
+	_connent, err = grpc.Dial("127.0.0.1:8080", grpc.WithInsecure())
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 }
 
 func TestComment(t *testing.T) {
-	commentClient := service.NewCommentClient(connent)
+	commentClient := service.NewCommentClient(_connent)
 
 	// 565304231165094162, 17, 49
-	stream, err := commentClient.Get(ctx, &service.CommentRequest{
+	stream, err := commentClient.Get(_ctx, &service.CommentRequest{
 		BaseCommentRequest: &service.BaseCommentRequest{
 			Type: 17,
 			RID:  565304231165094162,
 		},
 		PageSum: 49,
 		PageNum: 1,
-		Sort:    int32(info.SortDesc),
+		Sort:    int32(comment.Desc),
 	}, grpc.EmptyCallOption{})
 	if err != nil {
-		t.Log(err)
+		t.Error(err)
 		return
 	}
 
 	for {
-		res, err := stream.Recv()
+		_, err := stream.Recv()
 		if err != nil {
-			break
+			t.Error(err)
 		}
-
-		t.Log(res)
 	}
 }
 
 func TestDynamic(t *testing.T) {
-	dynamicClient := service.NewDynamicClient(connent)
+	dynamicClient := service.NewDynamicClient(_connent)
 
-	stream, err := dynamicClient.Get(ctx, &service.DynamicRequest{
+	stream, err := dynamicClient.Get(_ctx, &service.DynamicRequest{
 		BaseCommentRequest: &service.BaseDynamicRequest{
 			UID: 672342685,
 		},
 	}, grpc.EmptyCallOption{})
 	if err != nil {
-		t.Log(err)
+		t.Error(err)
 		return
 	}
 
 	for {
-		res, err := stream.Recv()
+		_, err := stream.Recv()
 		if err != nil {
-			break
+			t.Error(err)
 		}
-
-		t.Log(res)
 	}
 }
 
+// 测试超时，取消测试
 // func TestAllComment(t *testing.T) {
 // 	commentClient := service.NewCommentClient(connent)
 
