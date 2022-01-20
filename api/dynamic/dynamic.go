@@ -161,7 +161,7 @@ func getOriginCard(c *proto.Card) (Info, error) {
 				Msg: err.Error(),
 			}
 		}
-		dynamic.RID = item.Item.Id
+
 		dynamic.Content = item.Item.Description
 
 	case proto.DynamicDescType_TextOnly:
@@ -178,11 +178,9 @@ func getOriginCard(c *proto.Card) (Info, error) {
 
 	case proto.DynamicDescType_WithVideo:
 		dynamic.Type = comment.Viedo
-		dynamic.RID = c.Desc.Rid
 
 	case proto.DynamicDescType_WithPost:
 		dynamic.Type = comment.Column
-		dynamic.RID = c.Desc.Rid
 
 	case proto.DynamicDescType_WithMusic:
 		dynamic.Type = comment.Audio
