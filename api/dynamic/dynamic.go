@@ -23,6 +23,7 @@ type Info struct {
 	Card    string
 	RID     int64
 	Offect  int64
+	Pic     string
 	Type    comment.Type
 }
 
@@ -35,6 +36,7 @@ var (
 )
 
 // Get 获取目的 uid 的一页动态
+// nextOffect 翻页参数
 func Get(hostUID, nextOffect int64) ([]Info, error) {
 	resp := &proto.DynamicSvrSpaceHistoryResponse{}
 	err := requests.Gets(fmt.Sprintf("%s?visitor_uid=0&host_uid=%d&offset_dynamic_id=%d&platform=web",
@@ -73,7 +75,7 @@ func Get(hostUID, nextOffect int64) ([]Info, error) {
 }
 
 // GetAll 获取指定时间为止的所有动态
-func GetAll(hostUID, t int64) (dynamics []Info, errs []error) {
+func GetAll(hostUID, endTime int64) (dynamics []Info, errs []error) {
 	var offect int64
 	for {
 		infos, err := Get(hostUID, offect)
@@ -85,7 +87,7 @@ func GetAll(hostUID, t int64) (dynamics []Info, errs []error) {
 		}
 
 		for _, inf := range infos {
-			if inf.Time <= t {
+			if inf.Time <= endTime {
 				return
 			}
 
@@ -99,17 +101,18 @@ func GetAll(hostUID, t int64) (dynamics []Info, errs []error) {
 
 // getOriginCard 解析 Card 的动态内容
 func getOriginCard(c *proto.Card) (Info, error) {
-	dynamic := *_dynamicPool.Get().(*Info)
-	defer _dynamicPool.Put(&dynamic)
+	dynamic := _dynamicPool.Get().(*Info)
+	defer _dynamicPool.Put(dynamic)
 
 	dynamic.UID = c.Desc.Uid
 	dynamic.Time = c.Desc.Timestamp
 	dynamic.Name = c.Desc.UserProfile.Info.Uname
 	dynamic.Card = c.Card
+	dynamic.Pic = ""
 
 	offect, err := strconv.Atoi(c.Desc.DynamicIdStr)
 	if err != nil {
-		return dynamic, ecode.APIErr{
+		return *dynamic, ecode.APIErr{
 			E:   ecode.ErrLoad,
 			Msg: err.Error(),
 		}
@@ -127,7 +130,7 @@ func getOriginCard(c *proto.Card) (Info, error) {
 		orig := &proto.CardWithOrig{}
 		err = json.Unmarshal([]byte(c.Card), orig)
 		if err != nil {
-			return dynamic, ecode.APIErr{
+			return *dynamic, ecode.APIErr{
 				E:   ecode.ErrLoad,
 				Msg: err.Error(),
 			}
@@ -150,26 +153,27 @@ func getOriginCard(c *proto.Card) (Info, error) {
 
 		dynamic.Type = comment.Dynamic
 		dynamic.Content = orig.Item.Content
+		dynamic.Pic = dy.Pic
 
 	case proto.DynamicDescType_WithImage:
 		dynamic.Type = comment.DynamicImage
 
 		item := &proto.CardWithImage{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
-			return dynamic, ecode.APIErr{
+			return *dynamic, ecode.APIErr{
 				E:   ecode.ErrLoad,
 				Msg: err.Error(),
 			}
 		}
-
 		dynamic.Content = item.Item.Description
+		dynamic.Pic = item.Item.Pictures[0].ImgSrc
 
 	case proto.DynamicDescType_TextOnly:
 		dynamic.Type = comment.Dynamic
 
 		item := &proto.CardTextOnly{}
 		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
-			return dynamic, ecode.APIErr{
+			return *dynamic, ecode.APIErr{
 				E:   ecode.ErrLoad,
 				Msg: err.Error(),
 			}
@@ -179,8 +183,28 @@ func getOriginCard(c *proto.Card) (Info, error) {
 	case proto.DynamicDescType_WithVideo:
 		dynamic.Type = comment.Viedo
 
+		item := &proto.CardWithVideo{}
+		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
+			return *dynamic, ecode.APIErr{
+				E:   ecode.ErrLoad,
+				Msg: err.Error(),
+			}
+		}
+		dynamic.Content = item.Title
+		dynamic.Pic = item.Pic
+
 	case proto.DynamicDescType_WithPost:
 		dynamic.Type = comment.Column
+
+		item := &proto.CardWithPost{}
+		if err = json.Unmarshal([]byte(c.Card), item); err != nil {
+			return *dynamic, ecode.APIErr{
+				E:   ecode.ErrLoad,
+				Msg: err.Error(),
+			}
+		}
+		dynamic.Content = item.Title
+		dynamic.Pic = item.ImageUrls[0]
 
 	case proto.DynamicDescType_WithMusic:
 		dynamic.Type = comment.Audio
@@ -189,10 +213,10 @@ func getOriginCard(c *proto.Card) (Info, error) {
 		dynamic.Type = comment.Dynamic
 
 	default:
-		return dynamic, ecode.APIErr{
+		return *dynamic, ecode.APIErr{
 			E: ecode.ErrLoad,
 		}
 	}
 
-	return dynamic, nil
+	return *dynamic, nil
 }
