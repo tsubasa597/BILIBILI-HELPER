@@ -11,7 +11,8 @@ import (
 )
 
 type Dynamic struct {
-	UID int64
+	UID  int64
+	Name string
 
 	// 最新动态的更新时间
 	time int64
@@ -51,6 +52,7 @@ func (d *Dynamic) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 
 	dynamics, errs := dynamic.GetAll(d.UID, d.time)
 	if len(dynamics) > 0 {
+		d.Name = dynamics[0].Name
 		d.time = dynamics[0].Time
 	}
 
@@ -76,6 +78,7 @@ func (d Dynamic) Next(t time.Time) time.Time {
 func (d Dynamic) Info() Info {
 	return Info{
 		ID:       d.UID,
+		Name:     d.Name,
 		Time:     d.time,
 		TimeCell: d.timeCell,
 	}

@@ -17,6 +17,8 @@ type Info struct {
 	TimeCell time.Duration
 	// Time 动态时间
 	Time int64
+	// Name 昵称
+	Name string
 }
 
 // Tasker 任务接口
