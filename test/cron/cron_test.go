@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tsubasa597/BILIBILI-HELPER/api"
 	"github.com/tsubasa597/BILIBILI-HELPER/cron"
 	"go.uber.org/zap"
 )
@@ -42,6 +43,29 @@ func TestDynamic(t *testing.T) {
 
 	c.Add(672342685, cron.NewDynamic(672342685, _ti, 5, _log), time.Now())
 	assert.Equal(4, len(c.Info()))
+
+	<-c.Ch
+
+	c.Stop()
+}
+
+func TestLive(t *testing.T) {
+	t.SkipNow()
+	ap, err := api.New("../cookie.yaml")
+	if err != nil {
+		t.Logf("%s, %s", "跳过测试", err)
+		return
+	}
+
+	c := cron.New()
+	c.Start()
+
+	l, err := cron.NewLive(ap, 672342685, zap.NewExample())
+	if err != nil {
+		t.Error(err)
+	}
+
+	c.Add(672342685, l, time.Now())
 
 	<-c.Ch
 

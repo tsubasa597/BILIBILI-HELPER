@@ -6,6 +6,7 @@ option go_package = "proto";
 enum LiveStatus {
   NoLiving = 0;
   Living = 1;
+  Rotation = 2;
 }
 
 enum RoundStatus {
@@ -373,6 +374,30 @@ message CardWithLiveV2 {
   LivePlayInfo live_play_info = 1;
   int64 style = 2;
   int64 type = 3;
+}
+
+message EnterLive {
+    int32 code = 1;
+    string message = 2;
+    message Data {
+        int32 heartbeat_interval = 1;
+        int64 timestamp = 2;
+        string secret_key = 3;
+        repeated int32 secret_rule = 4;
+    }
+    Data data = 3;
+}
+
+message RoomInfo {
+    int32 code = 1;
+    string message = 2;
+    message Data {
+        int32 parent_area_id = 1;
+        int32 area_id = 2;
+        int32 room_id = 3;
+        LiveStatus live_status = 4;
+    }
+    Data data = 3;
 }
 
 message Comments {

@@ -4,6 +4,7 @@ const (
 	baseHost     = "https://api.bilibili.com"
 	baseLiveHost = "https://api.live.bilibili.com"
 	baseVCHost   = "https://api.vc.bilibili.com"
+	baseLive     = "https://live-trace.bilibili.com"
 
 	// SpaceAccInfo 用户空间详细信息
 	SpaceAccInfo = baseHost + "/x/space/acc/info"
@@ -34,4 +35,16 @@ const (
 
 	// Reply 评论区
 	Reply = baseHost + "/x/v2/reply"
+
+	// EnterRoom 进入直播间
+	EnterRoom = baseLive + "/xlive/data-interface/v1/x25Kn/E"
+
+	// InRoom 直播间心跳
+	InRoom = baseLive + "/xlive/data-interface/v1/x25Kn/X"
+
+	// LiveInfo 直播间信息
+	LiveInfo = baseLiveHost + "/room/v1/Room/get_info"
+
+	// LiveInfo2 直播间信息
+	LiveInfo2 = baseLiveHost + "xlive/web-room/v1/index/getInfoByRoom"
 )

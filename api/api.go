@@ -8,7 +8,7 @@ import (
 
 // API 发起请求所需的数据
 type API struct {
-	Cookie *Cookie
+	cookie *cookie
 	Req    *requests.Requests
 }
 
@@ -20,7 +20,7 @@ func New(path string) (API, error) {
 	}
 
 	return API{
-		Cookie: c,
+		cookie: c,
 		Req: &requests.Requests{
 			Client: &http.Client{},
 			Headers: map[string]string{
@@ -29,10 +29,18 @@ func New(path string) (API, error) {
 				"Content-Type": "application/x-www-form-urlencoded",
 			},
 			Cookies: map[string]string{
-				"DedeUserID": c.UserID,
-				"SESSDATA":   c.SessData,
-				"bili_jct":   c.BiliJct,
+				"DedeUserID": c.userID,
+				"SESSDATA":   c.sessData,
+				"bili_jct":   c.biliJct,
 			},
 		},
 	}, nil
+}
+
+func (api API) GetJwt() string {
+	return api.cookie.biliJct
+}
+
+func (api API) GetBuvid() string {
+	return api.cookie.liveBuvid
 }

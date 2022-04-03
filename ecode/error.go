@@ -4,7 +4,7 @@ const (
 	ErrGetInfo   = "请求发生错误"
 	ErrLoad      = "解析错误"
 	ErrPause     = "正在暂停"
-	ErrorStop    = "已经停止"
+	ErrStop      = "已经停止"
 	ErrNoDynamic = "该用户没有更多动态"
 	ErrNoComment = "没有更多评论"
 

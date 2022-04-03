@@ -45,7 +45,7 @@ func WatchVideo(ap api.API, bvid string) error {
 func ShareVideo(ap api.API, bvid string) error {
 	data := url.Values{
 		"bvid": []string{bvid},
-		"csrf": []string{ap.Cookie.BiliJct},
+		"csrf": []string{ap.GetJwt()},
 	}
 
 	resp := &proto.BaseResponse{}
@@ -102,7 +102,7 @@ func Sliver2Coins(ap api.API) error {
 	}
 
 	data := url.Values{
-		"csrf": []string{ap.Cookie.BiliJct},
+		"csrf": []string{ap.GetJwt()},
 	}
 
 	resp := &proto.BaseResponse{}

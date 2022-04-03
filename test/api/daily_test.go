@@ -31,7 +31,7 @@ var (
 )
 
 func TestMain(t *testing.T) {
-	ap, err := api.New("./cookie.yaml")
+	ap, err := api.New("../cookie.yaml")
 	if err != nil {
 		t.Logf("%s, %s", "跳过测试", err)
 		return
