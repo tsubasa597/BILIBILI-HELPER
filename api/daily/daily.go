@@ -16,6 +16,14 @@ const (
 	_exchangeRate int64 = 700
 )
 
+// Info 日常任务返回信息
+type Info struct {
+	WatchVideo   string
+	ShareVideo   string
+	Sliver2Coins string
+	LiveCheckin  string
+}
+
 // WatchVideo 视频模拟观看，观看时间在 [0, 90) 之间
 func WatchVideo(ap api.API, bvid string) error {
 	data := url.Values{

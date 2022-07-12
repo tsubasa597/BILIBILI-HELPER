@@ -1,7 +1,6 @@
 package cron
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -26,8 +25,12 @@ var (
 
 // NewDaily 初始化
 // 默认时间间隔为 24 小时
-func NewDaily(api api.API, av string, log *zap.Logger) Daily {
-	return Daily{
+func NewDaily(api api.API, av string, log *zap.Logger) *Daily {
+	if log == nil {
+		log = zap.NewExample()
+	}
+
+	return &Daily{
 		api:       api,
 		VideoAvID: av,
 		timeCell:  time.Hour * 24, /** 24 小时 */
@@ -37,14 +40,10 @@ func NewDaily(api api.API, av string, log *zap.Logger) Daily {
 }
 
 // Run 运行日常任务
-func (d *Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
+func (d *Daily) Run() interface{} {
 	var (
 		err error
 	)
-
-	defer func() {
-		wg.Done()
-	}()
 
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
@@ -56,20 +55,18 @@ func (d *Daily) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 		}
 	}
 
-	if err := user.UserCheck(d.api); err == nil {
-		d.log.Info(fmt.Sprintf(
-			`WatchVideo: %s
-			ShareVideo: %s 
-			Sliver2Coins: %s
-			LiveCheckin: %s`,
-			daily.WatchVideo(d.api, d.VideoAvID).Error(),
-			daily.ShareVideo(d.api, d.VideoAvID).Error(),
-			daily.Sliver2Coins(d.api).Error(),
-			daily.LiveCheckin(d.api).Error(),
-		))
-	} else {
-		d.log.Error(err.Error())
+	err = user.Check(d.api)
+	if err == nil {
+		return daily.Info{
+			WatchVideo:   daily.WatchVideo(d.api, d.VideoAvID).Error(),
+			ShareVideo:   daily.ShareVideo(d.api, d.VideoAvID).Error(),
+			Sliver2Coins: daily.Sliver2Coins(d.api).Error(),
+			LiveCheckin:  daily.LiveCheckin(d.api).Error(),
+		}
 	}
+
+	d.log.Error(err.Error())
+	return nil
 }
 
 // Next 下次运行时间

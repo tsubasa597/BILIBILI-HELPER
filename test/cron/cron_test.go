@@ -6,6 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tsubasa597/BILIBILI-HELPER/api"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/daily"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/dynamic"
+	"github.com/tsubasa597/BILIBILI-HELPER/api/user"
 	"github.com/tsubasa597/BILIBILI-HELPER/cron"
 	"go.uber.org/zap"
 )
@@ -15,11 +18,12 @@ var (
 	_log *zap.Logger = zap.NewExample()
 
 	_dynamic = map[int64]*cron.Dynamic{
-		351609538: cron.NewDynamic(351609538, _ti, 5, _log),
-		672328094: cron.NewDynamic(672328094, _ti, 5, _log),
-		672353429: cron.NewDynamic(672353429, _ti, 5, _log),
-		672346917: cron.NewDynamic(672346917, _ti, 5, _log),
+		351609538: cron.NewDynamic(351609538, _ti, 5*time.Minute, _log),
+		672328094: cron.NewDynamic(672328094, _ti, 5*time.Minute, _log),
+		672353429: cron.NewDynamic(672353429, _ti, 5*time.Minute, _log),
+		672346917: cron.NewDynamic(672346917, _ti, 5*time.Minute, _log),
 	}
+	// _comment = map[int64]
 )
 
 func TestDynamic(t *testing.T) {
@@ -28,7 +32,7 @@ func TestDynamic(t *testing.T) {
 		assert = assert.New(t)
 	)
 
-	c := cron.New()
+	c := cron.New[[]dynamic.Info]()
 	c.Start()
 
 	for id, task := range _dynamic {
@@ -41,7 +45,7 @@ func TestDynamic(t *testing.T) {
 	c.StopByID(672328094)
 	assert.Equal(3, len(c.Info()))
 
-	c.Add(672342685, cron.NewDynamic(672342685, _ti, 5, _log), time.Now())
+	c.Add(672342685, cron.NewDynamic(672342685, _ti, 5*time.Minute, _log), time.Now())
 	assert.Equal(4, len(c.Info()))
 
 	<-c.Ch
@@ -49,25 +53,35 @@ func TestDynamic(t *testing.T) {
 	c.Stop()
 }
 
-func TestLive(t *testing.T) {
+func TestDaily(t *testing.T) {
 	t.SkipNow()
+
 	ap, err := api.New("../cookie.yaml")
 	if err != nil {
 		t.Logf("%s, %s", "跳过测试", err)
 		return
 	}
 
-	c := cron.New()
+	task := cron.NewDaily(ap, "", nil)
+	c := cron.New[daily.Info]()
+
+	c.Start()
+	c.Add(1, task, time.Now())
+
+	t.Log(<-c.Ch)
+}
+
+func TestUser(t *testing.T) {
+	assert := assert.New(t)
+
+	c := cron.New[user.Info]()
 	c.Start()
 
-	l, err := cron.NewLive(ap, 672342685, zap.NewExample())
-	if err != nil {
-		t.Error(err)
-	}
+	task := cron.NewUser(351609538, time.Minute, nil)
+	c.Add(351609538, task, time.Now())
 
-	c.Add(672342685, l, time.Now())
-
-	<-c.Ch
+	info := <-c.Ch
+	assert.Equal(int64(0), info.UID)
 
 	c.Stop()
 }

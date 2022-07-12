@@ -14,7 +14,7 @@ import (
 	"github.com/tsubasa597/requests"
 )
 
-// Dynamic 监听的动态信息
+// Info 监听的动态信息
 type Info struct {
 	Name    string
 	Time    int64

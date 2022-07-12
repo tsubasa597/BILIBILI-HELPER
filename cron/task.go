@@ -1,7 +1,6 @@
 package cron
 
 import (
-	"sync"
 	"time"
 
 	"github.com/tsubasa597/BILIBILI-HELPER/api/comment"
@@ -23,7 +22,8 @@ type Info struct {
 
 // Tasker 任务接口
 type Tasker interface {
-	Run(chan<- interface{}, *sync.WaitGroup)
+	// Run(chan<- interface{}, *sync.WaitGroup)
+	Run() interface{}
 	Next(time.Time) time.Time
 	Info() Info
 }

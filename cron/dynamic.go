@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Dynamic 动态信息
 type Dynamic struct {
 	UID  int64
 	Name string
@@ -31,23 +32,22 @@ var (
 )
 
 // NewDynamic 初始化
-// 时间间隔 timeCell 的单位为 **秒**
 func NewDynamic(uid, ti int64, timeCell time.Duration, log *zap.Logger) *Dynamic {
+	if log == nil {
+		log = zap.NewExample()
+	}
+
 	return &Dynamic{
 		UID:      uid,
 		time:     ti,
-		timeCell: timeCell * time.Second,
+		timeCell: timeCell,
 		log:      log,
 		mutex:    &sync.Mutex{},
 	}
 }
 
-// Run 获取动态
-func (d *Dynamic) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
-	defer func() {
-		wg.Done()
-	}()
-
+// Run 监听最新动态
+func (d *Dynamic) Run() interface{} {
 	d.mutex.Lock()
 
 	dynamics, errs := dynamic.GetAll(d.UID, d.time)
@@ -66,7 +66,7 @@ func (d *Dynamic) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 
 	d.mutex.Unlock()
 
-	ch <- dynamics
+	return dynamics
 }
 
 // Next 下次运行时间

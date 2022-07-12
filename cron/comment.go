@@ -35,7 +35,6 @@ var (
 )
 
 // NewComment 初始化
-// 时间间隔 timeCell 的单位为 **秒**
 func NewComment(rid, t int64, timeCell time.Duration, typ comment.Type, log *zap.Logger) *Comment {
 	if log == nil {
 		log = zap.NewExample()
@@ -46,18 +45,17 @@ func NewComment(rid, t int64, timeCell time.Duration, typ comment.Type, log *zap
 		Type:     typ,
 		time:     t,
 		pn:       1, // 开始爬取页数的初始值
-		timeCell: timeCell * time.Second,
+		timeCell: timeCell,
 		log:      log,
 		mutex:    &sync.Mutex{},
 	}
 }
 
-// Run 开始运行
-func (c *Comment) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
+// Run 获取最新评论内容
+func (c *Comment) Run() interface{} {
 	// 防止请求过快
 	defer func() {
 		time.Sleep(time.Second * 1)
-		wg.Done()
 	}()
 
 	c.mutex.Lock()
@@ -67,7 +65,7 @@ func (c *Comment) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 		// 爬取完成,在间隔之间之后继续更新
 		if err.Error() == ecode.ErrNoComment {
 			c.pn = 1
-			return
+			return nil
 		}
 
 		c.log.Error(err.Error(), zapcore.Field{
@@ -75,14 +73,14 @@ func (c *Comment) Run(ch chan<- interface{}, wg *sync.WaitGroup) {
 			Type:   zapcore.StringType,
 			String: fmt.Sprintf("RID: %d, Type: %d", c.RID, c.Type),
 		})
-		return
+		return nil
 	}
 
 	c.pn++
 
 	c.mutex.Unlock()
 
-	ch <- infos
+	return infos
 }
 
 // Next 下次运行时间

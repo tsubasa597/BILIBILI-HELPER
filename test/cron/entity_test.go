@@ -14,22 +14,22 @@ var (
 
 	_entities = []*cron.Entity{
 		{
-			Task: cron.NewDynamic(1, 1, 4, nil),
+			Task: cron.NewDynamic(1, 1, 4*time.Second, nil),
 			ID:   4,
 			Prev: _now,
 		},
 		{
-			Task: cron.NewDynamic(1, 1, 3, nil),
+			Task: cron.NewDynamic(1, 1, 3*time.Second, nil),
 			ID:   3,
 			Prev: _now.Add(time.Second * 1),
 		},
 		{
-			Task: cron.NewDynamic(1, 1, 2, nil),
+			Task: cron.NewDynamic(1, 1, 2*time.Second, nil),
 			ID:   2,
 			Prev: _now.Add(time.Second * 2),
 		},
 		{
-			Task: cron.NewDynamic(1, 1, 1, nil),
+			Task: cron.NewDynamic(1, 1, 1*time.Second, nil),
 			ID:   1,
 			Prev: _now.Add(time.Second * 3),
 		},

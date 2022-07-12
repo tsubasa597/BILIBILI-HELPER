@@ -11,7 +11,7 @@ func TestGetUserInfo(t *testing.T) {
 	assert := assert.New(t)
 
 	for up, name := range _ups {
-		if info, err := user.GetUserInfo(up); err != nil {
+		if info, err := user.GetInfo(up); err != nil {
 			t.Error(err)
 		} else {
 			assert.Equal(name, info.Data.Name)
@@ -25,7 +25,7 @@ func TestUserCheck(t *testing.T) {
 		t.SkipNow()
 	}
 
-	if err := user.UserCheck(_api); err != nil {
+	if err := user.Check(_api); err != nil {
 		t.Error(err)
 	}
 
